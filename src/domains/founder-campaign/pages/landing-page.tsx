@@ -95,7 +95,7 @@ function LandingCTA({
     <Link
       to={to}
       className={cn(
-        'inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-stone-900 px-6 py-3 font-display text-sm font-bold uppercase tracking-[0.12em] text-white shadow-md transition-all duration-200 hover:bg-stone-800 active:scale-[0.98]',
+        'inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-black px-6 py-3 font-display text-sm font-bold uppercase tracking-[0.12em] text-white shadow-md transition-all duration-200 hover:bg-neutral-800 active:scale-[0.98]',
         className,
       )}
     >
