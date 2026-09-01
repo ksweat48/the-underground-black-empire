@@ -49,12 +49,12 @@ export const landingCopy = {
   },
   screen4: {
     eyebrow: 'THE EMPIRE IS IN YOUR HANDS.',
-    headline: ['Your Voice.', 'Your City.', 'Our Future.'],
+    headline: ['Your Voice.', 'Our Future.'],
     accentWord: 'Our Future.',
     line1: 'Join the movement.',
     line2: "It's time to build what we deserve.",
     support: 'Choose your city. Join the Empire.',
     primaryCta: 'JOIN THE EMPIRE',
-    secondaryCta: 'CHOOSE YOUR CITY',
+    secondaryCta: 'SIGN IN',
   },
 } as const;

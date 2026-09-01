@@ -6,6 +6,7 @@ import { landingCopy, landingImages } from '@/config/landing-content';
 import { cn } from '@/shared/cn';
 
 const ONBOARDING_ROUTE = '/onboarding/city';
+const AUTH_ROUTE = '/auth/sign-in';
 const LOGO = '/the_underground_black_empire_logo.png';
 
 function LogoDivider() {
@@ -358,7 +359,7 @@ function Screen4() {
       <div
         ref={ref as React.RefObject<HTMLDivElement>}
         className={cn(
-          'landing-hero-sheet screen-4-sheet relative z-10 flex w-full max-w-2xl flex-col items-center px-6 py-8 text-center transition-all duration-700 ease-out sm:px-10 sm:py-10',
+          'relative z-10 flex w-full max-w-2xl flex-col items-center px-6 text-center transition-all duration-700 ease-out sm:px-10',
           inView ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0',
         )}
       >
@@ -369,26 +370,22 @@ function Screen4() {
         <h2 className="mt-2 font-display text-2xl font-bold leading-tight text-stone-900 sm:text-3xl lg:text-4xl">
           {c.headline[0]}
           <br />
-          {c.headline[1]}
-          <br />
-          <span className="text-plum-600">{c.headline[2]}</span>
+          <span className="text-plum-600">{c.headline[1]}</span>
         </h2>
 
         <p className="mt-3 text-sm font-medium text-stone-700">{c.line1}</p>
         <p className="mt-1 text-sm text-stone-600">{c.line2}</p>
-        <p className="mt-2 text-[11px] font-medium uppercase tracking-[0.14em] text-stone-400">
+        <p className="mt-2 text-[11px] font-medium uppercase tracking-[0.14em] text-stone-500">
           {c.support}
         </p>
 
         <div className="mt-4 flex flex-col items-center gap-3 sm:flex-row">
           <LandingCTA to={ONBOARDING_ROUTE}>{c.primaryCta}</LandingCTA>
-          <LandingCTA to={ONBOARDING_ROUTE} variant="secondary">
+          <LandingCTA to={AUTH_ROUTE} variant="secondary">
             {c.secondaryCta}
           </LandingCTA>
         </div>
       </div>
-
-      <ScrollIndicator />
     </SnapSection>
   );
 }
