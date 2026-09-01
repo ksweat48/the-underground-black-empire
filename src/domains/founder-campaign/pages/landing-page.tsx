@@ -54,7 +54,7 @@ function HeroImage({
     <div
       className={cn(
         'landing-hero-image group relative overflow-hidden',
-        fit === 'natural' && 'flex justify-center',
+        fit === 'natural' && 'inline-flex justify-center',
         className,
       )}
     >
@@ -177,28 +177,25 @@ function Screen1() {
   const c = landingCopy.screen1;
   return (
     <SnapSection id="screen-1">
-      <div className="landing-hero-glow" aria-hidden />
       <div
         ref={ref as React.RefObject<HTMLDivElement>}
         className={cn(
-          'landing-hero-panel flex w-full max-w-2xl flex-col items-center px-6 py-8 text-center transition-all duration-700 ease-out sm:px-10 sm:py-10',
+          'flex w-full max-w-2xl flex-col items-center text-center transition-all duration-700 ease-out',
           inView ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0',
         )}
       >
         <img
           src={LOGO}
           alt={APP_CONFIG.name}
-          className="mb-5 h-16 w-auto object-contain drop-shadow-sm sm:h-20"
+          className="mb-6 h-16 w-auto object-contain sm:h-20"
         />
 
-        <div className="landing-hero-stage mb-5">
-          <HeroImage
-            src={landingImages.screen1Hero}
-            alt="Community members building together"
-            fit="natural"
-            className="w-full rounded-2xl"
-          />
-        </div>
+        <HeroImage
+          src={landingImages.screen1Hero}
+          alt="Community members building together"
+          fit="natural"
+          className="mb-6 rounded-2xl"
+        />
 
         <h1 className="font-display text-xl font-bold leading-tight text-stone-900 sm:text-2xl lg:text-3xl">
           {c.headline}
@@ -208,7 +205,7 @@ function Screen1() {
           {c.body}
         </p>
 
-        <div className="landing-hero-rule my-4" aria-hidden />
+        <div className="landing-hero-rule my-5" aria-hidden />
 
         <div className="flex items-center gap-2 text-stone-700">
           <Sparkles className="h-4 w-4 text-plum-500" />
@@ -217,7 +214,7 @@ function Screen1() {
           </p>
         </div>
 
-        <LandingCTA to={ONBOARDING_ROUTE} className="mt-5">
+        <LandingCTA to={ONBOARDING_ROUTE} className="mt-6">
           {c.cta}
         </LandingCTA>
 
