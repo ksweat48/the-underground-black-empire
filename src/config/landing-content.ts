@@ -4,7 +4,7 @@ export const landingImages = {
   screen2School: '/images/screens/screen_2/reality_page/schools.png',
   screen2Elder: '/images/screens/screen_2/reality_page/elder_care.png',
   screen2Justice: '/images/screens/screen_2/reality_page/opportunity_justice.png',
-  screen3Community: '/placeholders/image copy.png',
+  screen3Community: '/images/screens/screen_3/image.png',
   screen4Join: '/placeholders/image copy 2.png',
 } as const;
 

@@ -326,7 +326,7 @@ function Screen3() {
           <HeroImage
             src={landingImages.screen3Community}
             alt="Community members organizing together"
-            className="h-[20svh] w-full rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.08)]"
+            className="h-[28svh] w-full rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.08)]"
           />
         </div>
 
