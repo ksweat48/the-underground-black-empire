@@ -108,7 +108,7 @@ function LandingCTA({
     <Link
       to={to}
       className={cn(
-        'inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-black px-6 py-3 font-display text-sm font-bold uppercase tracking-[0.12em] text-white shadow-md transition-all duration-200 hover:bg-neutral-800 active:scale-[0.98]',
+        'inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-gradient-to-b from-neutral-900 to-black px-6 py-3 font-display text-sm font-bold uppercase tracking-[0.12em] text-white shadow-[0_6px_20px_rgba(0,0,0,0.28),0_2px_6px_rgba(0,0,0,0.18),inset_0_1px_0_rgba(255,255,255,0.12)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_10px_28px_rgba(0,0,0,0.34),0_4px_10px_rgba(0,0,0,0.20),inset_0_1px_0_rgba(255,255,255,0.14)] active:translate-y-0 active:scale-[0.98]',
         className,
       )}
     >
@@ -177,25 +177,28 @@ function Screen1() {
   const c = landingCopy.screen1;
   return (
     <SnapSection id="screen-1">
+      <div className="landing-hero-glow" aria-hidden />
       <div
         ref={ref as React.RefObject<HTMLDivElement>}
         className={cn(
-          'flex w-full max-w-2xl flex-col items-center text-center transition-all duration-700 ease-out',
+          'landing-hero-panel flex w-full max-w-2xl flex-col items-center px-6 py-8 text-center transition-all duration-700 ease-out sm:px-10 sm:py-10',
           inView ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0',
         )}
       >
         <img
           src={LOGO}
           alt={APP_CONFIG.name}
-          className="mb-5 h-16 w-auto object-contain sm:h-20"
+          className="mb-5 h-16 w-auto object-contain drop-shadow-sm sm:h-20"
         />
 
-        <HeroImage
-          src={landingImages.screen1Hero}
-          alt="Community members building together"
-          fit="natural"
-          className="mb-5 w-full rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.08)]"
-        />
+        <div className="landing-hero-stage mb-5">
+          <HeroImage
+            src={landingImages.screen1Hero}
+            alt="Community members building together"
+            fit="natural"
+            className="w-full rounded-2xl"
+          />
+        </div>
 
         <h1 className="font-display text-xl font-bold leading-tight text-stone-900 sm:text-2xl lg:text-3xl">
           {c.headline}
@@ -205,7 +208,9 @@ function Screen1() {
           {c.body}
         </p>
 
-        <div className="mt-4 flex items-center gap-2 text-stone-700">
+        <div className="landing-hero-rule my-4" aria-hidden />
+
+        <div className="flex items-center gap-2 text-stone-700">
           <Sparkles className="h-4 w-4 text-plum-500" />
           <p className="font-display text-sm font-semibold tracking-wide">
             {c.voice}
