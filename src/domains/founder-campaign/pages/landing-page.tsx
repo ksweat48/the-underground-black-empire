@@ -248,11 +248,11 @@ function Screen2() {
   const { ref, inView } = useInView<HTMLElement>();
   const c = landingCopy.screen2;
   return (
-    <SnapSection id="screen-2" className="bg-stone-50/50">
+    <SnapSection id="screen-2" className="bg-stone-50/50 pt-4 pb-24">
       <div
         ref={ref as React.RefObject<HTMLDivElement>}
         className={cn(
-          'flex w-full max-w-2xl flex-col items-center text-center transition-all duration-700 ease-out',
+          'landing-hero-sheet flex w-full max-w-2xl flex-col items-center px-6 py-6 text-center transition-all duration-700 ease-out sm:px-10 sm:py-8',
           inView ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0',
         )}
       >
@@ -260,23 +260,25 @@ function Screen2() {
           {c.eyebrow}
         </p>
 
-        <h2 className="mt-2 font-display text-xl font-bold leading-tight text-stone-900 sm:text-2xl lg:text-3xl">
+        <h2 className="mt-1.5 font-display text-xl font-bold leading-tight text-stone-900 sm:text-2xl lg:text-3xl">
           {c.headline}
         </h2>
 
-        <p className="mt-2 max-w-md text-sm leading-relaxed text-stone-600">
+        <p className="mt-1.5 max-w-md text-sm leading-relaxed text-stone-600">
           {c.subtext}
         </p>
 
-        <div className="mt-5 grid w-full grid-cols-2 gap-3 lg:grid-cols-4">
+        <div className="mt-4 grid w-full grid-cols-2 gap-3 lg:grid-cols-4">
           {c.categories.map((cat, i) => (
             <div key={cat.label} className="flex flex-col gap-1.5">
-              <HeroImage
-                src={cat.image}
-                alt={cat.label}
-                label={`SCREEN_2_REALITY_IMAGE_${i + 1}`}
-                className="h-24 w-full rounded-xl shadow-sm sm:h-28"
-              />
+              <div className="landing-image-glow w-full">
+                <HeroImage
+                  src={cat.image}
+                  alt={cat.label}
+                  label={`SCREEN_2_REALITY_IMAGE_${i + 1}`}
+                  className="h-24 w-full rounded-xl shadow-sm sm:h-28"
+                />
+              </div>
               <p className="font-display text-[11px] font-bold uppercase tracking-[0.08em] text-stone-800">
                 {cat.label}
               </p>
@@ -285,7 +287,7 @@ function Screen2() {
           ))}
         </div>
 
-        <div className="mt-5">
+        <div className="mt-4">
           <p className="font-display text-base font-bold text-stone-900 sm:text-lg">
             {c.closing}
           </p>
@@ -307,11 +309,11 @@ function Screen3() {
   const { ref, inView } = useInView<HTMLElement>();
   const c = landingCopy.screen3;
   return (
-    <SnapSection id="screen-3">
+    <SnapSection id="screen-3" className="pt-4 pb-24">
       <div
         ref={ref as React.RefObject<HTMLDivElement>}
         className={cn(
-          'flex w-full max-w-2xl flex-col items-center text-center transition-all duration-700 ease-out lg:max-w-4xl',
+          'landing-hero-sheet flex w-full max-w-2xl flex-col items-center px-6 py-6 text-center transition-all duration-700 ease-out sm:px-10 sm:py-8 lg:max-w-4xl',
           inView ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0',
         )}
       >
@@ -319,22 +321,24 @@ function Screen3() {
           {c.eyebrow}
         </p>
 
-        <h2 className="mt-2 font-display text-xl font-bold leading-tight text-stone-900 sm:text-2xl lg:text-3xl">
+        <h2 className="mt-1.5 font-display text-xl font-bold leading-tight text-stone-900 sm:text-2xl lg:text-3xl">
           {c.headline}
         </h2>
 
-        <p className="mt-2 max-w-md text-sm leading-relaxed text-stone-600">
+        <p className="mt-1.5 max-w-md text-sm leading-relaxed text-stone-600">
           {c.subtext}
         </p>
 
-        <HeroImage
-          src={landingImages.screen3Community}
-          alt="Community members organizing together"
-          label="SCREEN_3_COMMUNITY_IMAGE"
-          className="mt-5 h-[22svh] w-full rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.08)]"
-        />
+        <div className="landing-image-glow mt-4 w-full">
+          <HeroImage
+            src={landingImages.screen3Community}
+            alt="Community members organizing together"
+            label="SCREEN_3_COMMUNITY_IMAGE"
+            className="h-[20svh] w-full rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.08)]"
+          />
+        </div>
 
-        <div className="mt-4 grid w-full grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="mt-3 grid w-full grid-cols-1 gap-3 sm:grid-cols-2">
           <ActionCard
             label={c.cards[0].label}
             body={c.cards[0].body}
@@ -359,11 +363,11 @@ function Screen4() {
   const { ref, inView } = useInView<HTMLElement>();
   const c = landingCopy.screen4;
   return (
-    <SnapSection id="screen-4">
+    <SnapSection id="screen-4" className="pt-4 pb-24">
       <div
         ref={ref as React.RefObject<HTMLDivElement>}
         className={cn(
-          'flex w-full max-w-2xl flex-col items-center text-center transition-all duration-700 ease-out',
+          'landing-hero-sheet flex w-full max-w-2xl flex-col items-center px-6 py-6 text-center transition-all duration-700 ease-out sm:px-10 sm:py-8',
           inView ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0',
         )}
       >
@@ -371,7 +375,7 @@ function Screen4() {
           {c.eyebrow}
         </p>
 
-        <h2 className="mt-4 font-display text-2xl font-bold leading-tight text-stone-900 sm:text-3xl lg:text-4xl">
+        <h2 className="mt-2 font-display text-2xl font-bold leading-tight text-stone-900 sm:text-3xl lg:text-4xl">
           {c.headline[0]}
           <br />
           {c.headline[1]}
@@ -379,26 +383,30 @@ function Screen4() {
           <span className="text-plum-600">{c.headline[2]}</span>
         </h2>
 
-        <p className="mt-4 text-sm font-medium text-stone-700">{c.line1}</p>
+        <p className="mt-3 text-sm font-medium text-stone-700">{c.line1}</p>
         <p className="mt-1 text-sm text-stone-600">{c.line2}</p>
         <p className="mt-2 text-[11px] font-medium uppercase tracking-[0.14em] text-stone-400">
           {c.support}
         </p>
 
-        <div className="mt-5 flex flex-col items-center gap-3 sm:flex-row">
+        <div className="mt-4 flex flex-col items-center gap-3 sm:flex-row">
           <LandingCTA to={ONBOARDING_ROUTE}>{c.primaryCta}</LandingCTA>
           <LandingCTA to={ONBOARDING_ROUTE} variant="secondary">
             {c.secondaryCta}
           </LandingCTA>
         </div>
 
-        <HeroImage
-          src={landingImages.screen4Join}
-          alt="Community moving toward a city skyline"
-          label="SCREEN_4_JOIN_IMAGE"
-          className="mt-6 h-[18svh] w-full rounded-t-2xl shadow-[0_12px_40px_rgba(0,0,0,0.08)]"
-        />
+        <div className="landing-image-glow mt-5 w-full">
+          <HeroImage
+            src={landingImages.screen4Join}
+            alt="Community moving toward a city skyline"
+            label="SCREEN_4_JOIN_IMAGE"
+            className="h-[16svh] w-full rounded-t-2xl shadow-[0_12px_40px_rgba(0,0,0,0.08)]"
+          />
+        </div>
       </div>
+
+      <ScrollIndicator />
     </SnapSection>
   );
 }
