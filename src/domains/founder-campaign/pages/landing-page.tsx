@@ -8,6 +8,18 @@ import { cn } from '@/shared/cn';
 const ONBOARDING_ROUTE = '/onboarding/city';
 const LOGO = '/the_underground_black_empire_logo.png';
 
+function LogoDivider() {
+  return (
+    <div className="landing-logo-divider" aria-hidden>
+      <div className="landing-logo-divider-line landing-logo-divider-line--plum" />
+      <svg width="8" height="8" viewBox="0 0 8 8" className="shrink-0">
+        <path d="M4 0L5 3L8 4L5 5L4 8L3 5L0 4L3 3Z" fill="#111111" />
+      </svg>
+      <div className="landing-logo-divider-line landing-logo-divider-line--emerald" />
+    </div>
+  );
+}
+
 type SnapSectionProps = {
   children: React.ReactNode;
   className?: string;
@@ -30,9 +42,11 @@ function SnapSection({ children, className, id }: SnapSectionProps) {
 
 function ScrollIndicator({ label = 'Scroll' }: { label?: string }) {
   return (
-    <div className="landing-scroll-indicator absolute bottom-5 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1.5 text-stone-400">
+    <div className="landing-scroll-indicator absolute bottom-5 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-stone-400">
       <span className="text-[9px] font-semibold uppercase tracking-[0.20em]">{label}</span>
-      <ChevronDown className="h-4 w-4 animate-bounce-slow" />
+      <div className="landing-scroll-circle">
+        <ChevronDown className="h-4 w-4 animate-bounce-slow text-stone-600" />
+      </div>
     </div>
   );
 }
@@ -108,7 +122,7 @@ function LandingCTA({
     <Link
       to={to}
       className={cn(
-        'inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-gradient-to-b from-neutral-900 to-black px-6 py-3 font-display text-sm font-bold uppercase tracking-[0.12em] text-white shadow-[0_6px_20px_rgba(0,0,0,0.28),0_2px_6px_rgba(0,0,0,0.18),inset_0_1px_0_rgba(255,255,255,0.12)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_10px_28px_rgba(0,0,0,0.34),0_4px_10px_rgba(0,0,0,0.20),inset_0_1px_0_rgba(255,255,255,0.14)] active:translate-y-0 active:scale-[0.98]',
+        'inline-flex min-h-[52px] items-center justify-center gap-2 rounded-2xl bg-[#0A0A0A] px-8 py-3.5 font-display text-sm font-bold uppercase tracking-[0.12em] text-white shadow-[0_10px_24px_rgba(0,0,0,0.16),inset_0_1px_0_rgba(255,255,255,0.10)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_32px_rgba(0,0,0,0.22),inset_0_1px_0_rgba(255,255,255,0.12)] active:translate-y-0 active:scale-[0.98] sm:min-h-[56px]',
         className,
       )}
     >
@@ -180,36 +194,38 @@ function Screen1() {
       <div
         ref={ref as React.RefObject<HTMLDivElement>}
         className={cn(
-          'flex w-full max-w-2xl flex-col items-center text-center transition-all duration-700 ease-out',
+          'landing-hero-sheet flex w-full max-w-2xl flex-col items-center px-6 py-10 text-center transition-all duration-700 ease-out sm:px-12 sm:py-14',
           inView ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0',
         )}
       >
         <img
           src={LOGO}
           alt={APP_CONFIG.name}
-          className="mb-6 h-16 w-auto object-contain sm:h-20"
+          className="mb-4 h-16 w-auto object-contain sm:h-20"
         />
 
-        <HeroImage
-          src={landingImages.screen1Hero}
-          alt="Community members building together"
-          fit="natural"
-          className="mb-6 rounded-2xl"
-        />
+        <LogoDivider />
 
-        <h1 className="font-display text-xl font-bold leading-tight text-stone-900 sm:text-2xl lg:text-3xl">
+        <div className="landing-image-glow mb-7 mt-7">
+          <HeroImage
+            src={landingImages.screen1Hero}
+            alt="Community members building together"
+            fit="natural"
+            className="rounded-2xl sm:rounded-3xl"
+          />
+        </div>
+
+        <h1 className="font-display text-[36px] font-bold leading-[1.0] text-[#111111] sm:text-[44px] lg:text-[48px]">
           {c.headline}
         </h1>
 
-        <p className="mt-3 max-w-md text-sm leading-relaxed text-stone-600">
+        <p className="mt-4 max-w-[560px] text-[15px] leading-[1.6] text-[#5C5C60]">
           {c.body}
         </p>
 
-        <div className="landing-hero-rule my-5" aria-hidden />
-
-        <div className="flex items-center gap-2 text-stone-700">
-          <Sparkles className="h-4 w-4 text-plum-500" />
-          <p className="font-display text-sm font-semibold tracking-wide">
+        <div className="landing-voice-pill mt-6">
+          <Sparkles className="h-4 w-4 landing-voice-icon" />
+          <p className="font-display text-sm font-semibold tracking-wide text-[#111111]">
             {c.voice}
           </p>
         </div>
@@ -218,7 +234,7 @@ function Screen1() {
           {c.cta}
         </LandingCTA>
 
-        <p className="mt-3 text-[11px] font-medium uppercase tracking-[0.14em] text-stone-400">
+        <p className="mt-4 text-[12px] font-medium uppercase tracking-[0.12em] text-[#555555]">
           {c.support}
         </p>
       </div>
@@ -390,6 +406,8 @@ function Screen4() {
 export function LandingPage() {
   return (
     <main className="landing-snap-container h-[100svh] w-full overflow-y-auto bg-white text-stone-900">
+      <div className="landing-ambient" aria-hidden />
+      <div className="landing-grain" aria-hidden />
       <Screen1 />
       <Screen2 />
       <Screen3 />
