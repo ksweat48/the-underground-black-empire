@@ -41,19 +41,32 @@ function HeroImage({
   src,
   alt,
   label,
+  fit = 'cover',
   className,
 }: {
   src: string;
   alt: string;
   label?: string;
+  fit?: 'cover' | 'natural';
   className?: string;
 }) {
   return (
-    <div className={cn('landing-hero-image group relative overflow-hidden', className)}>
+    <div
+      className={cn(
+        'landing-hero-image group relative overflow-hidden',
+        fit === 'natural' && 'flex justify-center',
+        className,
+      )}
+    >
       <img
         src={src}
         alt={alt}
-        className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.02]"
+        className={cn(
+          'transition-transform duration-700 ease-out group-hover:scale-[1.02]',
+          fit === 'natural'
+            ? 'h-auto max-h-[34svh] w-auto max-w-full object-contain'
+            : 'h-full w-full object-cover',
+        )}
       />
       {label && (
         <span className="absolute left-3 top-3 rounded-md bg-white/80 px-2 py-1 font-mono text-[9px] font-medium uppercase tracking-wider text-stone-500 backdrop-blur-sm">
@@ -180,8 +193,8 @@ function Screen1() {
         <HeroImage
           src={landingImages.screen1Hero}
           alt="Community members building together"
-          label="SCREEN_1_HERO_IMAGE"
-          className="mb-5 h-[28svh] w-full rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.08)]"
+          fit="natural"
+          className="mb-5 w-full rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.08)]"
         />
 
         <h1 className="font-display text-xl font-bold leading-tight text-stone-900 sm:text-2xl lg:text-3xl">
