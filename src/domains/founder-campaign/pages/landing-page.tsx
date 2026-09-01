@@ -54,13 +54,11 @@ function ScrollIndicator({ label = 'Scroll' }: { label?: string }) {
 function HeroImage({
   src,
   alt,
-  label,
   fit = 'cover',
   className,
 }: {
   src: string;
   alt: string;
-  label?: string;
   fit?: 'cover' | 'natural';
   className?: string;
 }) {
@@ -82,11 +80,7 @@ function HeroImage({
             : 'h-full w-full object-cover',
         )}
       />
-      {label && (
-        <span className="absolute left-3 top-3 rounded-md bg-white/80 px-2 py-1 font-mono text-[9px] font-medium uppercase tracking-wider text-stone-500 backdrop-blur-sm">
-          {label}
-        </span>
-      )}
+
     </div>
   );
 }
@@ -275,7 +269,6 @@ function Screen2() {
                 <HeroImage
                   src={cat.image}
                   alt={cat.label}
-                  label={`SCREEN_2_REALITY_IMAGE_${i + 1}`}
                   className="h-24 w-full rounded-xl shadow-sm sm:h-28"
                 />
               </div>
@@ -333,20 +326,17 @@ function Screen3() {
           <HeroImage
             src={landingImages.screen3Community}
             alt="Community members organizing together"
-            label="SCREEN_3_COMMUNITY_IMAGE"
             className="h-[20svh] w-full rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.08)]"
           />
         </div>
 
         <div className="mt-3 grid w-full grid-cols-1 gap-3 sm:grid-cols-2">
           <ActionCard
-            label={c.cards[0].label}
             body={c.cards[0].body}
             accent="plum"
             icon={Users}
           />
           <ActionCard
-            label={c.cards[1].label}
             body={c.cards[1].body}
             accent="emerald"
             icon={Heart}
@@ -400,7 +390,6 @@ function Screen4() {
           <HeroImage
             src={landingImages.screen4Join}
             alt="Community moving toward a city skyline"
-            label="SCREEN_4_JOIN_IMAGE"
             className="h-[16svh] w-full rounded-t-2xl shadow-[0_12px_40px_rgba(0,0,0,0.08)]"
           />
         </div>
