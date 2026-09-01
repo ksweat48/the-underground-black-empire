@@ -78,7 +78,7 @@ function HeroImage({
         className={cn(
           'transition-transform duration-700 ease-out group-hover:scale-[1.02]',
           fit === 'natural'
-            ? 'h-auto max-h-[22svh] w-auto max-w-full object-contain'
+            ? 'h-auto max-h-[28svh] w-auto max-w-full object-contain'
             : 'h-full w-full object-cover',
         )}
       />
@@ -215,17 +215,17 @@ function Screen1() {
           />
         </div>
 
-        <h1 className="font-display text-[28px] font-bold leading-[1.05] text-[#111111] sm:text-[34px] lg:text-[36px]">
+        <h1 className="font-display text-[24px] font-bold leading-[1.05] text-[#111111] sm:text-[28px] lg:text-[30px]">
           {c.headline}
         </h1>
 
-        <p className="mt-2.5 max-w-[500px] text-[13px] leading-[1.5] text-[#5C5C60]">
+        <p className="mt-2 max-w-[500px] text-[13px] leading-[1.5] text-[#5C5C60]">
           {c.body}
         </p>
 
-        <div className="landing-voice-pill mt-4">
-          <Sparkles className="h-3.5 w-3.5 landing-voice-icon" />
-          <p className="font-display text-[13px] font-semibold tracking-wide text-[#111111]">
+        <div className="landing-voice-pill mt-3.5">
+          <Sparkles className="h-3.5 w-3.5 text-emerald-600" />
+          <p className="font-display text-[13px] font-semibold tracking-wide text-emerald-600">
             {c.voice}
           </p>
         </div>
