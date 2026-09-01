@@ -78,7 +78,7 @@ function HeroImage({
         className={cn(
           'transition-transform duration-700 ease-out group-hover:scale-[1.02]',
           fit === 'natural'
-            ? 'h-auto max-h-[34svh] w-auto max-w-full object-contain'
+            ? 'h-auto max-h-[26svh] w-auto max-w-full object-contain'
             : 'h-full w-full object-cover',
         )}
       />
@@ -190,23 +190,23 @@ function Screen1() {
   const { ref, inView } = useInView<HTMLElement>();
   const c = landingCopy.screen1;
   return (
-    <SnapSection id="screen-1">
+    <SnapSection id="screen-1" className="py-4">
       <div
         ref={ref as React.RefObject<HTMLDivElement>}
         className={cn(
-          'landing-hero-sheet flex w-full max-w-2xl flex-col items-center px-6 py-10 text-center transition-all duration-700 ease-out sm:px-12 sm:py-14',
+          'landing-hero-sheet flex w-full max-w-2xl flex-col items-center px-6 py-6 text-center transition-all duration-700 ease-out sm:px-10 sm:py-8',
           inView ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0',
         )}
       >
         <img
           src={LOGO}
           alt={APP_CONFIG.name}
-          className="mb-4 h-16 w-auto object-contain sm:h-20"
+          className="h-14 w-auto object-contain sm:h-16"
         />
 
         <LogoDivider />
 
-        <div className="landing-image-glow mb-7 mt-7">
+        <div className="landing-image-glow mb-5 mt-4">
           <HeroImage
             src={landingImages.screen1Hero}
             alt="Community members building together"
@@ -215,26 +215,26 @@ function Screen1() {
           />
         </div>
 
-        <h1 className="font-display text-[36px] font-bold leading-[1.0] text-[#111111] sm:text-[44px] lg:text-[48px]">
+        <h1 className="font-display text-[30px] font-bold leading-[1.05] text-[#111111] sm:text-[38px] lg:text-[40px]">
           {c.headline}
         </h1>
 
-        <p className="mt-4 max-w-[560px] text-[15px] leading-[1.6] text-[#5C5C60]">
+        <p className="mt-3 max-w-[520px] text-[14px] leading-[1.5] text-[#5C5C60]">
           {c.body}
         </p>
 
-        <div className="landing-voice-pill mt-6">
-          <Sparkles className="h-4 w-4 landing-voice-icon" />
-          <p className="font-display text-sm font-semibold tracking-wide text-[#111111]">
+        <div className="landing-voice-pill mt-5">
+          <Sparkles className="h-3.5 w-3.5 landing-voice-icon" />
+          <p className="font-display text-[13px] font-semibold tracking-wide text-[#111111]">
             {c.voice}
           </p>
         </div>
 
-        <LandingCTA to={ONBOARDING_ROUTE} className="mt-6">
+        <LandingCTA to={ONBOARDING_ROUTE} className="mt-5">
           {c.cta}
         </LandingCTA>
 
-        <p className="mt-4 text-[12px] font-medium uppercase tracking-[0.12em] text-[#555555]">
+        <p className="mt-3 text-[12px] font-medium uppercase tracking-[0.12em] text-[#555555]">
           {c.support}
         </p>
       </div>
