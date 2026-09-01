@@ -1,9 +1,9 @@
 export const landingImages = {
   screen1Hero: '/screen_1_image.png',
-  screen2Mother: '/placeholders/image copy.png',
-  screen2School: '/placeholders/image copy 2.png',
-  screen2Elder: '/placeholders/image copy 3.png',
-  screen2Justice: '/placeholders/image.png',
+  screen2Mother: '/images/screens/screen_2/reality_page/single_mother.png',
+  screen2School: '/images/screens/screen_2/reality_page/schools.png',
+  screen2Elder: '/images/screens/screen_2/reality_page/elder_care.png',
+  screen2Justice: '/images/screens/screen_2/reality_page/opportunity_justice.png',
   screen3Community: '/placeholders/image copy.png',
   screen4Join: '/placeholders/image copy 2.png',
 } as const;
