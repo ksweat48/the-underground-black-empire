@@ -5,7 +5,7 @@ export const landingImages = {
   screen2Elder: '/images/screens/screen_2/reality_page/elder_care.png',
   screen2Justice: '/images/screens/screen_2/reality_page/opportunity_justice.png',
   screen3Community: '/images/screens/screen_3/screen_3_image.png',
-  screen4Join: '/placeholders/image copy 2.png',
+  screen4Join: '/images/screens/screen_4/screen_4.png',
 } as const;
 
 export const landingCopy = {

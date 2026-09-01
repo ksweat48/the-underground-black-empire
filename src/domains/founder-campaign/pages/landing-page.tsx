@@ -353,11 +353,12 @@ function Screen4() {
   const { ref, inView } = useInView<HTMLElement>();
   const c = landingCopy.screen4;
   return (
-    <SnapSection id="screen-4" className="pt-4 pb-24">
+    <SnapSection id="screen-4" className="screen-4-bg px-0 py-0">
+      <div className="screen-4-overlay" aria-hidden />
       <div
         ref={ref as React.RefObject<HTMLDivElement>}
         className={cn(
-          'landing-hero-sheet flex w-full max-w-2xl flex-col items-center px-6 py-6 text-center transition-all duration-700 ease-out sm:px-10 sm:py-8',
+          'landing-hero-sheet screen-4-sheet relative z-10 flex w-full max-w-2xl flex-col items-center px-6 py-8 text-center transition-all duration-700 ease-out sm:px-10 sm:py-10',
           inView ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0',
         )}
       >
@@ -384,14 +385,6 @@ function Screen4() {
           <LandingCTA to={ONBOARDING_ROUTE} variant="secondary">
             {c.secondaryCta}
           </LandingCTA>
-        </div>
-
-        <div className="landing-image-glow mt-5 w-full">
-          <HeroImage
-            src={landingImages.screen4Join}
-            alt="Community moving toward a city skyline"
-            className="h-[16svh] w-full rounded-t-2xl shadow-[0_12px_40px_rgba(0,0,0,0.08)]"
-          />
         </div>
       </div>
 

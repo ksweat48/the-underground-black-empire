@@ -1583,6 +1583,31 @@
   background: linear-gradient(90deg, transparent, rgba(74, 31, 74, 0.35), rgba(15, 107, 80, 0.35), transparent);
 }
 
+/* ---- Screen 4 full-bleed background ---- */
+.screen-4-bg {
+  background-image: url('/images/screens/screen_4/screen_4.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.screen-4-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.72) 0%,
+    rgba(255, 255, 255, 0.55) 45%,
+    rgba(255, 255, 255, 0.68) 100%
+  );
+  pointer-events: none;
+}
+
+.screen-4-sheet {
+  max-width: 36rem;
+}
+
 /* =========================================================================
    REDUCED MOTION
    ========================================================================= */
