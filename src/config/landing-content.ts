@@ -1,5 +1,5 @@
 export const landingImages = {
-  screen1Hero: '/placeholders/image.png',
+  screen1Hero: '/image copy.png',
   screen2Mother: '/placeholders/image copy.png',
   screen2School: '/placeholders/image copy 2.png',
   screen2Elder: '/placeholders/image copy 3.png',
@@ -13,7 +13,7 @@ export const landingCopy = {
     headline: 'Build the future of your community.',
     body: 'A city-based network to organize communities and strengthen local economies.',
     voice: 'Your voice has power here.',
-    cta: 'JOIN YOUR CITY',
+    cta: 'JOIN THE EMPIRE',
     support: 'Build Influence. Strengthen your city. Build the Empire.',
   },
   screen2: {
