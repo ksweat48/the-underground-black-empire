@@ -42,7 +42,7 @@ function SnapSection({ children, className, id }: SnapSectionProps) {
 
 function ScrollIndicator({ label = 'Scroll' }: { label?: string }) {
   return (
-    <div className="landing-scroll-indicator absolute bottom-5 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-stone-400">
+    <div className="landing-scroll-indicator absolute bottom-4 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1.5 text-stone-400">
       <span className="text-[9px] font-semibold uppercase tracking-[0.20em]">{label}</span>
       <div className="landing-scroll-circle">
         <ChevronDown className="h-4 w-4 animate-bounce-slow text-stone-600" />
@@ -78,7 +78,7 @@ function HeroImage({
         className={cn(
           'transition-transform duration-700 ease-out group-hover:scale-[1.02]',
           fit === 'natural'
-            ? 'h-auto max-h-[26svh] w-auto max-w-full object-contain'
+            ? 'h-auto max-h-[22svh] w-auto max-w-full object-contain'
             : 'h-full w-full object-cover',
         )}
       />
@@ -122,7 +122,7 @@ function LandingCTA({
     <Link
       to={to}
       className={cn(
-        'inline-flex min-h-[52px] items-center justify-center gap-2 rounded-2xl bg-[#0A0A0A] px-8 py-3.5 font-display text-sm font-bold uppercase tracking-[0.12em] text-white shadow-[0_10px_24px_rgba(0,0,0,0.16),inset_0_1px_0_rgba(255,255,255,0.10)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_32px_rgba(0,0,0,0.22),inset_0_1px_0_rgba(255,255,255,0.12)] active:translate-y-0 active:scale-[0.98] sm:min-h-[56px]',
+        'inline-flex min-h-[48px] items-center justify-center gap-2 rounded-2xl bg-[#0A0A0A] px-8 py-3 font-display text-sm font-bold uppercase tracking-[0.12em] text-white shadow-[0_10px_24px_rgba(0,0,0,0.16),inset_0_1px_0_rgba(255,255,255,0.10)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_32px_rgba(0,0,0,0.22),inset_0_1px_0_rgba(255,255,255,0.12)] active:translate-y-0 active:scale-[0.98] sm:min-h-[52px]',
         className,
       )}
     >
@@ -190,7 +190,7 @@ function Screen1() {
   const { ref, inView } = useInView<HTMLElement>();
   const c = landingCopy.screen1;
   return (
-    <SnapSection id="screen-1" className="py-4">
+    <SnapSection id="screen-1" className="pt-4 pb-24">
       <div
         ref={ref as React.RefObject<HTMLDivElement>}
         className={cn(
@@ -201,12 +201,12 @@ function Screen1() {
         <img
           src={LOGO}
           alt={APP_CONFIG.name}
-          className="h-14 w-auto object-contain sm:h-16"
+          className="h-12 w-auto object-contain sm:h-14"
         />
 
         <LogoDivider />
 
-        <div className="landing-image-glow mb-5 mt-4">
+        <div className="landing-image-glow mb-4 mt-3">
           <HeroImage
             src={landingImages.screen1Hero}
             alt="Community members building together"
@@ -215,26 +215,26 @@ function Screen1() {
           />
         </div>
 
-        <h1 className="font-display text-[30px] font-bold leading-[1.05] text-[#111111] sm:text-[38px] lg:text-[40px]">
+        <h1 className="font-display text-[28px] font-bold leading-[1.05] text-[#111111] sm:text-[34px] lg:text-[36px]">
           {c.headline}
         </h1>
 
-        <p className="mt-3 max-w-[520px] text-[14px] leading-[1.5] text-[#5C5C60]">
+        <p className="mt-2.5 max-w-[500px] text-[13px] leading-[1.5] text-[#5C5C60]">
           {c.body}
         </p>
 
-        <div className="landing-voice-pill mt-5">
+        <div className="landing-voice-pill mt-4">
           <Sparkles className="h-3.5 w-3.5 landing-voice-icon" />
           <p className="font-display text-[13px] font-semibold tracking-wide text-[#111111]">
             {c.voice}
           </p>
         </div>
 
-        <LandingCTA to={ONBOARDING_ROUTE} className="mt-5">
+        <LandingCTA to={ONBOARDING_ROUTE} className="mt-4">
           {c.cta}
         </LandingCTA>
 
-        <p className="mt-3 text-[12px] font-medium uppercase tracking-[0.12em] text-[#555555]">
+        <p className="mt-2.5 text-[11px] font-medium uppercase tracking-[0.12em] text-[#555555]">
           {c.support}
         </p>
       </div>
