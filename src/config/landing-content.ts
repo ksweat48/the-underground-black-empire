@@ -12,7 +12,7 @@ export const landingCopy = {
   screen1: {
     headline: 'Rise Together or Fall Forever.',
     body: 'A city-based platform that brings people, businesses, and communities together to organize, fund, and build the future we choose.',
-    voice: 'Your voice belongs in the future we build.',
+    voice: 'Your voice matters. Change starts with you.',
     cta: 'JOIN THE EMPIRE',
     support: 'Many voices. One shared future.'
   },
