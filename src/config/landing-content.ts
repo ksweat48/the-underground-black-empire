@@ -3,7 +3,7 @@ export const landingImages = {
   screen2Mother: '/images/screens/screen_2/reality_page/single_mother.png',
   screen2School: '/images/screens/screen_2/reality_page/schools.png',
   screen2Elder: '/images/screens/screen_2/reality_page/elder_care.png',
-  screen2Justice: '/images/screens/screen_2/reality_page/opportunity_justice.png',
+  screen2Justice: '/images/screens/screen_2/reality_page/justice_image.png',
   screen3Community: '/images/screens/screen_3/screen_3_image.png',
   screen4Join: '/images/screens/screen_4/screen_4.png',
 } as const;

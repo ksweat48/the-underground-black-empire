@@ -1604,6 +1604,27 @@
   pointer-events: none;
 }
 
+/* ---- Screen 2 full-bleed background ---- */
+.screen-2-bg {
+  background-image: url('/images/screens/screen_2/reality_page/justice_image.png');
+  background-size: cover;
+  background-position: center bottom;
+  background-repeat: no-repeat;
+}
+
+.screen-2-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.08) 0%,
+    rgba(255, 255, 255, 0.02) 48%,
+    rgba(255, 255, 255, 0.18) 100%
+  );
+  pointer-events: none;
+}
+
 /* ---- Screen 4 full-bleed background ---- */
 .screen-4-bg {
   background-image: url('/images/screens/screen_4/screen_4.png');

@@ -236,19 +236,21 @@ function Screen2() {
   const { ref, inView } = useInView<HTMLElement>();
   const c = landingCopy.screen2;
   return (
-    <SnapSection id="screen-2" className="bg-stone-50/50 pt-4 pb-24">
+    <SnapSection id="screen-2" className="screen-2-bg px-0 py-0">
+      <div className="screen-2-overlay" aria-hidden />
       <div
         ref={ref as React.RefObject<HTMLDivElement>}
         className={cn(
-          'landing-hero-sheet flex w-full max-w-2xl flex-col items-center px-6 py-6 text-center transition-all duration-700 ease-out sm:px-10 sm:py-8',
+          'relative z-10 flex w-full max-w-2xl flex-col items-center px-6 text-center transition-all duration-700 ease-out sm:px-10',
           inView ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0',
         )}
+        style={{ marginTop: 'auto', paddingBottom: '15svh' }}
       >
         <p className="font-display text-[11px] font-semibold uppercase tracking-[0.24em] text-plum-600">
           {c.eyebrow}
         </p>
 
-        <h2 className="mt-1.5 font-display text-xl font-bold leading-tight text-stone-900 sm:text-2xl lg:text-3xl">
+        <h2 className="mt-1.5 max-w-xl font-display text-xl font-bold leading-tight text-stone-900 sm:text-2xl lg:text-3xl">
           {c.headline}
         </h2>
 
@@ -256,29 +258,11 @@ function Screen2() {
           {c.subtext}
         </p>
 
-        <div className="mt-4 grid w-full grid-cols-2 gap-3 lg:grid-cols-4">
-          {c.categories.map((cat, i) => (
-            <div key={cat.label} className="flex flex-col gap-1.5">
-              <div className="landing-image-glow w-full">
-                <HeroImage
-                  src={cat.image}
-                  alt={cat.label}
-                  className="h-24 w-full rounded-xl shadow-sm sm:h-28"
-                />
-              </div>
-              <p className="font-display text-[11px] font-bold uppercase tracking-[0.08em] text-stone-800">
-                {cat.label}
-              </p>
-              <div className="h-px w-8 bg-plum-400/50" />
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-4">
+        <div className="mt-3">
           <p className="font-display text-base font-bold text-stone-900 sm:text-lg">
             {c.closing}
           </p>
-          <p className="font-display text-base font-bold text-stone-900 sm:text-lg">
+          <p className="font-display text-base font-bold text-plum-600 sm:text-lg">
             {c.closingAccent}
           </p>
           <p className="mt-1.5 max-w-sm text-xs leading-relaxed text-stone-500">
