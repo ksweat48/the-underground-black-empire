@@ -260,6 +260,8 @@ function Screen4() {
           {c.headline[0]}
           <br />
           <span className="text-plum-600">{c.headline[1]}</span>
+          <br />
+          <span className="text-emerald-600">{c.headline[2]}</span>
         </h2>
 
         <p className="mt-3 text-sm font-medium text-stone-700">{c.line1}</p>
