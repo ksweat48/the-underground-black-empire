@@ -33,16 +33,16 @@ export const landingCopy = {
   screen3: {
     eyebrow: 'THE SHIFT',
     headline: 'Now we build it ourselves.',
-    subtext: 'The Empire gives communities a way to organize and build together.',
+    subtext: 'We organize our cities. We decide what our communities need. Then we build it together.',
     cards: [
       {
         label: 'ORGANIZE',
-        body: 'Bring people together around what matters.',
+        body: 'Coordinate residents, businesses, and community networks',
         accent: 'plum' as const,
       },
       {
         label: 'SUPPORT',
-        body: 'Strengthen local businesses and community power.',
+        body: 'Provide support and turn community priorities into action.',
         accent: 'emerald' as const,
       },
     ],
