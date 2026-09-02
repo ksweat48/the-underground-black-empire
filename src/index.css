@@ -1608,7 +1608,7 @@
 .screen-1-bg {
   background-image: url('/images/screens/screen_1/screen_01_full_image.png');
   background-size: cover;
-  background-position: center;
+  background-position: center bottom;
   background-repeat: no-repeat;
 }
 
