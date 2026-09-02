@@ -114,8 +114,10 @@ function Screen1() {
   const { ref, inView } = useInView<HTMLElement>();
   const c = landingCopy.screen1;
   return (
-    <SnapSection id="screen-1" className="screen-1-bg px-0 py-0">
-      <div className="screen-1-overlay" aria-hidden />
+    <SnapSection id="screen-1" className="px-0 py-0 overflow-hidden">
+      <div className="landing-bg-wrapper screen-1-bg">
+        <div className="screen-1-overlay" aria-hidden />
+      </div>
       <div
         ref={ref as React.RefObject<HTMLDivElement>}
         className={cn(
@@ -165,8 +167,10 @@ function Screen2() {
   const { ref, inView } = useInView<HTMLElement>();
   const c = landingCopy.screen2;
   return (
-    <SnapSection id="screen-2" className="screen-2-bg px-0 py-0">
-      <div className="screen-2-overlay" aria-hidden />
+    <SnapSection id="screen-2" className="px-0 py-0 overflow-hidden">
+      <div className="landing-bg-wrapper screen-2-bg">
+        <div className="screen-2-overlay" aria-hidden />
+      </div>
       <div
         ref={ref as React.RefObject<HTMLDivElement>}
         className={cn(
@@ -208,8 +212,10 @@ function Screen3() {
   const { ref, inView } = useInView<HTMLElement>();
   const c = landingCopy.screen3;
   return (
-    <SnapSection id="screen-3" className="screen-3-bg px-0 py-0">
-      <div className="screen-3-overlay" aria-hidden />
+    <SnapSection id="screen-3" className="px-0 py-0 overflow-hidden">
+      <div className="landing-bg-wrapper screen-3-bg">
+        <div className="screen-3-overlay" aria-hidden />
+      </div>
       <div
         ref={ref as React.RefObject<HTMLDivElement>}
         className={cn(
@@ -243,8 +249,10 @@ function Screen4() {
   const { ref, inView } = useInView<HTMLElement>();
   const c = landingCopy.screen4;
   return (
-    <SnapSection id="screen-4" className="screen-4-bg px-0 py-0">
-      <div className="screen-4-overlay" aria-hidden />
+    <SnapSection id="screen-4" className="px-0 py-0 overflow-hidden">
+      <div className="landing-bg-wrapper screen-4-bg">
+        <div className="screen-4-overlay" aria-hidden />
+      </div>
       <div
         ref={ref as React.RefObject<HTMLDivElement>}
         className={cn(

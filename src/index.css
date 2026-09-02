@@ -1402,6 +1402,27 @@
   z-index: 2;
 }
 
+/* ---- Centered background wrapper (mobile: full-bleed, desktop: centered panel) ---- */
+.landing-bg-wrapper {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+}
+@media (min-width: 1024px) {
+  .landing-bg-wrapper {
+    left: 50%;
+    right: auto;
+    top: 0;
+    bottom: 0;
+    width: 100%;
+    max-width: 768px;
+    transform: translateX(-50%);
+    border-radius: 24px;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.07), 0 8px 24px rgba(0, 0, 0, 0.04);
+  }
+}
+
 /* ---- Raised hero sheet ---- */
 .landing-hero-sheet {
   position: relative;
