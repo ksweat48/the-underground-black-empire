@@ -241,31 +241,30 @@ function Screen2() {
       <div
         ref={ref as React.RefObject<HTMLDivElement>}
         className={cn(
-          'relative z-10 flex w-full max-w-2xl flex-col items-center px-6 text-center transition-all duration-700 ease-out sm:px-10',
+          'absolute inset-x-0 top-0 z-10 flex h-[70%] w-full max-w-3xl flex-col items-center justify-center px-6 text-center transition-all duration-700 ease-out sm:px-10',
           inView ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0',
         )}
-        style={{ marginTop: 'auto', paddingBottom: '58svh' }}
       >
         <p className="font-display text-[11px] font-semibold uppercase tracking-[0.24em] text-plum-600">
           {c.eyebrow}
         </p>
 
-        <h2 className="mt-1.5 max-w-xl font-display text-xl font-bold leading-tight text-stone-900 sm:text-2xl lg:text-3xl">
+        <h2 className="mt-2 max-w-2xl font-display text-3xl font-bold leading-tight text-stone-900 sm:text-4xl lg:text-5xl">
           {c.headline}
         </h2>
 
-        <p className="mt-1.5 max-w-md text-sm leading-relaxed text-stone-600">
+        <p className="mt-3 max-w-2xl text-base leading-relaxed text-stone-600 sm:text-lg">
           {c.subtext}
         </p>
 
-        <div className="mt-3">
-          <p className="font-display text-base font-bold text-stone-900 sm:text-lg">
+        <div className="mt-6">
+          <p className="font-display text-xl font-bold text-stone-900 sm:text-2xl">
             {c.closing}
           </p>
-          <p className="font-display text-base font-bold text-plum-600 sm:text-lg">
+          <p className="font-display text-xl font-bold text-plum-600 sm:text-2xl">
             {c.closingAccent}
           </p>
-          <p className="mt-1.5 max-w-sm text-xs leading-relaxed text-stone-500">
+          <p className="mt-2 max-w-lg text-sm leading-relaxed text-stone-500 sm:text-base">
             {c.closingSub}
           </p>
         </div>
