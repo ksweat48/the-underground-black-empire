@@ -1585,7 +1585,7 @@
 
 /* ---- Screen 1 full-bleed background ---- */
 .screen-1-bg {
-  background-image: url('/screen_1_image.png');
+  background-image: url('/images/screens/screen_1/screen_1_full_image.png');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -1597,9 +1597,9 @@
   z-index: 1;
   background: linear-gradient(
     180deg,
-    rgba(255, 255, 255, 0.35) 0%,
-    rgba(255, 255, 255, 0.20) 45%,
-    rgba(255, 255, 255, 0.30) 100%
+    rgba(255, 255, 255, 0.08) 0%,
+    rgba(255, 255, 255, 0.02) 45%,
+    rgba(255, 255, 255, 0.08) 100%
   );
   pointer-events: none;
 }

@@ -1,5 +1,5 @@
 export const landingImages = {
-  screen1Hero: '/screen_1_image.png',
+  screen1Hero: '/images/screens/screen_1/screen_1_full_image.png',
   screen2Mother: '/images/screens/screen_2/reality_page/single_mother.png',
   screen2School: '/images/screens/screen_2/reality_page/schools.png',
   screen2Elder: '/images/screens/screen_2/reality_page/elder_care.png',
@@ -10,11 +10,11 @@ export const landingImages = {
 
 export const landingCopy = {
   screen1: {
-    headline: 'Build the future of your community.',
-    body: 'A city-based network to organize communities and strengthen local economies.',
-    voice: 'Your voice has power here.',
+    headline: 'We build together.',
+    body: 'A city-based movement bringing people together to create stronger communities and a future we can shape.',
+    voice: 'Your voice belongs in the future we build.',
     cta: 'JOIN THE EMPIRE',
-    support: 'Build Influence. Strengthen your city. Build the Empire.',
+    support: 'Many voices. One shared future.'
   },
   screen2: {
     eyebrow: 'THE REALITY',
