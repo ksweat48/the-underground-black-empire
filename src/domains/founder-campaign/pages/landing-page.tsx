@@ -198,7 +198,7 @@ function Screen1() {
         <img
           src={LOGO}
           alt={APP_CONFIG.name}
-          className="h-12 w-auto object-contain sm:h-14"
+          className="h-20 w-auto object-contain sm:h-24"
         />
 
         <LogoDivider />
