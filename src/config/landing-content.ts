@@ -34,8 +34,7 @@ export const landingCopy = {
     eyebrow: 'THE SHIFT',
     headline: 'Now we build it ourselves.',
     subtext: 'We organize our cities. We decide what our communities need. Then we build it together.',
-    point1: 'Coordinate residents, businesses, and community networks.',
-    point2: 'Provide support and turn community priorities into action.',
+    closing: 'The Empire is the digital city where we organize, decide, and build together.',
   },
   screen4: {
     eyebrow: 'THE EMPIRE IS IN YOUR HANDS.',

@@ -228,11 +228,8 @@ function Screen3() {
           {c.subtext}
         </p>
 
-        <p className="mt-4 max-w-xl text-base leading-relaxed text-stone-700 sm:text-lg">
-          {c.point1}
-        </p>
-        <p className="mt-2 max-w-xl text-base leading-relaxed text-stone-700 sm:text-lg">
-          {c.point2}
+        <p className="mt-4 max-w-xl font-display text-lg font-bold leading-relaxed text-emerald-600 sm:text-xl">
+          {c.closing}
         </p>
       </div>
 
