@@ -185,14 +185,15 @@ function Screen1() {
   const { ref, inView } = useInView<HTMLElement>();
   const c = landingCopy.screen1;
   return (
-    <SnapSection id="screen-1" className="screen-1-bg justify-start px-0 pt-[8svh] pb-0">
+    <SnapSection id="screen-1" className="screen-1-bg px-0 py-0">
       <div className="screen-1-overlay" aria-hidden />
       <div
         ref={ref as React.RefObject<HTMLDivElement>}
         className={cn(
-          'relative z-10 flex w-full max-w-2xl flex-col items-center px-6 text-center transition-all duration-700 ease-out sm:px-10',
+          'absolute inset-x-0 top-0 z-10 mx-auto flex w-full max-w-2xl flex-col items-center px-6 text-center transition-all duration-700 ease-out sm:px-10',
           inView ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0',
         )}
+        style={{ top: '4svh' }}
       >
         <img
           src={LOGO}
