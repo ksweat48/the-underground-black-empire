@@ -259,12 +259,41 @@ export function MarketPage() {
           })}
         </div>
 
+        {/* Events section (top, horizontal scroll) */}
+        {(category === 'all' || category === 'events') && (
+          <section className="animate-fade-up" style={{ animationDelay: '150ms' }}>
+            <div className="flex items-center gap-1.5 mb-2">
+              <CalendarDays className="w-3.5 h-3.5 text-empire-gold" />
+              <h2 className="font-display text-xs font-semibold text-empire-ivory uppercase tracking-wider">Upcoming Events</h2>
+            </div>
+            {eventsLoading ? (
+              <div className="flex justify-center py-4">
+                <Loader2 className="w-4 h-4 text-empire-text-muted animate-spin" />
+              </div>
+            ) : displayEvents.length === 0 ? (
+              <EmptyState
+                icon={CalendarDays}
+                title="No events this week"
+                description="Create an event to bring your community together."
+                actionLabel="Create an Event"
+                onAction={() => navigate('/market/create/event')}
+              />
+            ) : (
+              <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1 -mx-1 px-1">
+                {displayEvents.map((event) => (
+                  <EventCard key={event.id} event={event} onClick={() => navigate(`/market/listing/${event.listing_id ?? ''}`)} />
+                ))}
+              </div>
+            )}
+          </section>
+        )}
+
         {/* Featured listings */}
         {category !== 'events' && (
           <section className="animate-fade-up" style={{ animationDelay: '200ms' }}>
-            <div className="flex items-center gap-2 mb-3">
-              <TrendingUp className="w-4 h-4 text-empire-gold" />
-              <h2 className="font-display text-sm font-semibold text-empire-ivory uppercase tracking-wider">Featured</h2>
+            <div className="flex items-center gap-1.5 mb-2">
+              <TrendingUp className="w-3.5 h-3.5 text-empire-gold" />
+              <h2 className="font-display text-xs font-semibold text-empire-ivory uppercase tracking-wider">Featured</h2>
             </div>
             {loading ? (
               <div className="flex justify-center py-8">
@@ -291,9 +320,9 @@ export function MarketPage() {
         {/* All listings (when not in events category) */}
         {category !== 'events' && filteredListings.length > 5 && (
           <section className="animate-fade-up" style={{ animationDelay: '250ms' }}>
-            <div className="flex items-center gap-2 mb-3">
-              <Store className="w-4 h-4 text-empire-gold" />
-              <h2 className="font-display text-sm font-semibold text-empire-ivory uppercase tracking-wider">All Listings</h2>
+            <div className="flex items-center gap-1.5 mb-2">
+              <Store className="w-3.5 h-3.5 text-empire-gold" />
+              <h2 className="font-display text-xs font-semibold text-empire-ivory uppercase tracking-wider">All Listings</h2>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {filteredListings.slice(5).map((listing) => (
@@ -303,42 +332,11 @@ export function MarketPage() {
           </section>
         )}
 
-        {/* Events section */}
-        {(category === 'all' || category === 'events') && (
-          <section className="animate-fade-up" style={{ animationDelay: '300ms' }}>
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <CalendarDays className="w-4 h-4 text-empire-gold" />
-                <h2 className="font-display text-sm font-semibold text-empire-ivory uppercase tracking-wider">Upcoming Events</h2>
-              </div>
-            </div>
-            {eventsLoading ? (
-              <div className="flex justify-center py-6">
-                <Loader2 className="w-5 h-5 text-empire-text-muted animate-spin" />
-              </div>
-            ) : displayEvents.length === 0 ? (
-              <EmptyState
-                icon={CalendarDays}
-                title="No events this week"
-                description="Create an event to bring your community together."
-                actionLabel="Create an Event"
-                onAction={() => navigate('/market/create/event')}
-              />
-            ) : (
-              <div className="space-y-2">
-                {displayEvents.map((event) => (
-                  <EventRow key={event.id} event={event} onClick={() => navigate(`/market/listing/${event.listing_id ?? ''}`)} />
-                ))}
-              </div>
-            )}
-          </section>
-        )}
-
         {/* Community feed — three tabs */}
         <section className="animate-fade-up" style={{ animationDelay: '400ms' }}>
-          <div className="flex items-center gap-2 mb-3">
-            <MessageCircle className="w-4 h-4 text-empire-gold" />
-            <h2 className="font-display text-sm font-semibold text-empire-ivory uppercase tracking-wider">Community Feed</h2>
+          <div className="flex items-center gap-1.5 mb-2">
+            <MessageCircle className="w-3.5 h-3.5 text-empire-gold" />
+            <h2 className="font-display text-xs font-semibold text-empire-ivory uppercase tracking-wider">Community Feed</h2>
           </div>
 
           {/* Tab bar */}
@@ -451,9 +449,9 @@ function ListingCard({ listing, onClick }: { listing: MarketListing; onClick: ()
   );
 }
 
-// ==================== Event Row ====================
+// ==================== Event Card (horizontal) ====================
 
-function EventRow({ event, onClick }: { event: MarketEvent; onClick: () => void }) {
+function EventCard({ event, onClick }: { event: MarketEvent; onClick: () => void }) {
   const eventDate = new Date(event.event_date);
   const day = eventDate.toLocaleDateString('en-US', { day: 'numeric' });
   const month = eventDate.toLocaleDateString('en-US', { month: 'short' });
@@ -461,22 +459,21 @@ function EventRow({ event, onClick }: { event: MarketEvent; onClick: () => void 
   return (
     <button
       onClick={onClick}
-      className="frame-intel w-full p-3 flex items-center gap-3 text-left transition-all duration-200 hover:border-empire-gold/25 group active:scale-[0.99]"
+      className="frame-intel shrink-0 w-[200px] p-2.5 flex flex-col gap-2 text-left transition-all duration-200 hover:border-empire-gold/25 group active:scale-[0.98]"
     >
-      <div className="flex flex-col items-center justify-center shrink-0 w-12 h-12 rounded-lg bg-empire-gold/8 border border-empire-gold/15">
-        <span className="text-[9px] font-semibold text-empire-gold uppercase">{month}</span>
-        <span className="text-lg font-display font-bold text-empire-ivory leading-none">{day}</span>
+      <div className="flex items-center gap-2">
+        <div className="flex flex-col items-center justify-center shrink-0 w-10 h-10 rounded-lg bg-empire-gold/8 border border-empire-gold/15">
+          <span className="text-[8px] font-semibold text-empire-gold uppercase leading-none">{month}</span>
+          <span className="text-base font-display font-bold text-empire-ivory leading-none mt-0.5">{day}</span>
+        </div>
+        <h3 className="font-display text-xs font-semibold text-empire-ivory line-clamp-2 leading-tight flex-1">{event.name}</h3>
       </div>
-      <div className="flex-1 min-w-0">
-        <h3 className="font-display text-sm font-semibold text-empire-ivory line-clamp-1">{event.name}</h3>
-        <p className="text-xs text-empire-text-muted line-clamp-1">
-          {event.event_time && `${event.event_time} · `}{event.location_text || 'Location TBA'}
-        </p>
-        {event.listing_name && (
-          <p className="text-[10px] text-empire-text-muted mt-0.5">{event.listing_name}</p>
-        )}
-      </div>
-      <ChevronRight className="w-4 h-4 text-empire-text-muted group-hover:text-empire-gold transition-colors shrink-0" />
+      <p className="text-[10px] text-empire-text-muted line-clamp-1">
+        {event.event_time && `${event.event_time} · `}{event.location_text || 'Location TBA'}
+      </p>
+      {event.listing_name && (
+        <p className="text-[10px] text-empire-text-muted/70 line-clamp-1">{event.listing_name}</p>
+      )}
     </button>
   );
 }
