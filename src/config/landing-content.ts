@@ -10,8 +10,8 @@ export const landingImages = {
 
 export const landingCopy = {
   screen1: {
-    headline: 'We build together.',
-    body: 'A city-based movement bringing people together to create stronger communities and a future we can shape.',
+    headline: 'Rise Together or Fall Forever.',
+    body: 'A city-based platform that brings people, businesses, and communities together to organize, fund, and build the future we choose.',
     voice: 'Your voice belongs in the future we build.',
     cta: 'JOIN THE EMPIRE',
     support: 'Many voices. One shared future.'
