@@ -14,6 +14,7 @@ export const landingCopy = {
     body: 'A city-based platform that brings people, businesses, and communities together to organize, fund, and build the future we choose.',
     voice: 'Your voice matters. Change starts with you.',
     cta: 'JOIN THE EMPIRE',
+    secondaryCta: 'SIGN IN',
     support: 'Many voices. One shared future.'
   },
   screen2: {
