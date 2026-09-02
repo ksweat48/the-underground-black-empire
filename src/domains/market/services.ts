@@ -502,35 +502,37 @@ export async function createListingComment(listingId: string, body: string): Pro
 // COMMUNITY FEED
 // ============================================================
 
-export async function fetchCommunityFeed(cityId: string, metroCityIds?: string[], limit: number = 30): Promise<CommunityFeedItem[]> {
-  const cityIds = metroCityIds && metroCityIds.length > 0 ? [cityId, ...metroCityIds] : [cityId];
+export async function fetchCommunityFeed(cityId?: string, metroCityIds?: string[], limit: number = 30): Promise<CommunityFeedItem[]> {
+  const cityIds = cityId && metroCityIds && metroCityIds.length > 0 ? [cityId, ...metroCityIds] : cityId ? [cityId] : null;
 
-  const [updatesRes, newsRes, eventsRes] = await Promise.all([
-    supabase
-      .from('listing_updates')
-      .select(`
-        id, listing_id, body, image_url, author_id, created_at,
-        listing:listing_id ( name, city_id )
-      `)
-      .eq('status', 'approved')
-      .in('listing.city_id', cityIds)
-      .order('created_at', { ascending: false })
-      .limit(limit),
-    supabase
-      .from('local_news')
-      .select('id, title, body, image_url, author_id, city_id, created_at')
-      .eq('status', 'approved')
-      .in('city_id', cityIds)
-      .order('created_at', { ascending: false })
-      .limit(limit),
-    supabase
-      .from('market_events')
-      .select('id, listing_id, name, description, image_url, author_id, city_id, created_at')
-      .eq('status', 'approved')
-      .in('city_id', cityIds)
-      .order('created_at', { ascending: false })
-      .limit(limit),
-  ]);
+  let updatesQuery = supabase
+    .from('listing_updates')
+    .select(`
+      id, listing_id, body, image_url, author_id, created_at,
+      listing:listing_id ( name, city_id )
+    `)
+    .eq('status', 'approved')
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (cityIds) updatesQuery = updatesQuery.in('listing.city_id', cityIds);
+
+  let newsQuery = supabase
+    .from('local_news')
+    .select('id, title, body, image_url, author_id, city_id, created_at')
+    .eq('status', 'approved')
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (cityIds) newsQuery = newsQuery.in('city_id', cityIds);
+
+  let eventsQuery = supabase
+    .from('market_events')
+    .select('id, listing_id, name, description, image_url, author_id, city_id, created_at')
+    .eq('status', 'approved')
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (cityIds) eventsQuery = eventsQuery.in('city_id', cityIds);
+
+  const [updatesRes, newsRes, eventsRes] = await Promise.all([updatesQuery, newsQuery, eventsQuery]);
 
   const items: CommunityFeedItem[] = [];
 

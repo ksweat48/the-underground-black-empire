@@ -35,7 +35,7 @@ import {
 import { PLACEHOLDER_LISTINGS, PLACEHOLDER_EVENTS, PLACEHOLDER_FEED } from '@/domains/market/placeholder-data';
 
 type CategoryFilter = 'all' | ListingCategory;
-type ScopeFilter = 'city' | 'metro';
+type ScopeFilter = 'local' | 'empire';
 type FeedTab = 'update' | 'news' | 'event';
 
 const CATEGORY_CONFIG: Record<CategoryFilter, { label: string; icon: typeof Store }> = {
@@ -55,7 +55,7 @@ export function MarketPage() {
     metroId: null,
     cityName: null,
   });
-  const [scope, setScope] = useState<ScopeFilter>('city');
+  const [scope, setScope] = useState<ScopeFilter>('local');
   const [category, setCategory] = useState<CategoryFilter>('all');
   const [search, setSearch] = useState('');
   const [searchInput, setSearchInput] = useState('');
@@ -74,21 +74,17 @@ export function MarketPage() {
     fetchMemberCityInfo(userId).then(setCityInfo).catch(() => {});
   }, [userId]);
 
-  const metroCityIds = useMemo(() => {
-    return cityInfo.metroId ? fetchCityIdsInMetro(cityInfo.metroId).catch(() => []) : Promise.resolve([]);
-  }, [cityInfo.metroId]);
-
   const loadListings = useCallback(async () => {
     if (!cityInfo.cityId) { setLoading(false); return; }
     setLoading(true);
     try {
       let metroIds: string[] = [];
-      if (scope === 'metro' && cityInfo.metroId) {
+      if (scope === 'local' && cityInfo.metroId) {
         metroIds = await fetchCityIdsInMetro(cityInfo.metroId);
       }
       const data = await fetchListings({
-        cityId: cityInfo.cityId,
-        metroCityIds: scope === 'metro' ? metroIds : undefined,
+        cityId: scope === 'local' ? cityInfo.cityId : undefined,
+        metroCityIds: scope === 'local' ? metroIds : undefined,
         category,
         search,
         limit: 50,
@@ -106,10 +102,12 @@ export function MarketPage() {
     setFeedLoading(true);
     try {
       let metroIds: string[] = [];
-      if (cityInfo.metroId) {
+      if (scope === 'local' && cityInfo.metroId) {
         metroIds = await fetchCityIdsInMetro(cityInfo.metroId);
       }
-      const data = await fetchCommunityFeed(cityInfo.cityId, scope === 'metro' ? metroIds : undefined, 20);
+      const data = scope === 'local'
+        ? await fetchCommunityFeed(cityInfo.cityId, metroIds, 20)
+        : await fetchCommunityFeed(undefined, undefined, 20);
       setFeed(data);
     } catch {
       setFeed([]);
@@ -123,12 +121,12 @@ export function MarketPage() {
     setEventsLoading(true);
     try {
       let metroIds: string[] = [];
-      if (scope === 'metro' && cityInfo.metroId) {
+      if (scope === 'local' && cityInfo.metroId) {
         metroIds = await fetchCityIdsInMetro(cityInfo.metroId);
       }
       const data = await fetchEvents({
-        cityId: cityInfo.cityId,
-        metroCityIds: scope === 'metro' ? metroIds : undefined,
+        cityId: scope === 'local' ? cityInfo.cityId : undefined,
+        metroCityIds: scope === 'local' ? metroIds : undefined,
         upcomingOnly: true,
         limit: 10,
       });
@@ -194,17 +192,17 @@ export function MarketPage() {
         <div className="flex justify-center animate-fade-up" style={{ animationDelay: '50ms' }}>
           <div className="seg-control">
             <button
-              className={cn('seg-btn', scope === 'city' && 'seg-btn-active')}
-              onClick={() => setScope('city')}
-            >
-              City
-            </button>
-            <button
-              className={cn('seg-btn', scope === 'metro' && 'seg-btn-active')}
-              onClick={() => setScope('metro')}
+              className={cn('seg-btn', scope === 'local' && 'seg-btn-active')}
+              onClick={() => setScope('local')}
               disabled={!cityInfo.metroId}
             >
-              Metro
+              Local
+            </button>
+            <button
+              className={cn('seg-btn', scope === 'empire' && 'seg-btn-active')}
+              onClick={() => setScope('empire')}
+            >
+              Empire
             </button>
           </div>
         </div>

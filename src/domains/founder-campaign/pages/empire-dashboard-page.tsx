@@ -499,8 +499,8 @@ function FeedTabs({
   };
 
   const tabs: { key: FeedTab; label: string; disabled?: boolean }[] = [
-    { key: 'local', label: 'Local Cities', disabled: !hasLocalFeed },
-    { key: 'empire', label: 'All Cities' },
+    { key: 'local', label: 'Local', disabled: !hasLocalFeed },
+    { key: 'empire', label: 'Empire' },
   ];
 
   return (
