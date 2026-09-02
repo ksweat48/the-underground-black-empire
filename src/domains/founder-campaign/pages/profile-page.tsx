@@ -11,7 +11,6 @@ import {
   CreditCard,
   Shield,
   Mail,
-  Camera,
   Loader2,
   Map as MapIcon,
   Users,
@@ -140,9 +139,7 @@ export function ProfilePage() {
   const [editSupportRoleDetail, setEditSupportRoleDetail] = useState('');
   const [editIdentityError, setEditIdentityError] = useState<string | null>(null);
   const [editIdentitySaving, setEditIdentitySaving] = useState(false);
-  const [showPhotoEdit, setShowPhotoEdit] = useState(false);
   const [photoDataUrl, setPhotoDataUrl] = useState<string | null>(null);
-  const [photoSaving, setPhotoSaving] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const navigate = useNavigate();
@@ -332,9 +329,9 @@ export function ProfilePage() {
           <div className="relative z-10 flex items-start justify-between gap-4">
             {/* Avatar */}
             <button
-              onClick={() => { setPhotoError(null); setPhotoDataUrl(null); setShowPhotoEdit(true); }}
+              onClick={() => setShowProfileModal(true)}
               className="relative flex-shrink-0 group"
-              aria-label="Edit profile photo"
+              aria-label="View profile details"
             >
               <div
                 className="w-16 h-16 rounded-full flex items-center justify-center transition-transform group-hover:scale-105 overflow-hidden"
@@ -353,9 +350,6 @@ export function ProfilePage() {
               </div>
               <div className={cn('absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-2 flex items-center justify-center shadow-md', profileCardConfig.badgeBg, profileCardConfig.badgeBorder)}>
                 <Award className={cn('w-3.5 h-3.5', profileCardConfig.badgeIcon)} />
-              </div>
-              <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
-                <Camera className="w-5 h-5 text-white" />
               </div>
             </button>
 
@@ -683,73 +677,6 @@ export function ProfilePage() {
         </div>
       </GlassModal>
 
-      {/* Photo Edit Modal */}
-      <GlassModal
-        open={showPhotoEdit}
-        onClose={() => { setShowPhotoEdit(false); setPhotoDataUrl(null); setPhotoError(null); }}
-        title="Edit Profile Photo"
-      >
-        <div className="space-y-4">
-          <ProfilePhotoUploader onPhotoReady={setPhotoDataUrl} />
-          {photoError && <p className="text-sm text-crimson-300 px-1">{photoError}</p>}
-          <div className="flex gap-2">
-            <button
-              onClick={() => { setShowPhotoEdit(false); setPhotoDataUrl(null); setPhotoError(null); }}
-              className="btn-secondary flex-1"
-              disabled={photoSaving}
-            >
-              Cancel
-            </button>
-            <button
-              onClick={async () => {
-                if (!photoDataUrl) {
-                  setPhotoError('Please select a photo first.');
-                  return;
-                }
-                setPhotoSaving(true);
-                setPhotoError(null);
-                try {
-                  const { data: sessionData } = await supabase.auth.getSession();
-                  if (!sessionData.session) {
-                    setPhotoError('Your session has expired. Please sign in again.');
-                    navigate('/auth/sign-in');
-                    return;
-                  }
-                  const userId = sessionData.session.user.id;
-                  const blob = await (await fetch(photoDataUrl)).blob();
-                  const { error: uploadError } = await supabase.storage
-                    .from('member-avatars')
-                    .upload(`${userId}/avatar.jpg`, blob, {
-                      contentType: 'image/jpeg',
-                      upsert: true,
-                    });
-                  if (uploadError) throw uploadError;
-                  const { data: urlData } = supabase.storage
-                    .from('member-avatars')
-                    .getPublicUrl(`${userId}/avatar.jpg`);
-                  const avatarUrl = `${urlData.publicUrl}?t=${Date.now()}`;
-                  const { error: profileError } = await supabase.rpc('update_member_profile', {
-                    p_avatar_url: avatarUrl,
-                  });
-                  if (profileError) throw profileError;
-                  setMember((prev) => prev ? { ...prev, avatar_url: avatarUrl } : prev);
-                  setShowPhotoEdit(false);
-                  setPhotoDataUrl(null);
-                } catch (err) {
-                  setPhotoError(parseSupabaseError(err));
-                } finally {
-                  setPhotoSaving(false);
-                }
-              }}
-              disabled={!photoDataUrl || photoSaving}
-              className="btn-primary flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {photoSaving ? 'Saving...' : 'Save Photo'}
-            </button>
-          </div>
-        </div>
-      </GlassModal>
-
       {/* Profile Details Modal */}
       <GlassModal
         open={showProfileModal}
@@ -759,12 +686,7 @@ export function ProfilePage() {
         <div className="space-y-5">
           {/* Identity */}
           <div className="flex items-center gap-4">
-            <button
-              onClick={() => { setPhotoError(null); setPhotoDataUrl(null); setShowPhotoEdit(true); }}
-              className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-white/25 shadow-lg shadow-black/40 group"
-              style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05), 0 8px 24px rgba(0,0,0,0.4)' }}
-              aria-label="Edit profile photo"
-            >
+            <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-white/25 shadow-lg shadow-black/40 flex items-center justify-center" style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05), 0 8px 24px rgba(0,0,0,0.4)' }}>
               {member.avatar_url ? (
                 <img src={member.avatar_url} alt="" className="w-full h-full object-cover" />
               ) : (
@@ -777,10 +699,7 @@ export function ProfilePage() {
                   </span>
                 </div>
               )}
-              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
-                <Camera className="w-5 h-5 text-white" />
-              </div>
-            </button>
+            </div>
             <div className="min-w-0">
               <h3 className="font-display text-lg font-bold text-ink-100 truncate">{member.display_name || 'Member'}</h3>
               <p className="text-xs text-ink-400 truncate">{member.email}</p>
@@ -820,6 +739,8 @@ export function ProfilePage() {
                     setEditSupportRole(member.support_role ?? 'supporter');
                     setEditSupportRoleDetail(member.support_role_detail ?? '');
                     setEditIdentityError(null);
+                    setPhotoDataUrl(null);
+                    setPhotoError(null);
                     setShowIdentityEdit(true);
                   }
                 }}
@@ -830,6 +751,11 @@ export function ProfilePage() {
             </div>
             {showIdentityEdit ? (
               <div className="mt-2 space-y-4">
+                <div>
+                  <p className="text-[10px] text-ink-500 uppercase tracking-wider mb-2">Profile Photo</p>
+                  <ProfilePhotoUploader onPhotoReady={setPhotoDataUrl} />
+                  {photoError && <p className="text-sm text-crimson-300 px-1 mt-1">{photoError}</p>}
+                </div>
                 <EthnicIdentitySelector
                   selected={editEthnicSelected}
                   detail={editEthnicDetail}
@@ -912,12 +838,29 @@ export function ProfilePage() {
                     }
                     setEditIdentitySaving(true);
                     setEditIdentityError(null);
+                    setPhotoError(null);
                     try {
                       const { data: sessionData } = await supabase.auth.getSession();
                       if (!sessionData.session) {
                         setEditIdentityError('Your session has expired. Please sign in again.');
                         navigate('/auth/sign-in');
                         return;
+                      }
+                      let avatarUrl: string | null = null;
+                      if (photoDataUrl) {
+                        const userId = sessionData.session.user.id;
+                        const blob = await (await fetch(photoDataUrl)).blob();
+                        const { error: uploadError } = await supabase.storage
+                          .from('member-avatars')
+                          .upload(`${userId}/avatar.jpg`, blob, {
+                            contentType: 'image/jpeg',
+                            upsert: true,
+                          });
+                        if (uploadError) throw uploadError;
+                        const { data: urlData } = supabase.storage
+                          .from('member-avatars')
+                          .getPublicUrl(`${userId}/avatar.jpg`);
+                        avatarUrl = `${urlData.publicUrl}?t=${Date.now()}`;
                       }
                       const { error: rpcError } = await supabase.rpc('update_ethnic_identity', {
                         p_ethnic_identity: editEthnicSelected,
@@ -933,6 +876,7 @@ export function ProfilePage() {
                         p_date_of_birth: editDob || null,
                         p_support_role: editSupportRole,
                         p_support_role_detail: editSupportRole && editSupportRole !== 'supporter' ? editSupportRoleDetail.trim() : null,
+                        p_avatar_url: avatarUrl,
                       });
                       if (profileError) throw profileError;
                       setMember((prev) => prev ? {
@@ -944,8 +888,10 @@ export function ProfilePage() {
                         date_of_birth: editDob || null,
                         support_role: editSupportRole,
                         support_role_detail: editSupportRole && editSupportRole !== 'supporter' ? editSupportRoleDetail.trim() : null,
+                        avatar_url: avatarUrl ?? prev.avatar_url,
                       } : prev);
                       setShowIdentityEdit(false);
+                      setPhotoDataUrl(null);
                     } catch (err) {
                       setEditIdentityError(parseSupabaseError(err));
                     } finally {
@@ -955,7 +901,7 @@ export function ProfilePage() {
                   disabled={editIdentitySaving}
                   className="btn-primary w-full mt-3 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {editIdentitySaving ? 'Saving...' : 'Save Identity'}
+                  {editIdentitySaving ? 'Saving...' : 'Save Changes'}
                 </button>
               </div>
             ) : (member.ethnic_identity && member.ethnic_identity.length > 0) || member.gender || member.date_of_birth || member.support_role ? (
