@@ -1585,7 +1585,7 @@
 
 /* ---- Screen 1 full-bleed background ---- */
 .screen-1-bg {
-  background-image: url('/images/screens/screen_1/screen_1_full_image.png');
+  background-image: url('/images/screens/screen_1/screen_01_full_image.png');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;

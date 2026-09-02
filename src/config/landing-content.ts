@@ -1,5 +1,5 @@
 export const landingImages = {
-  screen1Hero: '/images/screens/screen_1/screen_1_full_image.png',
+  screen1Hero: '/images/screens/screen_1/screen_01_full_image.png',
   screen2Mother: '/images/screens/screen_2/reality_page/single_mother.png',
   screen2School: '/images/screens/screen_2/reality_page/schools.png',
   screen2Elder: '/images/screens/screen_2/reality_page/elder_care.png',

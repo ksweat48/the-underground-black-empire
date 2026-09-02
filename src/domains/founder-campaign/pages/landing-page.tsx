@@ -185,7 +185,7 @@ function Screen1() {
   const { ref, inView } = useInView<HTMLElement>();
   const c = landingCopy.screen1;
   return (
-    <SnapSection id="screen-1" className="screen-1-bg px-0 py-0">
+    <SnapSection id="screen-1" className="screen-1-bg justify-start px-0 pt-[8svh] pb-0">
       <div className="screen-1-overlay" aria-hidden />
       <div
         ref={ref as React.RefObject<HTMLDivElement>}
