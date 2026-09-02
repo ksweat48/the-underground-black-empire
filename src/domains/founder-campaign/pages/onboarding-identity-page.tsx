@@ -1,7 +1,8 @@
 import { useState, type FormEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowRight, Loader2, ChevronDown } from 'lucide-react';
+import { ArrowRight, Loader2 } from 'lucide-react';
 import { OnboardingStep } from '@/shared/components/onboarding-step';
+import { ProfilePhotoUploader } from '@/shared/components/profile-photo-uploader';
 import {
   EthnicIdentitySelector,
   type EthnicIdentityValue,
@@ -31,12 +32,18 @@ export function OnboardingIdentityPage() {
   const [dateOfBirth, setDateOfBirth] = useState('');
   const [supportRole, setSupportRole] = useState<SupportRole | null>('supporter');
   const [supportRoleDetail, setSupportRoleDetail] = useState('');
+  const [avatarDataUrl, setAvatarDataUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    if (!avatarDataUrl) {
+      setError('Please add a profile photo to continue.');
+      return;
+    }
 
     if (!ethnicSelected) {
       setError('Please select your race / ethnic identity.');
@@ -78,6 +85,22 @@ export function OnboardingIdentityPage() {
         return;
       }
 
+      // Upload avatar to storage
+      const userId = sessionData.session.user.id;
+      const blob = await (await fetch(avatarDataUrl)).blob();
+      const { error: uploadError } = await supabase.storage
+        .from('member-avatars')
+        .upload(`${userId}/avatar.jpg`, blob, {
+          contentType: 'image/jpeg',
+          upsert: true,
+        });
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from('member-avatars')
+        .getPublicUrl(`${userId}/avatar.jpg`);
+      const avatarUrl = `${urlData.publicUrl}?t=${Date.now()}`;
+
       const { error: ethnicError } = await supabase.rpc('update_ethnic_identity', {
         p_ethnic_identity: ethnicSelected,
         p_ethnic_identity_detail: ethnicSelected === 'another' ? ethnicDetail.trim() : null,
@@ -94,6 +117,7 @@ export function OnboardingIdentityPage() {
         p_date_of_birth: dateOfBirth,
         p_support_role: supportRole,
         p_support_role_detail: supportRole !== 'supporter' ? supportRoleDetail.trim() : null,
+        p_avatar_url: avatarUrl,
       });
       if (profileError) throw profileError;
 
@@ -114,6 +138,14 @@ export function OnboardingIdentityPage() {
       onBack={() => navigate(`/onboarding/account?city=${cityId}`)}
     >
       <form onSubmit={handleSubmit} className="space-y-5">
+        {/* Profile Photo */}
+        <div className="flex flex-col items-center pt-1 pb-2">
+          <label className="label-field mb-3">
+            Profile Photo <span className="text-crimson-400">*</span>
+          </label>
+          <ProfilePhotoUploader onPhotoReady={setAvatarDataUrl} />
+        </div>
+
         <EthnicIdentitySelector
           selected={ethnicSelected}
           detail={ethnicDetail}
