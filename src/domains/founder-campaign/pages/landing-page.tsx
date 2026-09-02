@@ -147,13 +147,13 @@ function Screen1() {
           </p>
         </div>
 
-        <LandingCTA to={ONBOARDING_ROUTE} className="mt-8">
+        <LandingCTA to={ONBOARDING_ROUTE} className="mt-6">
           {c.cta}
         </LandingCTA>
 
-        <p className="mt-4 text-[11px] font-medium uppercase tracking-[0.12em] text-stone-600">
-          {c.support}
-        </p>
+        <LandingCTA to={AUTH_ROUTE} variant="secondary" className="mt-2">
+          {c.secondaryCta}
+        </LandingCTA>
       </div>
 
       <ScrollIndicator />
