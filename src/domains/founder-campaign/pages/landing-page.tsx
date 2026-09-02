@@ -244,7 +244,7 @@ function Screen2() {
           'relative z-10 flex w-full max-w-2xl flex-col items-center px-6 text-center transition-all duration-700 ease-out sm:px-10',
           inView ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0',
         )}
-        style={{ marginTop: 'auto', paddingBottom: '15svh' }}
+        style={{ marginTop: 'auto', paddingBottom: '58svh' }}
       >
         <p className="font-display text-[11px] font-semibold uppercase tracking-[0.24em] text-plum-600">
           {c.eyebrow}
