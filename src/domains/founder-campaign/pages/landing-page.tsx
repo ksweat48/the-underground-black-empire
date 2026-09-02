@@ -218,11 +218,11 @@ function Screen1() {
           </p>
         </div>
 
-        <LandingCTA to={ONBOARDING_ROUTE} className="mt-4">
+        <LandingCTA to={ONBOARDING_ROUTE} className="mt-8">
           {c.cta}
         </LandingCTA>
 
-        <p className="mt-2.5 text-[11px] font-medium uppercase tracking-[0.12em] text-stone-600">
+        <p className="mt-4 text-[11px] font-medium uppercase tracking-[0.12em] text-stone-600">
           {c.support}
         </p>
       </div>
