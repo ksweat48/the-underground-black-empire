@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronDown, ArrowRight, Sparkles } from 'lucide-react';
+import { ChevronDown, ArrowRight } from 'lucide-react';
 import { APP_CONFIG } from '@/config/app';
 import { landingCopy } from '@/config/landing-content';
 import { cn } from '@/shared/cn';
@@ -143,7 +143,6 @@ function Screen1() {
         </p>
 
         <div className="landing-voice-pill mt-3.5">
-          <Sparkles className="h-3.5 w-3.5 text-emerald-600" />
           <p className="font-display text-[13px] font-semibold tracking-wide text-emerald-600">
             {c.voice}
           </p>
