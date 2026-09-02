@@ -7,6 +7,16 @@
   VITE_SUPABASE_URL = "https://ehjvkbpjwedtgtpufpyz.supabase.co"
   VITE_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVoanZrYnBqd2VkdGd0cHVmcHl6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU1MzkzNzIsImV4cCI6MjEwMTExNTM3Mn0.pO3FiHPxK2vxGX18NLOnwFVlMvxFOwQr-Z72OKYBdsI"
 
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
 [[redirects]]
   from = "/*"
   to = "/index.html"

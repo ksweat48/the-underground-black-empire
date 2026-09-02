@@ -1671,7 +1671,7 @@
 .screen-4-bg {
   background-image: url('/images/screens/screen_4/screen_4.png');
   background-size: cover;
-  background-position: center;
+  background-position: center bottom;
   background-repeat: no-repeat;
 }
 
