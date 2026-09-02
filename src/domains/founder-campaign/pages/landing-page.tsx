@@ -44,7 +44,7 @@ function SnapSection({ children, className, id }: SnapSectionProps) {
 function ScrollIndicator({ label = 'Scroll' }: { label?: string }) {
   return (
     <div className="landing-scroll-indicator absolute bottom-4 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1.5 text-stone-400">
-      <span className="text-[9px] font-semibold uppercase tracking-[0.20em]">{label}</span>
+      <span className="text-[9px] font-semibold uppercase tracking-[0.20em] text-white">{label}</span>
       <div className="landing-scroll-circle">
         <ChevronDown className="h-4 w-4 animate-bounce-slow text-stone-600" />
       </div>
