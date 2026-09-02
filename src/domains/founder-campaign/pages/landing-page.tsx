@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronDown, ArrowRight, Users, Heart, Sparkles } from 'lucide-react';
 import { APP_CONFIG } from '@/config/app';
-import { landingCopy, landingImages } from '@/config/landing-content';
+import { landingCopy } from '@/config/landing-content';
 import { cn } from '@/shared/cn';
 
 const ONBOARDING_ROUTE = '/onboarding/city';
@@ -48,40 +48,6 @@ function ScrollIndicator({ label = 'Scroll' }: { label?: string }) {
       <div className="landing-scroll-circle">
         <ChevronDown className="h-4 w-4 animate-bounce-slow text-stone-600" />
       </div>
-    </div>
-  );
-}
-
-function HeroImage({
-  src,
-  alt,
-  fit = 'cover',
-  className,
-}: {
-  src: string;
-  alt: string;
-  fit?: 'cover' | 'natural';
-  className?: string;
-}) {
-  return (
-    <div
-      className={cn(
-        'landing-hero-image group relative overflow-hidden',
-        fit === 'natural' && 'inline-flex justify-center',
-        className,
-      )}
-    >
-      <img
-        src={src}
-        alt={alt}
-        className={cn(
-          'transition-transform duration-700 ease-out group-hover:scale-[1.02]',
-          fit === 'natural'
-            ? 'h-auto max-h-[28svh] w-auto max-w-full object-contain'
-            : 'h-full w-full object-cover',
-        )}
-      />
-
     </div>
   );
 }
@@ -279,11 +245,12 @@ function Screen3() {
   const { ref, inView } = useInView<HTMLElement>();
   const c = landingCopy.screen3;
   return (
-    <SnapSection id="screen-3" className="pt-4 pb-24">
+    <SnapSection id="screen-3" className="screen-3-bg px-0 py-0">
+      <div className="screen-3-overlay" aria-hidden />
       <div
         ref={ref as React.RefObject<HTMLDivElement>}
         className={cn(
-          'landing-hero-sheet flex w-full max-w-2xl flex-col items-center px-6 py-6 text-center transition-all duration-700 ease-out sm:px-10 sm:py-8 lg:max-w-4xl',
+          'absolute inset-x-0 top-0 z-10 flex h-[70%] w-full max-w-3xl flex-col items-center justify-center px-6 text-center transition-all duration-700 ease-out sm:px-10',
           inView ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0',
         )}
       >
@@ -291,23 +258,15 @@ function Screen3() {
           {c.eyebrow}
         </p>
 
-        <h2 className="mt-1.5 font-display text-xl font-bold leading-tight text-stone-900 sm:text-2xl lg:text-3xl">
+        <h2 className="mt-2 max-w-2xl font-display text-3xl font-bold leading-tight text-stone-900 sm:text-4xl lg:text-5xl">
           {c.headline}
         </h2>
 
-        <p className="mt-1.5 max-w-md text-sm leading-relaxed text-stone-600">
+        <p className="mt-3 max-w-2xl text-base leading-relaxed text-stone-600 sm:text-lg">
           {c.subtext}
         </p>
 
-        <div className="landing-image-glow mt-4 w-full">
-          <HeroImage
-            src={landingImages.screen3Community}
-            alt="Community members organizing together"
-            className="h-[28svh] w-full rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.08)]"
-          />
-        </div>
-
-        <div className="mt-3 grid w-full grid-cols-2 gap-3">
+        <div className="mt-6 grid w-full max-w-2xl grid-cols-2 gap-3">
           <ActionCard
             body={c.cards[0].body}
             accent="plum"
