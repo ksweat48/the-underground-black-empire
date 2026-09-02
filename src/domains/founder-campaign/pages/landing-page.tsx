@@ -207,7 +207,7 @@ function Screen2() {
       <div
         ref={ref as React.RefObject<HTMLDivElement>}
         className={cn(
-          'absolute inset-x-0 top-0 z-10 flex h-[70%] w-full max-w-3xl flex-col items-center justify-center px-6 text-center transition-all duration-700 ease-out sm:px-10',
+          'absolute inset-x-0 top-0 z-10 flex h-[70svh] w-full max-w-3xl flex-col items-center justify-start px-6 pt-[14svh] text-center transition-all duration-700 ease-out sm:px-10',
           inView ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0',
         )}
       >
@@ -250,7 +250,7 @@ function Screen3() {
       <div
         ref={ref as React.RefObject<HTMLDivElement>}
         className={cn(
-          'absolute inset-x-0 top-0 z-10 flex h-[70%] w-full max-w-3xl flex-col items-center justify-center px-6 text-center transition-all duration-700 ease-out sm:px-10',
+          'absolute inset-x-0 top-0 z-10 flex h-[70svh] w-full max-w-3xl flex-col items-center justify-start px-6 pt-[14svh] text-center transition-all duration-700 ease-out sm:px-10',
           inView ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0',
         )}
       >
@@ -294,7 +294,7 @@ function Screen4() {
       <div
         ref={ref as React.RefObject<HTMLDivElement>}
         className={cn(
-          'relative z-10 flex w-full max-w-2xl flex-col items-center px-6 text-center transition-all duration-700 ease-out sm:px-10',
+          'absolute inset-x-0 top-0 z-10 flex h-[70svh] w-full max-w-3xl flex-col items-center justify-start px-6 pt-[14svh] text-center transition-all duration-700 ease-out sm:px-10',
           inView ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0',
         )}
       >
