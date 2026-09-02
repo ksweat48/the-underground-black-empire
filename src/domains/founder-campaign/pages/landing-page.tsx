@@ -185,11 +185,12 @@ function Screen1() {
   const { ref, inView } = useInView<HTMLElement>();
   const c = landingCopy.screen1;
   return (
-    <SnapSection id="screen-1" className="pt-4 pb-24">
+    <SnapSection id="screen-1" className="screen-1-bg px-0 py-0">
+      <div className="screen-1-overlay" aria-hidden />
       <div
         ref={ref as React.RefObject<HTMLDivElement>}
         className={cn(
-          'landing-hero-sheet flex w-full max-w-2xl flex-col items-center px-6 py-6 text-center transition-all duration-700 ease-out sm:px-10 sm:py-8',
+          'relative z-10 flex w-full max-w-2xl flex-col items-center px-6 text-center transition-all duration-700 ease-out sm:px-10',
           inView ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0',
         )}
       >
@@ -201,20 +202,11 @@ function Screen1() {
 
         <LogoDivider />
 
-        <div className="landing-image-glow mb-4 mt-3">
-          <HeroImage
-            src={landingImages.screen1Hero}
-            alt="Community members building together"
-            fit="natural"
-            className="rounded-2xl sm:rounded-3xl"
-          />
-        </div>
-
-        <h1 className="font-display text-[24px] font-bold leading-[1.05] text-[#111111] sm:text-[28px] lg:text-[30px]">
+        <h1 className="mt-4 font-display text-[26px] font-bold leading-[1.05] text-stone-900 sm:text-[32px] lg:text-[36px]">
           {c.headline}
         </h1>
 
-        <p className="mt-2 max-w-[500px] text-[13px] leading-[1.5] text-[#5C5C60]">
+        <p className="mt-2 max-w-[500px] text-sm leading-[1.5] text-stone-700">
           {c.body}
         </p>
 
@@ -229,7 +221,7 @@ function Screen1() {
           {c.cta}
         </LandingCTA>
 
-        <p className="mt-2.5 text-[11px] font-medium uppercase tracking-[0.12em] text-[#555555]">
+        <p className="mt-2.5 text-[11px] font-medium uppercase tracking-[0.12em] text-stone-600">
           {c.support}
         </p>
       </div>
