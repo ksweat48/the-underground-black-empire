@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronDown, ArrowRight, Users, Heart, Sparkles } from 'lucide-react';
+import { ChevronDown, ArrowRight, Sparkles } from 'lucide-react';
 import { APP_CONFIG } from '@/config/app';
 import { landingCopy } from '@/config/landing-content';
 import { cn } from '@/shared/cn';
@@ -90,44 +90,6 @@ function LandingCTA({
       {children}
       <ArrowRight className="h-4 w-4" />
     </Link>
-  );
-}
-
-function ActionCard({
-  label,
-  body,
-  accent,
-  icon: Icon,
-}: {
-  label: string;
-  body: string;
-  accent: 'plum' | 'emerald';
-  icon: typeof Users;
-}) {
-  const isPlum = accent === 'plum';
-  return (
-    <div className="frame-intel flex flex-col gap-1.5 p-4 transition-all duration-300 hover:shadow-md">
-      <div
-        className={cn(
-          'flex h-8 w-8 items-center justify-center rounded-full border',
-          isPlum
-            ? 'border-plum-200/50 bg-plum-50 text-plum-600'
-            : 'border-emerald-200/50 bg-emerald-50 text-emerald-600',
-        )}
-      >
-        <Icon className="h-4 w-4" />
-      </div>
-      <h3 className="font-display text-sm font-bold uppercase tracking-[0.08em] text-stone-900">
-        {label}
-      </h3>
-      <p className="text-xs leading-relaxed text-stone-600">{body}</p>
-      <div
-        className={cn(
-          'mt-0.5 h-px w-8',
-          isPlum ? 'bg-plum-400/60' : 'bg-emerald-400/60',
-        )}
-      />
-    </div>
   );
 }
 
@@ -266,18 +228,12 @@ function Screen3() {
           {c.subtext}
         </p>
 
-        <div className="mt-6 grid w-full max-w-2xl grid-cols-2 gap-3">
-          <ActionCard
-            body={c.cards[0].body}
-            accent="plum"
-            icon={Users}
-          />
-          <ActionCard
-            body={c.cards[1].body}
-            accent="emerald"
-            icon={Heart}
-          />
-        </div>
+        <p className="mt-4 max-w-xl text-base leading-relaxed text-stone-700 sm:text-lg">
+          {c.point1}
+        </p>
+        <p className="mt-2 max-w-xl text-base leading-relaxed text-stone-700 sm:text-lg">
+          {c.point2}
+        </p>
       </div>
 
       <ScrollIndicator />

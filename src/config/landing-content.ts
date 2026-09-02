@@ -34,18 +34,8 @@ export const landingCopy = {
     eyebrow: 'THE SHIFT',
     headline: 'Now we build it ourselves.',
     subtext: 'We organize our cities. We decide what our communities need. Then we build it together.',
-    cards: [
-      {
-        label: 'ORGANIZE',
-        body: 'Coordinate residents, businesses, and community networks',
-        accent: 'plum' as const,
-      },
-      {
-        label: 'SUPPORT',
-        body: 'Provide support and turn community priorities into action.',
-        accent: 'emerald' as const,
-      },
-    ],
+    point1: 'Coordinate residents, businesses, and community networks.',
+    point2: 'Provide support and turn community priorities into action.',
   },
   screen4: {
     eyebrow: 'THE EMPIRE IS IN YOUR HANDS.',
