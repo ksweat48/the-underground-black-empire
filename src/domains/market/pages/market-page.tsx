@@ -13,12 +13,10 @@ import {
   BadgeCheck,
   TrendingUp,
   Clock,
-  ChevronRight,
   Loader2,
   Image as ImageIcon,
 } from 'lucide-react';
 import { Layout } from '@/shared/components/layout';
-import { EmpireFrame } from '@/shared/components/empire-frame';
 import { cn } from '@/shared/cn';
 import { useAuth } from '@/domains/identity/auth-context';
 import {
@@ -34,12 +32,13 @@ import {
 } from '@/domains/market/services';
 import { PLACEHOLDER_LISTINGS, PLACEHOLDER_EVENTS, PLACEHOLDER_FEED } from '@/domains/market/placeholder-data';
 
-type CategoryFilter = 'all' | ListingCategory;
+type CategoryFilter = 'feed' | 'market' | ListingCategory;
 type ScopeFilter = 'local' | 'empire';
 type FeedTab = 'update' | 'news' | 'event';
 
 const CATEGORY_CONFIG: Record<CategoryFilter, { label: string; icon: typeof Store }> = {
-  all: { label: 'All', icon: Store },
+  feed: { label: 'Feed', icon: Search },
+  market: { label: 'Market', icon: Store },
   products: { label: 'Products', icon: Package },
   services: { label: 'Services', icon: Wrench },
   events: { label: 'Events', icon: CalendarDays },
@@ -56,7 +55,7 @@ export function MarketPage() {
     cityName: null,
   });
   const [scope, setScope] = useState<ScopeFilter>('local');
-  const [category, setCategory] = useState<CategoryFilter>('all');
+  const [category, setCategory] = useState<CategoryFilter>('feed');
   const [search, setSearch] = useState('');
   const [searchInput, setSearchInput] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
@@ -166,12 +165,16 @@ export function MarketPage() {
   }, [feed]);
 
   const featuredListings = useMemo(() => {
-    return [...displayListings].sort((a, b) => (b.rank_score ?? 0) - (a.rank_score ?? 0)).slice(0, 5);
-  }, [displayListings]);
+    if (category === 'feed' || category === 'events') return [];
+    const source = category === 'market'
+      ? displayListings
+      : displayListings.filter((l) => l.category === category);
+    return [...source].sort((a, b) => (b.rank_score ?? 0) - (a.rank_score ?? 0)).slice(0, 5);
+  }, [displayListings, category]);
 
   const filteredListings = useMemo(() => {
-    if (category === 'events') return [];
-    if (category === 'all') return displayListings;
+    if (category === 'feed' || category === 'events') return [];
+    if (category === 'market') return displayListings;
     return displayListings.filter((l) => l.category === category);
   }, [displayListings, category]);
 
@@ -182,8 +185,6 @@ export function MarketPage() {
       event: displayFeed.filter((item) => item.feed_type === 'event'),
     };
   }, [displayFeed]);
-
-
 
   return (
     <Layout fullWidth>
@@ -259,16 +260,96 @@ export function MarketPage() {
           })}
         </div>
 
-        {/* Events section (top, horizontal scroll) */}
-        {(category === 'all' || category === 'events') && (
+        {/* ==================== FEED VIEW ==================== */}
+        {category === 'feed' && (
+          <>
+            {/* Upcoming Events horizontal scroll */}
+            <section className="animate-fade-up" style={{ animationDelay: '150ms' }}>
+              <div className="flex items-center gap-1.5 mb-2">
+                <CalendarDays className="w-3.5 h-3.5 text-empire-gold" />
+                <h2 className="font-display text-xs font-semibold text-empire-ivory uppercase tracking-wider">Upcoming Events</h2>
+              </div>
+              {eventsLoading ? (
+                <div className="flex justify-center py-4">
+                  <Loader2 className="w-4 h-4 text-empire-text-muted animate-spin" />
+                </div>
+              ) : displayEvents.length === 0 ? (
+                <EmptyState
+                  icon={CalendarDays}
+                  title="No events this week"
+                  description="Create an event to bring your community together."
+                  actionLabel="Create an Event"
+                  onAction={() => navigate('/market/create/event')}
+                />
+              ) : (
+                <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1 -mx-1 px-1">
+                  {displayEvents.map((event) => (
+                    <EventCard key={event.id} event={event} onClick={() => navigate(`/market/listing/${event.listing_id ?? ''}`)} />
+                  ))}
+                </div>
+              )}
+            </section>
+
+            {/* Community Feed — three tabs */}
+            <section className="animate-fade-up" style={{ animationDelay: '200ms' }}>
+              <div className="flex items-center gap-1.5 mb-2">
+                <MessageCircle className="w-3.5 h-3.5 text-empire-gold" />
+                <h2 className="font-display text-xs font-semibold text-empire-ivory uppercase tracking-wider">Community Feed</h2>
+              </div>
+
+              {/* Tab bar */}
+              <div className="seg-control mb-3">
+                {([
+                  { key: 'update' as const, label: 'Updates', icon: MessageCircle, color: 'text-empire-info' },
+                  { key: 'news' as const, label: 'News', icon: TrendingUp, color: 'text-empire-success' },
+                  { key: 'event' as const, label: 'Events', icon: CalendarDays, color: 'text-empire-gold' },
+                ]).map((tab) => {
+                  const TabIcon = tab.icon;
+                  const isActive = activeFeedTab === tab.key;
+                  return (
+                    <button
+                      key={tab.key}
+                      className={cn('seg-btn', isActive && 'seg-btn-active')}
+                      onClick={() => setActiveFeedTab(tab.key)}
+                    >
+                      <TabIcon className={cn('w-3.5 h-3.5', isActive ? tab.color : 'text-empire-text-muted')} />
+                      {tab.label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {feedLoading ? (
+                <div className="flex justify-center py-6">
+                  <Loader2 className="w-5 h-5 text-empire-text-muted animate-spin" />
+                </div>
+              ) : feedByTab[activeFeedTab].length === 0 ? (
+                <EmptyState
+                  icon={MessageCircle}
+                  title="No updates available"
+                  description="Business updates, local news, and events will appear here."
+                />
+              ) : (
+                <div className="space-y-2">
+                  {feedByTab[activeFeedTab].map((item) => (
+                    <FeedItemRow key={`${activeFeedTab}-${item.id}`} item={item} />
+                  ))}
+                </div>
+              )}
+            </section>
+          </>
+        )}
+
+        {/* ==================== EVENTS VIEW ==================== */}
+        {category === 'events' && (
           <section className="animate-fade-up" style={{ animationDelay: '150ms' }}>
             <div className="flex items-center gap-1.5 mb-2">
               <CalendarDays className="w-3.5 h-3.5 text-empire-gold" />
               <h2 className="font-display text-xs font-semibold text-empire-ivory uppercase tracking-wider">Upcoming Events</h2>
             </div>
             {eventsLoading ? (
-              <div className="flex justify-center py-4">
-                <Loader2 className="w-4 h-4 text-empire-text-muted animate-spin" />
+              <div className="flex justify-center py-8">
+                <Loader2 className="w-5 h-5 text-empire-text-muted animate-spin" />
               </div>
             ) : displayEvents.length === 0 ? (
               <EmptyState
@@ -288,103 +369,105 @@ export function MarketPage() {
           </section>
         )}
 
-        {/* Featured listings */}
-        {category !== 'events' && (
-          <section className="animate-fade-up" style={{ animationDelay: '200ms' }}>
-            <div className="flex items-center gap-1.5 mb-2">
-              <TrendingUp className="w-3.5 h-3.5 text-empire-gold" />
-              <h2 className="font-display text-xs font-semibold text-empire-ivory uppercase tracking-wider">Featured</h2>
-            </div>
-            {loading ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="w-5 h-5 text-empire-text-muted animate-spin" />
+        {/* ==================== MARKET / PRODUCTS / SERVICES VIEWS ==================== */}
+        {category !== 'feed' && category !== 'events' && (
+          <>
+            {/* Featured horizontal scroll */}
+            <section className="animate-fade-up" style={{ animationDelay: '150ms' }}>
+              <div className="flex items-center gap-1.5 mb-2">
+                <TrendingUp className="w-3.5 h-3.5 text-empire-gold" />
+                <h2 className="font-display text-xs font-semibold text-empire-ivory uppercase tracking-wider">Featured</h2>
               </div>
-            ) : featuredListings.length === 0 ? (
-              <EmptyState
-                icon={Store}
-                title="No listings yet"
-                description="Be the first to list a business in your area."
-                actionLabel="List a Business"
-                onAction={() => navigate('/market/create/listing')}
-              />
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {featuredListings.map((listing) => (
-                  <ListingCard key={listing.id} listing={listing} onClick={() => navigate(`/market/listing/${listing.id}`)} />
-                ))}
-              </div>
+              {loading ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="w-5 h-5 text-empire-text-muted animate-spin" />
+                </div>
+              ) : featuredListings.length === 0 ? (
+                <EmptyState
+                  icon={Store}
+                  title="No listings yet"
+                  description="Be the first to list a business in your area."
+                  actionLabel="List a Business"
+                  onAction={() => navigate('/market/create/listing')}
+                />
+              ) : (
+                <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1 -mx-1 px-1">
+                  {featuredListings.map((listing) => (
+                    <FeaturedListingCard key={listing.id} listing={listing} onClick={() => navigate(`/market/listing/${listing.id}`)} />
+                  ))}
+                </div>
+              )}
+            </section>
+
+            {/* All listings grid */}
+            {filteredListings.length > 5 && (
+              <section className="animate-fade-up" style={{ animationDelay: '200ms' }}>
+                <div className="flex items-center gap-1.5 mb-2">
+                  <Store className="w-3.5 h-3.5 text-empire-gold" />
+                  <h2 className="font-display text-xs font-semibold text-empire-ivory uppercase tracking-wider">All Listings</h2>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {filteredListings.slice(5).map((listing) => (
+                    <ListingCard key={listing.id} listing={listing} onClick={() => navigate(`/market/listing/${listing.id}`)} />
+                  ))}
+                </div>
+              </section>
             )}
-          </section>
+          </>
         )}
-
-        {/* All listings (when not in events category) */}
-        {category !== 'events' && filteredListings.length > 5 && (
-          <section className="animate-fade-up" style={{ animationDelay: '250ms' }}>
-            <div className="flex items-center gap-1.5 mb-2">
-              <Store className="w-3.5 h-3.5 text-empire-gold" />
-              <h2 className="font-display text-xs font-semibold text-empire-ivory uppercase tracking-wider">All Listings</h2>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {filteredListings.slice(5).map((listing) => (
-                <ListingCard key={listing.id} listing={listing} onClick={() => navigate(`/market/listing/${listing.id}`)} />
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Community feed — three tabs */}
-        <section className="animate-fade-up" style={{ animationDelay: '400ms' }}>
-          <div className="flex items-center gap-1.5 mb-2">
-            <MessageCircle className="w-3.5 h-3.5 text-empire-gold" />
-            <h2 className="font-display text-xs font-semibold text-empire-ivory uppercase tracking-wider">Community Feed</h2>
-          </div>
-
-          {/* Tab bar */}
-          <div className="seg-control mb-3">
-            {([
-              { key: 'update' as const, label: 'Updates', icon: MessageCircle, color: 'text-empire-info' },
-              { key: 'news' as const, label: 'News', icon: TrendingUp, color: 'text-empire-success' },
-              { key: 'event' as const, label: 'Events', icon: CalendarDays, color: 'text-empire-gold' },
-            ]).map((tab) => {
-              const TabIcon = tab.icon;
-              const isActive = activeFeedTab === tab.key;
-              return (
-                <button
-                  key={tab.key}
-                  className={cn('seg-btn', isActive && 'seg-btn-active')}
-                  onClick={() => setActiveFeedTab(tab.key)}
-                >
-                  <TabIcon className={cn('w-3.5 h-3.5', isActive ? tab.color : 'text-empire-text-muted')} />
-                  {tab.label}
-                </button>
-              );
-            })}
-          </div>
-
-          {feedLoading ? (
-            <div className="flex justify-center py-6">
-              <Loader2 className="w-5 h-5 text-empire-text-muted animate-spin" />
-            </div>
-          ) : feedByTab[activeFeedTab].length === 0 ? (
-            <EmptyState
-              icon={MessageCircle}
-              title="No updates available"
-              description="Business updates, local news, and events will appear here."
-            />
-          ) : (
-            <div className="space-y-2">
-              {feedByTab[activeFeedTab].map((item) => (
-                <FeedItemRow key={`${activeFeedTab}-${item.id}`} item={item} />
-              ))}
-            </div>
-          )}
-        </section>
       </div>
     </Layout>
   );
 }
 
-// ==================== Listing Card ====================
+// ==================== Featured Listing Card (horizontal) ====================
+
+function FeaturedListingCard({ listing, onClick }: { listing: MarketListing; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="frame-intel shrink-0 w-[200px] p-0 overflow-hidden text-left transition-all duration-200 hover:border-empire-gold/25 group active:scale-[0.98]"
+    >
+      <div className="relative h-24 overflow-hidden bg-ink-800/10">
+        {listing.image_url ? (
+          <img src={listing.image_url} alt={listing.name} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+        ) : (
+          <div className="flex items-center justify-center w-full h-full">
+            <ImageIcon className="w-7 h-7 text-empire-text-muted/30" />
+          </div>
+        )}
+        {listing.is_verified && (
+          <div className="absolute top-1.5 right-1.5">
+            <BadgeCheck className="w-4 h-4 text-empire-success" />
+          </div>
+        )}
+        <div className="absolute bottom-1.5 left-1.5">
+          <span className="badge-gold text-[9px] py-0.5 px-1.5 capitalize">
+            {listing.category}
+          </span>
+        </div>
+      </div>
+      <div className="p-2.5 space-y-1">
+        <h3 className="font-display text-xs font-semibold text-empire-ivory leading-tight line-clamp-1">
+          {listing.name}
+        </h3>
+        {listing.price_display && (
+          <span className="text-xs font-semibold text-empire-gold">
+            {listing.price_display}
+          </span>
+        )}
+        {listing.city_name && (
+          <span className="flex items-center gap-1 text-[10px] text-empire-text-muted">
+            <MapPin className="w-2.5 h-2.5" />
+            {listing.city_name}
+          </span>
+        )}
+      </div>
+    </button>
+  );
+}
+
+// ==================== Listing Card (grid) ====================
 
 function ListingCard({ listing, onClick }: { listing: MarketListing; onClick: () => void }) {
   return (

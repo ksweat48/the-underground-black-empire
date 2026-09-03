@@ -22,7 +22,7 @@ import type {
 export async function fetchListings(params: {
   cityId?: string;
   metroCityIds?: string[];
-  category?: ListingCategory | 'all';
+  category?: ListingCategory | 'all' | 'market' | 'feed';
   search?: string;
   limit?: number;
 }): Promise<MarketListing[]> {
@@ -45,7 +45,7 @@ export async function fetchListings(params: {
     query = query.eq('city_id', cityId);
   }
 
-  if (category && category !== 'all') {
+  if (category && category !== 'all' && category !== 'market' && category !== 'feed') {
     query = query.eq('category', category);
   }
 
