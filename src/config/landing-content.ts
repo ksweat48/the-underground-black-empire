@@ -11,7 +11,7 @@ export const landingImages = {
 export const landingCopy = {
   screen1: {
     headline: 'Rise Together or Fall Forever.',
-    body: 'A city-based platform that brings people, businesses, and communities together to organize, fund, and build the future we choose.',
+    body: 'A digital city built to unite the people and give power back to our communities.',
     voice: 'Your voice matters. Change starts here.',
     cta: 'JOIN THE EMPIRE',
     secondaryCta: 'SIGN IN',
