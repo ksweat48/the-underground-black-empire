@@ -267,7 +267,7 @@ export function MarketPage() {
             <section className="animate-fade-up" style={{ animationDelay: '150ms' }}>
               <div className="flex items-center gap-1.5 mb-2">
                 <CalendarDays className="w-3.5 h-3.5 text-empire-gold" />
-                <h2 className="font-display text-xs font-semibold text-empire-ivory uppercase tracking-wider">Upcoming Events</h2>
+                <h2 className="font-display text-[10px] font-semibold text-empire-ivory uppercase tracking-wider">Events</h2>
               </div>
               {eventsLoading ? (
                 <div className="flex justify-center py-4">
@@ -294,7 +294,7 @@ export function MarketPage() {
             <section className="animate-fade-up" style={{ animationDelay: '200ms' }}>
               <div className="flex items-center gap-1.5 mb-2">
                 <MessageCircle className="w-3.5 h-3.5 text-empire-gold" />
-                <h2 className="font-display text-xs font-semibold text-empire-ivory uppercase tracking-wider">Community Feed</h2>
+                <h2 className="font-display text-[10px] font-semibold text-empire-ivory uppercase tracking-wider">Feed</h2>
               </div>
 
               {/* Tab bar */}
@@ -345,7 +345,7 @@ export function MarketPage() {
           <section className="animate-fade-up" style={{ animationDelay: '150ms' }}>
             <div className="flex items-center gap-1.5 mb-2">
               <CalendarDays className="w-3.5 h-3.5 text-empire-gold" />
-              <h2 className="font-display text-xs font-semibold text-empire-ivory uppercase tracking-wider">Upcoming Events</h2>
+              <h2 className="font-display text-[10px] font-semibold text-empire-ivory uppercase tracking-wider">Events</h2>
             </div>
             {eventsLoading ? (
               <div className="flex justify-center py-8">
@@ -376,7 +376,7 @@ export function MarketPage() {
             <section className="animate-fade-up" style={{ animationDelay: '150ms' }}>
               <div className="flex items-center gap-1.5 mb-2">
                 <TrendingUp className="w-3.5 h-3.5 text-empire-gold" />
-                <h2 className="font-display text-xs font-semibold text-empire-ivory uppercase tracking-wider">Featured</h2>
+                <h2 className="font-display text-[10px] font-semibold text-empire-ivory uppercase tracking-wider">Featured</h2>
               </div>
               {loading ? (
                 <div className="flex justify-center py-8">
@@ -399,12 +399,12 @@ export function MarketPage() {
               )}
             </section>
 
-            {/* All listings grid */}
-            {filteredListings.length > 5 && (
+            {/* All listings grid — Market view only */}
+            {category === 'market' && filteredListings.length > 5 && (
               <section className="animate-fade-up" style={{ animationDelay: '200ms' }}>
                 <div className="flex items-center gap-1.5 mb-2">
                   <Store className="w-3.5 h-3.5 text-empire-gold" />
-                  <h2 className="font-display text-xs font-semibold text-empire-ivory uppercase tracking-wider">All Listings</h2>
+                  <h2 className="font-display text-[10px] font-semibold text-empire-ivory uppercase tracking-wider">All Listings</h2>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {filteredListings.slice(5).map((listing) => (
