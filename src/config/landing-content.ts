@@ -19,7 +19,7 @@ export const landingCopy = {
   },
   screen2: {
     eyebrow: 'THE REALITY',
-    headline: 'Our communities are carrying too much.',
+    headline: 'Our communities are hurting.',
     subtext: 'Housing, family strain, injustice, and limited opportunity shape everyday life.',
     categories: [
       { label: 'Single Mothers', image: landingImages.screen2Mother },
