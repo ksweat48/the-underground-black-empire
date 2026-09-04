@@ -34,7 +34,6 @@ import { PLACEHOLDER_LISTINGS, PLACEHOLDER_EVENTS, PLACEHOLDER_FEED } from '@/do
 
 type CategoryFilter = 'feed' | 'market' | ListingCategory;
 type ScopeFilter = 'local' | 'empire';
-type FeedTab = 'update' | 'news' | 'event';
 
 const CATEGORY_CONFIG: Record<CategoryFilter, { label: string; icon: typeof Store }> = {
   feed: { label: 'Feed', icon: Search },
@@ -66,7 +65,6 @@ export function MarketPage() {
   const [loading, setLoading] = useState(true);
   const [feedLoading, setFeedLoading] = useState(true);
   const [eventsLoading, setEventsLoading] = useState(true);
-  const [activeFeedTab, setActiveFeedTab] = useState<FeedTab>('update');
 
   useEffect(() => {
     if (!userId) return;
@@ -178,14 +176,6 @@ export function MarketPage() {
     return displayListings.filter((l) => l.category === category);
   }, [displayListings, category]);
 
-  const feedByTab = useMemo(() => {
-    return {
-      update: displayFeed.filter((item) => item.feed_type === 'update'),
-      news: displayFeed.filter((item) => item.feed_type === 'news'),
-      event: displayFeed.filter((item) => item.feed_type === 'event'),
-    };
-  }, [displayFeed]);
-
   return (
     <Layout fullWidth>
       <div className="w-full min-w-0 max-w-[960px] mx-auto px-2 sm:px-3 pt-3 pb-4 space-y-4">
@@ -290,49 +280,27 @@ export function MarketPage() {
               )}
             </section>
 
-            {/* Community Feed — three tabs */}
+            {/* Combined community feed */}
             <section className="animate-fade-up" style={{ animationDelay: '200ms' }}>
               <div className="flex items-center gap-1.5 mb-2">
                 <MessageCircle className="w-3.5 h-3.5 text-empire-gold" />
                 <h2 className="font-display text-[10px] font-semibold text-empire-ivory uppercase tracking-wider">Feed</h2>
               </div>
 
-              {/* Tab bar */}
-              <div className="seg-control mb-3">
-                {([
-                  { key: 'update' as const, label: 'Updates', icon: MessageCircle, color: 'text-empire-info' },
-                  { key: 'news' as const, label: 'News', icon: TrendingUp, color: 'text-empire-success' },
-                  { key: 'event' as const, label: 'Events', icon: CalendarDays, color: 'text-empire-gold' },
-                ]).map((tab) => {
-                  const TabIcon = tab.icon;
-                  const isActive = activeFeedTab === tab.key;
-                  return (
-                    <button
-                      key={tab.key}
-                      className={cn('seg-btn', isActive && 'seg-btn-active')}
-                      onClick={() => setActiveFeedTab(tab.key)}
-                    >
-                      <TabIcon className={cn('w-3.5 h-3.5', isActive ? tab.color : 'text-empire-text-muted')} />
-                      {tab.label}
-                    </button>
-                  );
-                })}
-              </div>
-
               {feedLoading ? (
                 <div className="flex justify-center py-6">
                   <Loader2 className="w-5 h-5 text-empire-text-muted animate-spin" />
                 </div>
-              ) : feedByTab[activeFeedTab].length === 0 ? (
+              ) : displayFeed.length === 0 ? (
                 <EmptyState
                   icon={MessageCircle}
-                  title="No updates available"
+                  title="No feed activity available"
                   description="Business updates, local news, and events will appear here."
                 />
               ) : (
                 <div className="space-y-2">
-                  {feedByTab[activeFeedTab].map((item) => (
-                    <FeedItemRow key={`${activeFeedTab}-${item.id}`} item={item} />
+                  {displayFeed.map((item) => (
+                    <FeedItemRow key={item.id} item={item} />
                   ))}
                 </div>
               )}
