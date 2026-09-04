@@ -159,7 +159,7 @@ export function HudTopBar({ empire, civLevel }: HudNavigationProps) {
             <Lock className="w-6 h-6 text-empire-text-muted" />
           </div>
           <p className="text-sm text-sand">The Treasury unlocks when the Empire reaches the <span className="text-empire-gold font-semibold">Settlement</span> stage.</p>
-          <p className="text-xs text-stone">Raise 50 Tribe Cities to advance the civilization.</p>
+          <p className="text-xs text-stone">Raise 10 Tribe Cities and a population of 1000 to advance the civilization to Settlement.</p>
         </div>
       </GlassModal>
 
