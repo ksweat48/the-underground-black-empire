@@ -357,13 +357,21 @@ export function ProfilePage() {
             </button>
 
             {/* Membership status — inset panel */}
-            <div className={cn('flex-1 min-w-0 px-3 py-2', profileCardConfig.inset)}>
+            <button
+              type="button"
+              onClick={() => navigate('/membership')}
+              aria-label="View membership options"
+              className={cn(
+                'flex-1 min-w-0 px-3 py-2 text-left transition-all duration-200 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-400/60',
+                profileCardConfig.inset,
+              )}
+            >
               <div className="flex items-center gap-1.5">
                 <CreditCard className={cn('w-4 h-4 shrink-0', profileCardConfig.iconColor)} />
                 <p className={cn('text-sm uppercase tracking-wider font-bold', profileCardConfig.textBold)}>Member</p>
               </div>
               <p className={cn('text-[10px] uppercase tracking-wider mt-0.5', profileCardConfig.textMuted)}>{cardLabel}</p>
-            </div>
+            </button>
 
             {/* Gear menu */}
             <div className="relative" ref={menuRef}>
