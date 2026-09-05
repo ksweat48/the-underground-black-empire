@@ -12,6 +12,7 @@ import {
   Building2,
   Megaphone,
   ChevronRight,
+  Newspaper,
 } from 'lucide-react';
 import { Layout } from '@/shared/components/layout';
 import { GlassModal } from '@/shared/components/glass-modal';
@@ -39,16 +40,68 @@ import {
   fetchCityWithMetro,
   fetchEmpireFeed,
   fetchLocalFeed,
+  fetchEmpireCouncilNews,
+  fetchLocalCouncilNews,
   fetchMapData,
   type MemberDashboardData,
   type CityWithProgress,
   type EmpireProgressData,
   type FeedEvent,
+  type CouncilNewsEvent,
   type StateMapData,
 } from '@/domains/founder-campaign/services';
 import { cn } from '@/shared/cn';
 
 type FeedTab = 'local' | 'empire';
+
+type MergedFeedItem = {
+  id: string;
+  event_type: string;
+  display_name: string | null;
+  city_name: string | null;
+  metro_id: string | null;
+  metro_name: string | null;
+  created_at: string;
+  message: string;
+  member_id: string | null;
+  title: string | null;
+  is_council_news: boolean;
+};
+
+function mergeFeedWithNews(news: CouncilNewsEvent[], events: FeedEvent[]): MergedFeedItem[] {
+  const newsItems: MergedFeedItem[] = news.map((n) => ({
+    id: n.id,
+    event_type: 'council_news',
+    display_name: n.display_name,
+    city_name: n.city_name,
+    metro_id: n.metro_id,
+    metro_name: n.metro_name,
+    created_at: n.created_at,
+    message: n.message,
+    member_id: n.member_id,
+    title: n.title,
+    is_council_news: true,
+  }));
+  const activityItems: MergedFeedItem[] = events.map((e) => ({
+    id: e.id,
+    event_type: e.event_type,
+    display_name: e.display_name,
+    city_name: e.city_name,
+    metro_id: e.metro_id,
+    metro_name: e.metro_name,
+    created_at: e.created_at,
+    message: e.message,
+    member_id: e.member_id,
+    title: null,
+    is_council_news: false,
+  }));
+  return [...newsItems, ...activityItems].sort((a, b) => {
+    if (a.is_council_news !== b.is_council_news) {
+      return a.is_council_news ? -1 : 1;
+    }
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  });
+}
 
 // ==================== Feed Category Config ====================
 
@@ -61,6 +114,13 @@ interface FeedCategoryConfig {
 }
 
 const FEED_CATEGORIES: Record<string, FeedCategoryConfig> = {
+  council_news: {
+    label: 'Council News',
+    icon: Newspaper,
+    iconColor: 'text-empire-success',
+    ringColor: 'bg-empire-success/10 border-empire-success/30',
+    labelColor: 'text-empire-success',
+  },
   referral_verified: {
     label: 'New Member',
     icon: UserPlus,
@@ -125,6 +185,8 @@ export function EmpireDashboardPage() {
   const [activeTab, setActiveTab] = useState<FeedTab>('local');
   const [localFeed, setLocalFeed] = useState<FeedEvent[]>([]);
   const [empireFeed, setEmpireFeed] = useState<FeedEvent[]>([]);
+  const [localCouncilNews, setLocalCouncilNews] = useState<CouncilNewsEvent[]>([]);
+  const [empireCouncilNews, setEmpireCouncilNews] = useState<CouncilNewsEvent[]>([]);
   const [feedLoading, setFeedLoading] = useState(true);
   const [mobileCollapsed, setMobileCollapsed] = useState(false);
   const [desktopCompact, setDesktopCompact] = useState(false);
@@ -217,17 +279,25 @@ export function EmpireDashboardPage() {
     (async () => {
       setFeedLoading(true);
       try {
-        const [empireEvents, localEvents] = await Promise.all([
+        const [empireEvents, localEvents, empireNews, localNews] = await Promise.all([
           fetchEmpireFeed(20),
           metroData?.metroId
             ? fetchLocalFeed(metroData.metroId, 20)
             : Promise.resolve([]),
+          fetchEmpireCouncilNews(20),
+          metroData?.metroId
+            ? fetchLocalCouncilNews(metroData.metroId, 20)
+            : Promise.resolve([]),
         ]);
         setEmpireFeed(empireEvents);
         setLocalFeed(localEvents);
+        setEmpireCouncilNews(empireNews);
+        setLocalCouncilNews(localNews);
       } catch {
         setEmpireFeed([]);
         setLocalFeed([]);
+        setEmpireCouncilNews([]);
+        setLocalCouncilNews([]);
       } finally {
         setFeedLoading(false);
       }
@@ -255,7 +325,9 @@ export function EmpireDashboardPage() {
   const cityTier = data?.city_population_count ? getCityTier(data.city_population_count) : 'group';
   const cityTierLevel = getCityTierLevel(cityTier);
 
-  const currentFeed = activeTab === 'local' ? localFeed : empireFeed;
+  const currentFeed = activeTab === 'local'
+    ? mergeFeedWithNews(localCouncilNews, localFeed)
+    : mergeFeedWithNews(empireCouncilNews, empireFeed);
   const hasLocalFeed = metroData?.metroId != null;
 
   return (
@@ -532,7 +604,7 @@ function FeedTabs({
 
 // ==================== Feed List (Intelligence Cards) ====================
 
-function FeedList({ events, loading, onCardClick }: { events: FeedEvent[]; loading: boolean; onCardClick: (memberId: string) => void }) {
+function FeedList({ events, loading, onCardClick }: { events: MergedFeedItem[]; loading: boolean; onCardClick: (memberId: string) => void }) {
   if (loading) {
     return (
       <div className="w-full space-y-2">
@@ -570,7 +642,7 @@ function FeedList({ events, loading, onCardClick }: { events: FeedEvent[]; loadi
 
 // ==================== Intelligence Card ====================
 
-function IntelligenceCard({ event, onCardClick }: { event: FeedEvent; onCardClick: (memberId: string) => void }) {
+function IntelligenceCard({ event, onCardClick }: { event: MergedFeedItem; onCardClick: (memberId: string) => void }) {
   const category = FEED_CATEGORIES[event.event_type] ?? DEFAULT_CATEGORY;
   const { icon: Icon, label, iconColor, ringColor, labelColor } = category;
   const clickable = event.member_id !== null;
@@ -593,10 +665,21 @@ function IntelligenceCard({ event, onCardClick }: { event: FeedEvent; onCardClic
         <p className={cn('text-[9px] font-bold uppercase tracking-wider mb-0.5', labelColor)}>
           {label}
         </p>
-        <p className="text-sm text-ivory leading-snug">
-          <span className="text-antique-200 font-medium">{event.display_name ?? 'Someone'}</span>{' '}
-          {event.message}
-        </p>
+        {event.is_council_news && event.title ? (
+          <>
+            <p className="text-sm font-display font-semibold text-ivory leading-snug line-clamp-2">
+              {event.title}
+            </p>
+            <p className="text-xs text-stone leading-snug line-clamp-2 mt-0.5">
+              {event.message}
+            </p>
+          </>
+        ) : (
+          <p className="text-sm text-ivory leading-snug">
+            <span className="text-antique-200 font-medium">{event.display_name ?? 'Someone'}</span>{' '}
+            {event.message}
+          </p>
+        )}
         {event.city_name && (
           <p className="text-[10px] text-stone mt-0.5">{event.city_name}</p>
         )}

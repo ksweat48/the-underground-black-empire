@@ -1,9 +1,10 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Newspaper, Loader2, Check } from 'lucide-react';
+import { ArrowLeft, Newspaper, Loader2, Check, ShieldAlert } from 'lucide-react';
 import { Layout } from '@/shared/components/layout';
 import { useAuth } from '@/domains/identity/auth-context';
 import { createLocalNews, fetchMemberCityInfo } from '@/domains/market/services';
+import { supabase } from '@/shared/supabase-client';
 
 export function CreateNewsPage() {
   const navigate = useNavigate();
@@ -19,13 +20,26 @@ export function CreateNewsPage() {
   const [imageUrl, setImageUrl] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [authChecking, setAuthChecking] = useState(true);
+  const [isCorrespondent, setIsCorrespondent] = useState(false);
 
   useEffect(() => {
-    if (!userId) return;
-    fetchMemberCityInfo(userId).then((info) => {
-      setCityId(info.cityId);
-      setCityName(info.cityName);
-    }).catch(() => {});
+    if (!userId) { setAuthChecking(false); return; }
+    Promise.all([
+      fetchMemberCityInfo(userId),
+      supabase
+        .from('members')
+        .select('correspondent_status')
+        .eq('id', userId)
+        .maybeSingle(),
+    ])
+      .then(([info, memberRes]) => {
+        setCityId(info.cityId);
+        setCityName(info.cityName);
+        setIsCorrespondent(memberRes.data?.correspondent_status === 'approved');
+      })
+      .catch(() => {})
+      .finally(() => setAuthChecking(false));
   }, [userId]);
 
   const handleSubmit = useCallback(async () => {
@@ -51,6 +65,39 @@ export function CreateNewsPage() {
       setSubmitting(false);
     }
   }, [cityId, title, body, locationText, newsDate, imageUrl, navigate]);
+
+  if (authChecking) {
+    return (
+      <Layout fullWidth>
+        <div className="max-w-[600px] mx-auto px-4 py-8 flex justify-center">
+          <Loader2 className="w-6 h-6 text-empire-gold animate-spin" />
+        </div>
+      </Layout>
+    );
+  }
+
+  if (!isCorrespondent) {
+    return (
+      <Layout fullWidth>
+        <div className="max-w-[600px] mx-auto px-4 py-8">
+          <BackButton onClick={() => navigate('/market')} />
+          <div className="frame-utility p-8 text-center space-y-3">
+            <ShieldAlert className="w-8 h-8 text-empire-gold mx-auto" />
+            <p className="font-display text-base font-semibold text-empire-ivory">
+              Correspondents Only
+            </p>
+            <p className="text-sm text-empire-text-muted">
+              Posting local news is reserved for approved Council Correspondents.
+              Contact your city leadership to apply.
+            </p>
+            <button onClick={() => navigate('/empire')} className="btn-secondary text-sm py-2 px-4">
+              Back to Empire
+            </button>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   if (!cityId) {
     return (

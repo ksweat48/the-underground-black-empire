@@ -516,14 +516,6 @@ export async function fetchCommunityFeed(cityId?: string, metroCityIds?: string[
     .limit(limit);
   if (cityIds) updatesQuery = updatesQuery.in('listing.city_id', cityIds);
 
-  let newsQuery = supabase
-    .from('local_news')
-    .select('id, title, body, image_url, author_id, city_id, created_at')
-    .eq('status', 'approved')
-    .order('created_at', { ascending: false })
-    .limit(limit);
-  if (cityIds) newsQuery = newsQuery.in('city_id', cityIds);
-
   let eventsQuery = supabase
     .from('market_events')
     .select('id, listing_id, name, description, image_url, author_id, city_id, created_at')
@@ -532,7 +524,7 @@ export async function fetchCommunityFeed(cityId?: string, metroCityIds?: string[
     .limit(limit);
   if (cityIds) eventsQuery = eventsQuery.in('city_id', cityIds);
 
-  const [updatesRes, newsRes, eventsRes] = await Promise.all([updatesQuery, newsQuery, eventsQuery]);
+  const [updatesRes, eventsRes] = await Promise.all([updatesQuery, eventsQuery]);
 
   const items: CommunityFeedItem[] = [];
 
@@ -544,21 +536,6 @@ export async function fetchCommunityFeed(cityId?: string, metroCityIds?: string[
       listing_id: row.listing_id,
       listing_name: listingData?.name ?? null,
       city_id: listingData?.city_id ?? '',
-      body: row.body,
-      image_url: row.image_url,
-      author_id: row.author_id,
-      created_at: row.created_at,
-      rank_score: 0,
-    });
-  }
-
-  for (const row of newsRes.data ?? []) {
-    items.push({
-      id: row.id,
-      feed_type: 'news',
-      listing_id: null,
-      listing_name: row.title,
-      city_id: row.city_id,
       body: row.body,
       image_url: row.image_url,
       author_id: row.author_id,

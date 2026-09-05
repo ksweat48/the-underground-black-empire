@@ -534,7 +534,6 @@ function EventCard({ event, onClick }: { event: MarketEvent; onClick: () => void
 function FeedItemRow({ item }: { item: CommunityFeedItem }) {
   const feedTypeConfig = {
     update: { label: 'Update', icon: MessageCircle, color: 'text-empire-info' },
-    news: { label: 'News', icon: TrendingUp, color: 'text-empire-success' },
     event: { label: 'Event', icon: CalendarDays, color: 'text-empire-gold' },
   };
   const config = feedTypeConfig[item.feed_type];

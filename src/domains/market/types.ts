@@ -86,7 +86,7 @@ export interface ListingComment {
 
 export interface CommunityFeedItem {
   id: string;
-  feed_type: 'update' | 'news' | 'event';
+  feed_type: 'update' | 'event';
   listing_id: string | null;
   listing_name: string | null;
   city_id: string;

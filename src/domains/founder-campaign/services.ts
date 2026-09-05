@@ -435,6 +435,35 @@ export async function fetchLocalFeed(metroId: string, limit: number = 20): Promi
   return (data ?? []) as FeedEvent[];
 }
 
+export interface CouncilNewsEvent {
+  id: string;
+  member_id: string | null;
+  event_type: string;
+  display_name: string | null;
+  city_name: string | null;
+  metro_id: string | null;
+  metro_name: string | null;
+  created_at: string;
+  message: string;
+  title: string | null;
+}
+
+export async function fetchEmpireCouncilNews(limit: number = 20): Promise<CouncilNewsEvent[]> {
+  const { data, error } = await supabase
+    .rpc('get_council_news_feed', { p_metro_id: null, p_limit: limit });
+
+  if (error) throw error;
+  return (data ?? []) as CouncilNewsEvent[];
+}
+
+export async function fetchLocalCouncilNews(metroId: string, limit: number = 20): Promise<CouncilNewsEvent[]> {
+  const { data, error } = await supabase
+    .rpc('get_council_news_feed', { p_metro_id: metroId, p_limit: limit });
+
+  if (error) throw error;
+  return (data ?? []) as CouncilNewsEvent[];
+}
+
 export async function fetchMemberDashboard(memberId: string): Promise<MemberDashboardData | null> {
   const { data: member, error: memberError } = await supabase
     .from('members')
