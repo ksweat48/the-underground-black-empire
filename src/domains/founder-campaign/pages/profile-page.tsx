@@ -142,6 +142,8 @@ export function ProfilePage() {
   const [editIdentitySaving, setEditIdentitySaving] = useState(false);
   const [photoDataUrl, setPhotoDataUrl] = useState<string | null>(null);
   const [photoError, setPhotoError] = useState<string | null>(null);
+  const [showPhotoEdit, setShowPhotoEdit] = useState(false);
+  const [photoSaving, setPhotoSaving] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const navigate = useNavigate();
 
@@ -689,19 +691,9 @@ export function ProfilePage() {
           <div className="flex items-center gap-4">
             <button
               onClick={() => {
-                if (!showIdentityEdit) {
-                  setEditEthnicSelected(member.ethnic_identity?.[0] ?? 'black_african_american');
-                  setEditEthnicDetail(member.ethnic_identity_detail ?? '');
-                  setEditGender(member.gender ?? null);
-                  setEditGenderDetail(member.gender_detail ?? '');
-                  setEditDob(member.date_of_birth ?? '');
-                  setEditSupportRole(member.support_role ?? 'supporter');
-                  setEditSupportRoleDetail(member.support_role_detail ?? '');
-                  setEditIdentityError(null);
-                  setPhotoDataUrl(null);
-                  setPhotoError(null);
-                  setShowIdentityEdit(true);
-                }
+                setPhotoDataUrl(null);
+                setPhotoError(null);
+                setShowPhotoEdit(true);
               }}
               className="relative flex-shrink-0 group rounded-full"
               aria-label="Edit profile photo"
@@ -732,6 +724,72 @@ export function ProfilePage() {
               <p className="text-xs text-ink-400 truncate">{member.email}</p>
             </div>
           </div>
+
+          {/* Photo Editor */}
+          {showPhotoEdit && (
+            <div className="p-3 rounded-xl bg-ink-800/30 border border-ink-700/20 space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-[10px] text-ink-500 uppercase tracking-wider">Profile Photo</p>
+                <button
+                  onClick={() => { setShowPhotoEdit(false); setPhotoDataUrl(null); setPhotoError(null); }}
+                  className="text-[10px] text-gold-400 hover:text-gold-300 font-medium uppercase tracking-wider"
+                >
+                  Cancel
+                </button>
+              </div>
+              <ProfilePhotoUploader onPhotoReady={setPhotoDataUrl} />
+              {photoError && <p className="text-sm text-crimson-300 px-1">{photoError}</p>}
+              <button
+                onClick={async () => {
+                  if (!photoDataUrl) {
+                    setPhotoError('Please select a photo first.');
+                    return;
+                  }
+                  setPhotoSaving(true);
+                  setPhotoError(null);
+                  try {
+                    const { data: sessionData } = await supabase.auth.getSession();
+                    if (!sessionData.session) {
+                      setPhotoError('Your session has expired. Please sign in again.');
+                      navigate('/auth/sign-in');
+                      return;
+                    }
+                    const userId = sessionData.session.user.id;
+                    const blob = await (await fetch(photoDataUrl)).blob();
+                    const { error: uploadError } = await supabase.storage
+                      .from('member-avatars')
+                      .upload(`${userId}/avatar.jpg`, blob, {
+                        contentType: 'image/jpeg',
+                        upsert: true,
+                      });
+                    if (uploadError) throw uploadError;
+                    const { data: urlData } = supabase.storage
+                      .from('member-avatars')
+                      .getPublicUrl(`${userId}/avatar.jpg`);
+                    const avatarUrl = `${urlData.publicUrl}?t=${Date.now()}`;
+                    const { error: profileError } = await supabase.rpc('update_member_profile', {
+                      p_date_of_birth: member.date_of_birth,
+                      p_support_role: member.support_role,
+                      p_support_role_detail: member.support_role_detail,
+                      p_avatar_url: avatarUrl,
+                    });
+                    if (profileError) throw profileError;
+                    setMember((prev) => prev ? { ...prev, avatar_url: avatarUrl } : prev);
+                    setShowPhotoEdit(false);
+                    setPhotoDataUrl(null);
+                  } catch (err) {
+                    setPhotoError(parseSupabaseError(err));
+                  } finally {
+                    setPhotoSaving(false);
+                  }
+                }}
+                disabled={photoSaving || !photoDataUrl}
+                className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {photoSaving ? 'Saving...' : 'Save Photo'}
+              </button>
+            </div>
+          )}
 
           {/* Location & Your Level */}
           <div className="grid grid-cols-2 gap-3">
@@ -766,8 +824,6 @@ export function ProfilePage() {
                     setEditSupportRole(member.support_role ?? 'supporter');
                     setEditSupportRoleDetail(member.support_role_detail ?? '');
                     setEditIdentityError(null);
-                    setPhotoDataUrl(null);
-                    setPhotoError(null);
                     setShowIdentityEdit(true);
                   }
                 }}
@@ -778,11 +834,6 @@ export function ProfilePage() {
             </div>
             {showIdentityEdit ? (
               <div className="mt-2 space-y-4">
-                <div>
-                  <p className="text-[10px] text-ink-500 uppercase tracking-wider mb-2">Profile Photo</p>
-                  <ProfilePhotoUploader onPhotoReady={setPhotoDataUrl} />
-                  {photoError && <p className="text-sm text-crimson-300 px-1 mt-1">{photoError}</p>}
-                </div>
                 <EthnicIdentitySelector
                   selected={editEthnicSelected}
                   detail={editEthnicDetail}
@@ -865,7 +916,6 @@ export function ProfilePage() {
                     }
                     setEditIdentitySaving(true);
                     setEditIdentityError(null);
-                    setPhotoError(null);
                     try {
                       const { data: sessionData } = await supabase.auth.getSession();
                       if (!sessionData.session) {
@@ -873,7 +923,7 @@ export function ProfilePage() {
                         navigate('/auth/sign-in');
                         return;
                       }
-                      let avatarUrl: string | null = null;
+                      let avatarUrl: string | null = member.avatar_url;
                       if (photoDataUrl) {
                         const userId = sessionData.session.user.id;
                         const blob = await (await fetch(photoDataUrl)).blob();
@@ -915,10 +965,9 @@ export function ProfilePage() {
                         date_of_birth: editDob || null,
                         support_role: editSupportRole,
                         support_role_detail: editSupportRole && editSupportRole !== 'supporter' ? editSupportRoleDetail.trim() : null,
-                        avatar_url: avatarUrl ?? prev.avatar_url,
+                        avatar_url: avatarUrl,
                       } : prev);
                       setShowIdentityEdit(false);
-                      setPhotoDataUrl(null);
                     } catch (err) {
                       setEditIdentityError(parseSupabaseError(err));
                     } finally {
