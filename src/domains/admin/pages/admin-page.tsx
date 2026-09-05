@@ -16,6 +16,7 @@ import {
 import { Layout } from '@/shared/components/layout';
 import { EmpireEmblemIcon } from '@/shared/components/empire-emblem-icon';
 import { supabase } from '@/shared/supabase-client';
+import { useAuth } from '@/domains/identity/auth-context';
 import { PROGRESSION_RULES, getCityTier } from '@/config/progression-rules';
 
 interface AdminStats {
@@ -119,6 +120,7 @@ const TIER_LABELS: Record<string, string> = {
 };
 
 export function AdminPage() {
+  const { sessionVersion } = useAuth();
   const [stats, setStats] = useState<AdminStats>({
     totalPopulation: 0,
   });
@@ -233,7 +235,7 @@ export function AdminPage() {
       })
       .catch(() => {})
       .finally(() => setParticipationLoading(false));
-  }, []);
+  }, [sessionVersion]);
 
   if (loading) {
     return (

@@ -174,7 +174,7 @@ const DEFAULT_CATEGORY: FeedCategoryConfig = {
 };
 
 export function EmpireDashboardPage() {
-  const { session } = useAuth();
+  const { session, sessionVersion } = useAuth();
   const [data, setData] = useState<MemberDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [empire, setEmpire] = useState<EmpireProgressData>({ tribe_city_count: 0, total_population: 0, total_cities: 0, total_states: 0 });
@@ -229,7 +229,7 @@ export function EmpireDashboardPage() {
       .then(setData)
       .catch(() => setData(null))
       .finally(() => setLoading(false));
-  }, [memberId]);
+  }, [memberId, sessionVersion]);
 
   useEffect(() => { loadDashboard(); }, [loadDashboard]);
 
@@ -239,14 +239,14 @@ export function EmpireDashboardPage() {
         setEmpire(progress);
       })
       .catch(() => {});
-  }, []);
+  }, [sessionVersion]);
 
   useEffect(() => {
     fetchMapData()
       .then(setMapData)
       .catch(() => setMapData(null))
       .finally(() => setMapLoading(false));
-  }, []);
+  }, [sessionVersion]);
 
   // Fetch metro data for the member's city
   useEffect(() => {
@@ -272,7 +272,7 @@ export function EmpireDashboardPage() {
           }
         });
     }
-  }, [data?.city_name, memberId]);
+  }, [data?.city_name, memberId, sessionVersion]);
 
   // Fetch both feeds whenever metro data is available
   useEffect(() => {
@@ -302,7 +302,7 @@ export function EmpireDashboardPage() {
         setFeedLoading(false);
       }
     })();
-  }, [metroData?.metroId]);
+  }, [metroData?.metroId, sessionVersion]);
 
   // If no metro, default to empire tab
   useEffect(() => {

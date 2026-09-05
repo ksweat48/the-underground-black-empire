@@ -9,6 +9,7 @@ interface AuthContextValue {
   session: AuthSession | null;
   loading: boolean;
   error: string | null;
+  sessionVersion: number;
   clearError: () => void;
   signUp: (params: SignUpParams) => Promise<AuthSession>;
   signIn: (params: SignInParams) => Promise<void>;
@@ -21,6 +22,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<AuthSession | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [sessionVersion, setSessionVersion] = useState(0);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }: { data: { session: Session | null } }) => {
@@ -31,6 +33,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: listener } = supabase.auth.onAuthStateChange(
       (_event: string, session: Session | null) => {
         setSession(session ? { user: session.user } : null);
+        setSessionVersion((v) => v + 1);
       },
     );
 
@@ -80,6 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         session,
         loading,
         error,
+        sessionVersion,
         clearError,
         signUp: handleSignUp,
         signIn: handleSignIn,

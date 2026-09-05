@@ -72,7 +72,7 @@ const CARD_COLOR_LABEL: Record<MembershipTierId, string> = {
 };
 
 export function MembershipPage() {
-  const { session } = useAuth();
+  const { session, sessionVersion } = useAuth();
   const userId = session?.user.id ?? '';
   const [tiers, setTiers] = useState<MembershipTier[]>([]);
   const [myMembership, setMyMembership] = useState<MemberMembership | null>(null);
@@ -101,9 +101,9 @@ export function MembershipPage() {
     } finally {
       setLoading(false);
     }
-  }, [userId]);
+  }, [userId, sessionVersion]);
 
-  useEffect(() => { loadData(); }, [loadData]);
+  useEffect(() => { loadData(); }, [loadData, sessionVersion]);
 
   const chooseTier = async (tierId: MembershipTierId) => {
     if (!userId || !myMembership || myMembership.membership_tier === tierId) return;

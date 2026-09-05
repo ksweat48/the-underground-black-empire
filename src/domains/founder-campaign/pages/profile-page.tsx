@@ -107,7 +107,7 @@ type LeaderboardTab = 'local' | 'empire';
 /* ---------- Main Component ---------- */
 
 export function ProfilePage() {
-  const { session, signOut } = useAuth();
+  const { session, signOut, sessionVersion } = useAuth();
   const [member, setMember] = useState<MemberProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [influence, setInfluence] = useState(0);
@@ -156,19 +156,19 @@ export function ProfilePage() {
   useEffect(() => {
     if (!memberId) { setLoading(false); return; }
     fetchMemberProfile(memberId).then(setMember).catch(() => {}).finally(() => setLoading(false));
-  }, [memberId]);
+  }, [memberId, sessionVersion]);
 
   // Fetch influence
   useEffect(() => {
     if (!memberId) return;
     fetchInfluence(memberId).then(setInfluence).catch(() => {});
-  }, [memberId]);
+  }, [memberId, sessionVersion]);
 
   // Fetch voting power and credits
   useEffect(() => {
     if (!memberId) return;
     fetchVotingPower(memberId).then(setVotingPower).catch(() => {});
-  }, [memberId]);
+  }, [memberId, sessionVersion]);
 
   // Fetch metro data
   useEffect(() => {
@@ -194,7 +194,7 @@ export function ProfilePage() {
           });
         }
       });
-  }, [memberId, member?.city_name]);
+  }, [memberId, member?.city_name, sessionVersion]);
 
   // Fetch referral data
   useEffect(() => {
@@ -211,7 +211,7 @@ export function ProfilePage() {
         pending: refs.filter((r) => r.status === 'pending').length,
       });
     }).catch(() => {});
-  }, [memberId]);
+  }, [memberId, sessionVersion]);
 
   // Check admin status
   useEffect(() => {
@@ -236,7 +236,7 @@ export function ProfilePage() {
     fetchMyListings(memberId).then(setMyListings).catch(() => {});
     fetchSavedListings(memberId).then(setSavedListings).catch(() => {});
     fetchMyMembership(memberId).then(setMyMembership).catch(() => {});
-  }, [memberId]);
+  }, [memberId, sessionVersion]);
 
   // Close menu on outside click
   useEffect(() => {

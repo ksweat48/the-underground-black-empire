@@ -44,7 +44,7 @@ const CATEGORY_CONFIG: Record<CategoryFilter, { label: string; icon: typeof Stor
 };
 
 export function MarketPage() {
-  const { session } = useAuth();
+  const { session, sessionVersion } = useAuth();
   const navigate = useNavigate();
   const userId = session?.user.id ?? '';
 
@@ -69,7 +69,7 @@ export function MarketPage() {
   useEffect(() => {
     if (!userId) return;
     fetchMemberCityInfo(userId).then(setCityInfo).catch(() => {});
-  }, [userId]);
+  }, [userId, sessionVersion]);
 
   const loadListings = useCallback(async () => {
     if (!cityInfo.cityId) { setLoading(false); return; }

@@ -26,7 +26,7 @@ import {
 import { BALLOT_CREDIT_CAP } from '@/config/progression-rules';
 
 export function VotePage() {
-  const { session } = useAuth();
+  const { session, sessionVersion } = useAuth();
   const navigate = useNavigate();
   const userId = session?.user.id ?? '';
 
@@ -70,8 +70,8 @@ export function VotePage() {
     }
   }, [userId]);
 
-  useEffect(() => { loadVotes(); }, [loadVotes]);
-  useEffect(() => { loadVotingInfo(); }, [loadVotingInfo]);
+  useEffect(() => { loadVotes(); }, [loadVotes, sessionVersion]);
+  useEffect(() => { loadVotingInfo(); }, [loadVotingInfo, sessionVersion]);
 
   const handleOpenVote = (vote: Vote) => {
     setSelectedVote(vote);
