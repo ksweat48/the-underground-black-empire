@@ -12,13 +12,14 @@ import { getEmpireCivilizationLevel } from '@/config/progression-rules';
 interface LayoutProps {
   children: ReactNode;
   fullWidth?: boolean;
+  showTopBar?: boolean;
 }
 
-export function Layout({ children, fullWidth = false }: LayoutProps) {
+export function Layout({ children, fullWidth = false, showTopBar = false }: LayoutProps) {
   const { session } = useAuth();
 
   if (session) {
-    return <EmpireLayout fullWidth={fullWidth}>{children}</EmpireLayout>;
+    return <EmpireLayout fullWidth={fullWidth} showTopBar={showTopBar}>{children}</EmpireLayout>;
   }
 
   return (
@@ -35,9 +36,11 @@ export function Layout({ children, fullWidth = false }: LayoutProps) {
 function EmpireLayout({
   children,
   fullWidth,
+  showTopBar,
 }: {
   children: ReactNode;
   fullWidth: boolean;
+  showTopBar: boolean;
 }) {
   const [empire, setEmpire] = useState<EmpireProgressData>({
     tribe_city_count: 0,
@@ -59,9 +62,9 @@ function EmpireLayout({
   return (
     <div className="relative h-screen flex flex-col overflow-hidden">
       <EmpireBackground />
-      <HudTopBar empire={empire} civLevel={civLevel} />
+      {showTopBar && <HudTopBar empire={empire} civLevel={civLevel} />}
       <main
-        className={`relative z-10 flex-1 min-w-0 empire-layout-main overflow-y-auto scrollbar-thin ${fullWidth ? 'flex flex-col' : 'container-empire'}`}
+        className={`relative z-10 flex-1 min-w-0 empire-layout-main overflow-y-auto scrollbar-thin ${showTopBar ? '' : 'empire-layout-main--no-topbar'} ${fullWidth ? 'flex flex-col' : 'container-empire'}`}
       >
         {children}
       </main>

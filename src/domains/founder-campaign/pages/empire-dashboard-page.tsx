@@ -313,7 +313,7 @@ export function EmpireDashboardPage() {
 
   if (loading) {
     return (
-      <Layout fullWidth>
+      <Layout fullWidth showTopBar>
         <div className="flex items-center justify-center py-20">
           <div className="w-10 h-10 rounded-full border-2 border-antique-gold/30 border-t-antique-gold animate-spin" />
         </div>
@@ -331,7 +331,7 @@ export function EmpireDashboardPage() {
   const hasLocalFeed = metroData?.metroId != null;
 
   return (
-    <Layout fullWidth>
+    <Layout fullWidth showTopBar>
       <div className={cn(
         'w-full min-w-0 px-2 sm:px-3 pb-4 lg:pb-10 flex flex-col h-full transition-[padding-top] duration-300 ease-out',
         mobileCollapsed ? 'pt-0' : 'pt-4',

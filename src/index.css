@@ -519,6 +519,15 @@
     }
   }
 
+  .empire-layout-main--no-topbar {
+    padding-top: calc(env(safe-area-inset-top) + 1rem);
+  }
+  @media (min-width: 1024px) {
+    .empire-layout-main--no-topbar {
+      padding-top: calc(env(safe-area-inset-top) + 1.5rem);
+    }
+  }
+
   .hud-bottom {
     @apply fixed left-0 right-0 z-40 flex justify-center;
     bottom: 0;
