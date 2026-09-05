@@ -22,6 +22,7 @@ import {
   HelpCircle,
   TrendingUp,
   Vote as VoteIcon,
+  Camera,
 } from 'lucide-react';
 import { Layout } from '@/shared/components/layout';
 import { GlassModal } from '@/shared/components/glass-modal';
@@ -686,20 +687,46 @@ export function ProfilePage() {
         <div className="space-y-5">
           {/* Identity */}
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-white/25 shadow-lg shadow-black/40 flex items-center justify-center" style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05), 0 8px 24px rgba(0,0,0,0.4)' }}>
-              {member.avatar_url ? (
-                <img src={member.avatar_url} alt="" className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full bg-gradient-to-br from-empire-black-750 to-empire-black-900 flex items-center justify-center">
-                  <span
-                    className="font-display font-bold text-xl text-white"
-                    style={{ textShadow: '0 1px 3px rgba(0,0,0,0.65)' }}
-                  >
-                    {initials}
-                  </span>
-                </div>
-              )}
-            </div>
+            <button
+              onClick={() => {
+                if (!showIdentityEdit) {
+                  setEditEthnicSelected(member.ethnic_identity?.[0] ?? 'black_african_american');
+                  setEditEthnicDetail(member.ethnic_identity_detail ?? '');
+                  setEditGender(member.gender ?? null);
+                  setEditGenderDetail(member.gender_detail ?? '');
+                  setEditDob(member.date_of_birth ?? '');
+                  setEditSupportRole(member.support_role ?? 'supporter');
+                  setEditSupportRoleDetail(member.support_role_detail ?? '');
+                  setEditIdentityError(null);
+                  setPhotoDataUrl(null);
+                  setPhotoError(null);
+                  setShowIdentityEdit(true);
+                }
+              }}
+              className="relative flex-shrink-0 group rounded-full"
+              aria-label="Edit profile photo"
+            >
+              <div
+                className="w-16 h-16 rounded-full overflow-hidden border-2 border-white/25 shadow-lg shadow-black/40 flex items-center justify-center transition-transform group-hover:scale-105"
+                style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05), 0 8px 24px rgba(0,0,0,0.4)' }}
+              >
+                {member.avatar_url ? (
+                  <img src={member.avatar_url} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-empire-black-750 to-empire-black-900 flex items-center justify-center">
+                    <span
+                      className="font-display font-bold text-xl text-white"
+                      style={{ textShadow: '0 1px 3px rgba(0,0,0,0.65)' }}
+                    >
+                      {initials}
+                    </span>
+                  </div>
+                )}
+              </div>
+              <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                <Camera className="w-5 h-5 text-white" />
+              </div>
+            </button>
             <div className="min-w-0">
               <h3 className="font-display text-lg font-bold text-ink-100 truncate">{member.display_name || 'Member'}</h3>
               <p className="text-xs text-ink-400 truncate">{member.email}</p>
