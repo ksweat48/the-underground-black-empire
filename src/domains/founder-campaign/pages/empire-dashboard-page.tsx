@@ -407,7 +407,7 @@ export function EmpireDashboardPage() {
               onTabChange={setActiveTab}
               hasLocalFeed={hasLocalFeed}
             />
-            <div ref={scrollRef} className="flex w-full flex-1 min-h-0 flex-col overflow-y-auto scrollbar-none">
+            <div ref={scrollRef} className="flex w-full flex-1 min-h-0 flex-col overflow-y-auto scrollbar-none pb-6">
               {activeTab === 'local' && data?.city_name && (
                 <CityCard
                   cityName={data.city_name}

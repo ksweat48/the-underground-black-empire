@@ -178,7 +178,7 @@ export function MarketPage() {
 
   return (
     <Layout fullWidth>
-      <div className="w-full min-w-0 max-w-[960px] mx-auto px-2 sm:px-3 pt-3 pb-4 space-y-4">
+      <div className="w-full min-w-0 max-w-[960px] mx-auto px-2 sm:px-3 pt-3 pb-24 space-y-4">
         {/* Scope toggle (centered) */}
         <div className="flex justify-center animate-fade-up" style={{ animationDelay: '50ms' }}>
           <div className="seg-control">

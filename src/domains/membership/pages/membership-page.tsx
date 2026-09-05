@@ -144,7 +144,7 @@ export function MembershipPage() {
 
   return (
     <Layout fullWidth>
-      <div className="membership-page w-full overflow-hidden pb-12">
+      <div className="membership-page w-full overflow-hidden pb-24">
         {tiers.length > 0 ? (
           <section
             className="membership-carousel relative pb-3 pt-8 sm:pb-7 sm:pt-12"

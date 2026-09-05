@@ -122,7 +122,7 @@ export function VotePage() {
 
   return (
     <Layout fullWidth>
-      <div className="max-w-[960px] mx-auto px-2 sm:px-3 pt-3 pb-4 space-y-4">
+      <div className="max-w-[960px] mx-auto px-2 sm:px-3 pt-3 pb-24 space-y-4">
         {/* VP & Credits Summary Bar */}
         <div className="frame-utility p-3 flex items-center justify-between gap-3 animate-fade-up" style={{ animationDelay: '25ms' }}>
           <div className="flex items-center gap-2">

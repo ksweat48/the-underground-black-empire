@@ -142,7 +142,7 @@ export function ListingDetailPage() {
 
   return (
     <Layout fullWidth>
-      <div className="max-w-[960px] mx-auto px-2 sm:px-3 pt-3 pb-4 space-y-4">
+      <div className="max-w-[960px] mx-auto px-2 sm:px-3 pt-3 pb-24 space-y-4">
         {/* Back button */}
         <button
           onClick={() => navigate('/market')}
