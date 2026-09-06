@@ -1613,12 +1613,16 @@
   background: linear-gradient(90deg, transparent, rgba(74, 31, 74, 0.35), rgba(15, 107, 80, 0.35), transparent);
 }
 
-/* ---- Screen 1 full-bleed background ---- */
-.screen-1-bg {
-  background-image: url('/images/screens/screen_1/screen_01_full_image.png');
+/* ---- Landing shared background image ---- */
+.screen-1-bg,
+.screen-2-bg,
+.screen-3-bg,
+.screen-4-bg {
+  background-image: url('/Yahweh_city_background_image.png');
   background-size: cover;
-  background-position: center bottom;
+  background-position: center;
   background-repeat: no-repeat;
+  background-attachment: fixed;
 }
 
 .screen-1-overlay {
@@ -1634,14 +1638,7 @@
   pointer-events: none;
 }
 
-/* ---- Screen 2 full-bleed background ---- */
-.screen-2-bg {
-  background-image: url('/images/screens/screen_2/reality_page/justice_image.png');
-  background-size: cover;
-  background-position: center bottom;
-  background-repeat: no-repeat;
-}
-
+/* ---- Screen 2 overlay ---- */
 .screen-2-overlay {
   position: absolute;
   inset: 0;
@@ -1655,14 +1652,7 @@
   pointer-events: none;
 }
 
-/* ---- Screen 3 full-bleed background ---- */
-.screen-3-bg {
-  background-image: url('/images/screens/screen_3/the_shift_image_3.png');
-  background-size: cover;
-  background-position: center bottom;
-  background-repeat: no-repeat;
-}
-
+/* ---- Screen 3 overlay ---- */
 .screen-3-overlay {
   position: absolute;
   inset: 0;
@@ -1676,14 +1666,7 @@
   pointer-events: none;
 }
 
-/* ---- Screen 4 full-bleed background ---- */
-.screen-4-bg {
-  background-image: url('/images/screens/screen_4/screen_4.png');
-  background-size: cover;
-  background-position: center bottom;
-  background-repeat: no-repeat;
-}
-
+/* ---- Screen 4 overlay ---- */
 .screen-4-overlay {
   position: absolute;
   inset: 0;
