@@ -69,6 +69,12 @@ import {
 } from '@/shared/components/support-role-selector';
 import { ProfessionAutocomplete } from '@/shared/components/profession-autocomplete';
 import { parseSupabaseError } from '@/shared/errors';
+import { Scale, Lock as LockIcon } from 'lucide-react';
+import {
+  fetchLeadershipEligibility,
+  toggleLeadershipOptIn,
+  type LeadershipEligibility,
+} from '@/domains/leadership/services';
 
 /* ---------- Types ---------- */
 
@@ -145,6 +151,9 @@ export function ProfilePage() {
   const [showPhotoEdit, setShowPhotoEdit] = useState(false);
   const [photoSaving, setPhotoSaving] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [leadershipEligibility, setLeadershipEligibility] = useState<LeadershipEligibility | null>(null);
+  const [leadershipToggling, setLeadershipToggling] = useState(false);
+  const [leadershipError, setLeadershipError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const memberId = session?.user.id ?? null;
@@ -236,6 +245,12 @@ export function ProfilePage() {
     fetchMyListings(memberId).then(setMyListings).catch(() => {});
     fetchSavedListings(memberId).then(setSavedListings).catch(() => {});
     fetchMyMembership(memberId).then(setMyMembership).catch(() => {});
+  }, [memberId, sessionVersion]);
+
+  // Fetch leadership eligibility
+  useEffect(() => {
+    if (!memberId) return;
+    fetchLeadershipEligibility(memberId).then(setLeadershipEligibility).catch(() => {});
   }, [memberId, sessionVersion]);
 
   // Close menu on outside click
@@ -452,6 +467,85 @@ export function ProfilePage() {
                   <span className="progress-shimmer" aria-hidden="true" />
                 </div>
               </div>
+            </div>
+          )}
+        </section>
+
+        {/* Leadership Card */}
+        <section className="glass-card p-4 animate-fade-up" style={{ animationDelay: '100ms' }}>
+          <div className="flex items-center gap-2 mb-3">
+            <Scale className="w-4 h-4 text-ink-400" />
+            <h2 className="font-display text-sm font-semibold text-ink-100">Leadership</h2>
+          </div>
+          {leadershipEligibility === null ? (
+            <div className="flex items-center justify-center py-3">
+              <Loader2 className="w-4 h-4 text-ink-400 animate-spin" />
+            </div>
+          ) : !leadershipEligibility.eligible ? (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <LockIcon className="w-4 h-4 text-ink-500" />
+                <p className="text-sm font-medium text-ink-300">Locked</p>
+              </div>
+              <p className="text-xs text-ink-400">
+                Reach the required Level, verification, membership status, and good standing to become eligible.
+              </p>
+              {leadershipEligibility.reasons.length > 0 && (
+                <ul className="text-xs text-ink-500 space-y-1 mt-2">
+                  {leadershipEligibility.reasons.map((reason) => (
+                    <li key={reason} className="flex items-start gap-1.5">
+                      <span className="text-ink-600 mt-0.5">-</span>
+                      {reason}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-ink-100">Open to Leadership Nominations</p>
+                  <p className="text-xs text-ink-400 mt-0.5">
+                    Turn this on to let members in your Metro nominate you for leadership.
+                  </p>
+                </div>
+                <button
+                  onClick={async () => {
+                    setLeadershipToggling(true);
+                    setLeadershipError(null);
+                    try {
+                      const newState = !leadershipEligibility.opt_in;
+                      await toggleLeadershipOptIn(newState);
+                      setLeadershipEligibility({ ...leadershipEligibility, opt_in: newState });
+                    } catch (err) {
+                      const message = err instanceof Error ? err.message : 'Failed to toggle';
+                      setLeadershipError(message);
+                    } finally {
+                      setLeadershipToggling(false);
+                    }
+                  }}
+                  disabled={leadershipToggling}
+                  className={cn(
+                    'relative inline-flex h-7 w-12 items-center rounded-full transition-colors shrink-0',
+                    leadershipEligibility.opt_in ? 'bg-emerald-600' : 'bg-ink-700'
+                  )}
+                  aria-label="Toggle leadership nominations"
+                >
+                  <span
+                    className={cn(
+                      'inline-block h-5 w-5 transform rounded-full bg-white transition-transform',
+                      leadershipEligibility.opt_in ? 'translate-x-6' : 'translate-x-1'
+                    )}
+                  />
+                </button>
+              </div>
+              <p className="text-[11px] text-ink-500 italic">
+                This does not automatically make you a candidate. It means you are willing to serve if your community chooses you.
+              </p>
+              {leadershipError && (
+                <p className="text-xs text-crimson-300">{leadershipError}</p>
+              )}
             </div>
           )}
         </section>

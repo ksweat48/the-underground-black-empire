@@ -1,5 +1,4 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
   Vote as VoteIcon,
   Check,
@@ -11,25 +10,127 @@ import {
   Coins,
   Zap,
   Info,
+  Scale,
+  Landmark,
+  Crown,
+  ChevronRight,
+  Award,
+  TrendingUp,
+  Star,
 } from 'lucide-react';
 import { Layout } from '@/shared/components/layout';
 import { GlassModal } from '@/shared/components/glass-modal';
 import { cn } from '@/shared/cn';
+import { supabase } from '@/shared/supabase-client';
 import { useAuth } from '@/domains/identity/auth-context';
 import {
   fetchVotes,
   castVote,
   fetchVotingCredits,
   fetchVotingPower,
+  fetchMemberCityInfo,
   type Vote,
 } from '@/domains/market/services';
-import { BALLOT_CREDIT_CAP } from '@/config/progression-rules';
+import { BALLOT_CREDIT_CAP, getLevelFromInfluence } from '@/config/progression-rules';
+import {
+  fetchActiveCycle,
+  fetchNominationCandidates,
+  submitNomination,
+  fetchMyNominationCount,
+  fetchFinalists,
+  castLeadershipBallot,
+  fetchMyBallot,
+  fetchMetroCouncil,
+} from '@/domains/leadership/services';
+import type {
+  LeadershipCycle,
+  NominationCandidate,
+  LeadershipFinalist,
+  MetroCouncilMember,
+} from '@/domains/leadership/types';
+
+type Tab = 'initiatives' | 'leadership';
 
 export function VotePage() {
   const { session, sessionVersion } = useAuth();
-  const navigate = useNavigate();
   const userId = session?.user.id ?? '';
+  const [tab, setTab] = useState<Tab>('initiatives');
 
+  return (
+    <Layout fullWidth>
+      <div className="max-w-[960px] mx-auto px-2 sm:px-3 pt-3 pb-24 space-y-4">
+        <VoteHeader tab={tab} onTabChange={setTab} />
+        {tab === 'initiatives' ? (
+          <InitiativesTab userId={userId} sessionVersion={sessionVersion} />
+        ) : (
+          <LeadershipTab userId={userId} sessionVersion={sessionVersion} />
+        )}
+      </div>
+    </Layout>
+  );
+}
+
+// ==================== Header ====================
+
+function VoteHeader({ tab, onTabChange }: { tab: Tab; onTabChange: (t: Tab) => void }) {
+  return (
+    <div className="space-y-3 animate-fade-up">
+      <div className="text-center">
+        <h1 className="font-display text-xl font-bold text-empire-ivory uppercase tracking-wider">
+          The Voting Booth
+        </h1>
+        <p className="text-xs text-empire-text-muted mt-1">
+          Your voice shapes the direction of your Metro and the Empire.
+        </p>
+      </div>
+      <div className="flex items-center gap-1 p-1 frame-utility">
+        <TabButton
+          active={tab === 'initiatives'}
+          onClick={() => onTabChange('initiatives')}
+          icon={VoteIcon}
+          label="Initiatives"
+        />
+        <TabButton
+          active={tab === 'leadership'}
+          onClick={() => onTabChange('leadership')}
+          icon={Scale}
+          label="Leadership"
+        />
+      </div>
+    </div>
+  );
+}
+
+function TabButton({
+  active,
+  onClick,
+  icon: Icon,
+  label,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        'flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-display font-semibold uppercase tracking-wider transition-all',
+        active
+          ? 'bg-empire-gold text-white shadow-sm'
+          : 'text-empire-text-secondary hover:text-empire-ivory'
+      )}
+    >
+      <Icon className="w-4 h-4" />
+      {label}
+    </button>
+  );
+}
+
+// ==================== Initiatives Tab ====================
+
+function InitiativesTab({ userId, sessionVersion }: { userId: string; sessionVersion: number }) {
   const [votes, setVotes] = useState<Vote[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedVote, setSelectedVote] = useState<Vote | null>(null);
@@ -112,80 +213,76 @@ export function VotePage() {
 
   if (loading) {
     return (
-      <Layout fullWidth>
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="w-6 h-6 text-empire-text-muted animate-spin" />
-        </div>
-      </Layout>
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="w-6 h-6 text-empire-text-muted animate-spin" />
+      </div>
     );
   }
 
   return (
-    <Layout fullWidth>
-      <div className="max-w-[960px] mx-auto px-2 sm:px-3 pt-3 pb-24 space-y-4">
-        {/* VP & Credits Summary Bar */}
-        <div className="frame-utility p-3 flex items-center justify-between gap-3 animate-fade-up" style={{ animationDelay: '25ms' }}>
-          <div className="flex items-center gap-2">
-            <Zap className="w-4 h-4 text-empire-gold" />
-            <div>
-              <p className="text-xs font-semibold text-empire-ivory">Voting Power</p>
-              <p className="text-lg font-display font-bold text-empire-gold tabular-nums">{votingPower.toFixed(2)}×</p>
-            </div>
-          </div>
-          <div className="w-px h-10 bg-ink-700/30" />
-          <div className="flex items-center gap-2">
-            <Coins className="w-4 h-4 text-empire-text-secondary" />
-            <div>
-              <p className="text-xs font-semibold text-empire-ivory">Voting Credits</p>
-              <p className="text-lg font-display font-bold text-empire-text-secondary tabular-nums">{votingCredits}</p>
-            </div>
+    <>
+      {/* VP & Credits Summary Bar */}
+      <div className="frame-utility p-3 flex items-center justify-between gap-3 animate-fade-up" style={{ animationDelay: '25ms' }}>
+        <div className="flex items-center gap-2">
+          <Zap className="w-4 h-4 text-empire-gold" />
+          <div>
+            <p className="text-xs font-semibold text-empire-ivory">Voting Power</p>
+            <p className="text-lg font-display font-bold text-empire-gold tabular-nums">{votingPower.toFixed(2)}x</p>
           </div>
         </div>
+        <div className="w-px h-10 bg-ink-700/30" />
+        <div className="flex items-center gap-2">
+          <Coins className="w-4 h-4 text-empire-text-secondary" />
+          <div>
+            <p className="text-xs font-semibold text-empire-ivory">Voting Credits</p>
+            <p className="text-lg font-display font-bold text-empire-text-secondary tabular-nums">{votingCredits}</p>
+          </div>
+        </div>
+      </div>
 
-        {/* Active votes */}
-        <section className="animate-fade-up" style={{ animationDelay: '50ms' }}>
+      {/* Active votes */}
+      <section className="animate-fade-up" style={{ animationDelay: '50ms' }}>
+        <div className="flex items-center gap-2 mb-3">
+          <div className="w-2 h-2 rounded-full bg-empire-success animate-pulse" />
+          <h2 className="font-display text-sm font-semibold text-empire-ivory uppercase tracking-wider">
+            Active Votes
+          </h2>
+        </div>
+        {activeVotes.length === 0 ? (
+          <div className="frame-utility p-6 text-center">
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-ink-800/20 border border-ink-700/20 mb-3">
+              <VoteIcon className="w-5 h-5 text-empire-text-muted" />
+            </div>
+            <p className="text-sm font-medium text-empire-text-secondary mb-1">No active votes</p>
+            <p className="text-xs text-empire-text-muted">
+              Community decisions will appear here when they're open for voting.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {activeVotes.map((vote) => (
+              <VoteCard key={vote.id} vote={vote} onOpen={() => handleOpenVote(vote)} />
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* Completed votes */}
+      {completedVotes.length > 0 && (
+        <section className="animate-fade-up" style={{ animationDelay: '100ms' }}>
           <div className="flex items-center gap-2 mb-3">
-            <div className="w-2 h-2 rounded-full bg-empire-success animate-pulse" />
-            <h2 className="font-display text-sm font-semibold text-empire-ivory uppercase tracking-wider">
-              Active Votes
+            <Clock className="w-4 h-4 text-empire-text-muted" />
+            <h2 className="font-display text-sm font-semibold text-empire-text-muted uppercase tracking-wider">
+              Recently Completed
             </h2>
           </div>
-          {activeVotes.length === 0 ? (
-            <div className="frame-utility p-6 text-center">
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-ink-800/20 border border-ink-700/20 mb-3">
-                <VoteIcon className="w-5 h-5 text-empire-text-muted" />
-              </div>
-              <p className="text-sm font-medium text-empire-text-secondary mb-1">No active votes</p>
-              <p className="text-xs text-empire-text-muted">
-                Community decisions will appear here when they're open for voting.
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {activeVotes.map((vote) => (
-                <VoteCard key={vote.id} vote={vote} onOpen={() => handleOpenVote(vote)} />
-              ))}
-            </div>
-          )}
+          <div className="space-y-2">
+            {completedVotes.map((vote) => (
+              <CompletedVoteRow key={vote.id} vote={vote} />
+            ))}
+          </div>
         </section>
-
-        {/* Completed votes */}
-        {completedVotes.length > 0 && (
-          <section className="animate-fade-up" style={{ animationDelay: '100ms' }}>
-            <div className="flex items-center gap-2 mb-3">
-              <Clock className="w-4 h-4 text-empire-text-muted" />
-              <h2 className="font-display text-sm font-semibold text-empire-text-muted uppercase tracking-wider">
-                Recently Completed
-              </h2>
-            </div>
-            <div className="space-y-2">
-              {completedVotes.map((vote) => (
-                <CompletedVoteRow key={vote.id} vote={vote} />
-              ))}
-            </div>
-          </section>
-        )}
-      </div>
+      )}
 
       {/* Vote confirmation modal */}
       <GlassModal
@@ -211,8 +308,6 @@ export function VotePage() {
             {selectedVote.description && (
               <p className="text-sm text-empire-text-secondary">{selectedVote.description}</p>
             )}
-
-            {/* Eligibility & timing */}
             <div className="flex flex-wrap gap-2">
               <span className="badge-gold text-[10px]">
                 <Users className="w-3 h-3" />
@@ -228,8 +323,6 @@ export function VotePage() {
                 </span>
               )}
             </div>
-
-            {/* Already voted indicator */}
             {selectedVote.user_choice && (
               <div className="frame-utility p-3 border-empire-success/20 bg-empire-success/5">
                 <div className="flex items-center gap-2">
@@ -240,13 +333,11 @@ export function VotePage() {
                 </div>
                 {selectedVote.user_effective_weight !== undefined && (
                   <p className="text-[10px] text-empire-text-muted mt-1 pl-6">
-                    Your vote weight: {selectedVote.user_effective_weight.toFixed(2)} ({selectedVote.user_credits_used} credits × {selectedVote.user_voting_power?.toFixed(2)} VP)
+                    Your vote weight: {selectedVote.user_effective_weight.toFixed(2)} ({selectedVote.user_credits_used} credits x {selectedVote.user_voting_power?.toFixed(2)} VP)
                   </p>
                 )}
               </div>
             )}
-
-            {/* Choices */}
             <div className="space-y-2">
               {selectedVote.choices.map((choice) => (
                 <button
@@ -269,8 +360,6 @@ export function VotePage() {
                 </button>
               ))}
             </div>
-
-            {/* Credit selector (only if not already voted) */}
             {!selectedVote.user_choice && (
               <>
                 <div className="frame-utility p-3 space-y-3">
@@ -317,8 +406,6 @@ export function VotePage() {
                     </p>
                   )}
                 </div>
-
-                {/* Effective weight preview */}
                 <div className="flex items-center justify-between p-3 rounded-xl bg-empire-gold/5 border border-empire-gold/15">
                   <div className="flex items-center gap-2">
                     <Info className="w-3.5 h-3.5 text-empire-gold" />
@@ -329,18 +416,14 @@ export function VotePage() {
                   </span>
                 </div>
                 <p className="text-[10px] text-empire-text-muted text-center">
-                  {creditsToUse} credits × {votingPower.toFixed(2)} VP = {effectiveWeight.toFixed(2)} weighted votes
+                  {creditsToUse} credits x {votingPower.toFixed(2)} VP = {effectiveWeight.toFixed(2)} weighted votes
                 </p>
-
-                {/* Error */}
                 {voteError && (
                   <p className="text-sm text-crimson-300 flex items-center gap-1.5">
                     <AlertCircle className="w-4 h-4" />
                     {voteError}
                   </p>
                 )}
-
-                {/* Submit */}
                 <button
                   onClick={handleCastVote}
                   disabled={!selectedChoice || submitting || votingCredits < 1}
@@ -351,7 +434,7 @@ export function VotePage() {
                   ) : (
                     <>
                       <Check className="w-4 h-4" />
-                      Confirm Vote — Final
+                      Confirm Vote -- Final
                     </>
                   )}
                 </button>
@@ -363,11 +446,571 @@ export function VotePage() {
           </div>
         ) : null}
       </GlassModal>
-    </Layout>
+    </>
   );
 }
 
-// ==================== Vote Card ====================
+// ==================== Leadership Tab ====================
+
+function LeadershipTab({ userId, sessionVersion }: { userId: string; sessionVersion: number }) {
+  const [loading, setLoading] = useState(true);
+  const [cycle, setCycle] = useState<LeadershipCycle | null>(null);
+  const [metroName, setMetroName] = useState<string | null>(null);
+  const [candidates, setCandidates] = useState<NominationCandidate[]>([]);
+  const [finalists, setFinalists] = useState<LeadershipFinalist[]>([]);
+  const [council, setCouncil] = useState<MetroCouncilMember[]>([]);
+  const [myNominations, setMyNominations] = useState(0);
+  const [ballotSubmitted, setBallotSubmitted] = useState(false);
+  const [selectedCandidates, setSelectedCandidates] = useState<string[]>([]);
+  const [nomineeForNomination, setNomineeForNomination] = useState<NominationCandidate | null>(null);
+  const [nominationSubmitting, setNominationSubmitting] = useState(false);
+  const [nominationError, setNominationError] = useState<string | null>(null);
+  const [nominationSuccess, setNominationSuccess] = useState(false);
+  const [ballotSubmitting, setBallotSubmitting] = useState(false);
+  const [ballotError, setBallotError] = useState<string | null>(null);
+  const [ballotSuccess, setBallotSuccess] = useState(false);
+
+  const load = useCallback(async () => {
+    if (!userId) { setLoading(false); return; }
+    setLoading(true);
+    try {
+      const cityInfo = await fetchMemberCityInfo(userId);
+      if (cityInfo.metroId) {
+        const { data: metro } = await supabase
+          .from('metros')
+          .select('name')
+          .eq('id', cityInfo.metroId)
+          .maybeSingle();
+        setMetroName((metro as { name: string } | null)?.name ?? 'Your Metro');
+      }
+
+      const activeCycle = await fetchActiveCycle(cityInfo.metroId);
+      setCycle(activeCycle);
+
+      if (activeCycle?.phase === 'nomination') {
+        const [cands, myNoms] = await Promise.all([
+          fetchNominationCandidates(cityInfo.metroId, userId),
+          fetchMyNominationCount(userId),
+        ]);
+        setCandidates(cands);
+        setMyNominations(myNoms);
+      } else if (activeCycle?.phase === 'election') {
+        const [fins, myBallot] = await Promise.all([
+          fetchFinalists(activeCycle.id),
+          fetchMyBallot(activeCycle.id, userId),
+        ]);
+        setFinalists(fins);
+        setBallotSubmitted(!!myBallot);
+        if (myBallot) setSelectedCandidates(myBallot.selected_candidate_ids);
+      } else {
+        const councilData = await fetchMetroCouncil(cityInfo.metroId);
+        setCouncil(councilData);
+        if (activeCycle?.phase === 'closed') {
+          const fins = await fetchFinalists(activeCycle.id);
+          setFinalists(fins);
+        }
+      }
+    } catch {
+      // ignore
+    } finally {
+      setLoading(false);
+    }
+  }, [userId]);
+
+  useEffect(() => { load(); }, [load, sessionVersion]);
+
+  const handleNominate = async () => {
+    if (!nomineeForNomination) return;
+    setNominationSubmitting(true);
+    setNominationError(null);
+    setNominationSuccess(false);
+    try {
+      await submitNomination(nomineeForNomination.member_id);
+      setNominationSuccess(true);
+      setMyNominations((n) => n + 1);
+      setCandidates((prev) =>
+        prev.map((c) =>
+          c.member_id === nomineeForNomination.member_id
+            ? { ...c, has_nominated: true, nomination_count: c.nomination_count + 1 }
+            : c
+        )
+      );
+      setTimeout(() => {
+        setNomineeForNomination(null);
+        setNominationSuccess(false);
+      }, 2000);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to nominate';
+      setNominationError(message);
+    } finally {
+      setNominationSubmitting(false);
+    }
+  };
+
+  const handleCastBallot = async () => {
+    if (!cycle || selectedCandidates.length < 1) return;
+    setBallotSubmitting(true);
+    setBallotError(null);
+    setBallotSuccess(false);
+    try {
+      await castLeadershipBallot(cycle.id, selectedCandidates);
+      setBallotSuccess(true);
+      setBallotSubmitted(true);
+      setTimeout(() => setBallotSuccess(false), 3000);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to cast ballot';
+      setBallotError(message);
+    } finally {
+      setBallotSubmitting(false);
+    }
+  };
+
+  const toggleCandidateSelection = (memberId: string) => {
+    setSelectedCandidates((prev) => {
+      if (prev.includes(memberId)) return prev.filter((id) => id !== memberId);
+      if (prev.length >= (cycle?.seats ?? 7)) return prev;
+      return [...prev, memberId];
+    });
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="w-6 h-6 text-empire-text-muted animate-spin" />
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {/* Metro header */}
+      <div className="frame-command p-4 animate-fade-up" style={{ animationDelay: '25ms' }}>
+        <div className="flex items-center gap-3">
+          <div className="shrink-0 w-10 h-10 rounded-lg bg-empire-gold/10 border border-empire-gold/20 flex items-center justify-center">
+            <Landmark className="w-5 h-5 text-empire-gold" />
+          </div>
+          <div>
+            <h2 className="font-display text-sm font-bold text-empire-ivory uppercase tracking-wider">
+              {metroName ? `${metroName} Metro` : 'Your Metro'} Leadership
+            </h2>
+            <p className="text-xs text-empire-text-muted mt-0.5">
+              {cycle ? getPhaseDescription(cycle.phase) : 'No active election cycle'}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* No cycle */}
+      {!cycle && (
+        <div className="frame-utility p-6 text-center animate-fade-up" style={{ animationDelay: '50ms' }}>
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-ink-800/20 border border-ink-700/20 mb-3">
+            <Scale className="w-5 h-5 text-empire-text-muted" />
+          </div>
+          <p className="text-sm font-medium text-empire-text-secondary mb-1">No active leadership election</p>
+          <p className="text-xs text-empire-text-muted">
+            When a nomination period opens, eligible members who have opted in will appear here.
+          </p>
+        </div>
+      )}
+
+      {/* Nomination phase */}
+      {cycle?.phase === 'nomination' && (
+        <section className="space-y-3 animate-fade-up" style={{ animationDelay: '50ms' }}>
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-empire-success animate-pulse" />
+              <h3 className="font-display text-sm font-semibold text-empire-ivory uppercase tracking-wider">
+                Nominations Open
+              </h3>
+            </div>
+            <span className="badge-steel text-[10px]">
+              {myNominations}/3 used
+            </span>
+          </div>
+          <p className="text-xs text-empire-text-muted">
+            Help identify the members you trust to represent your Metro. You have 3 nominations per cycle.
+          </p>
+
+          {candidates.length === 0 ? (
+            <div className="frame-utility p-6 text-center">
+              <p className="text-sm font-medium text-empire-text-secondary mb-1">No candidates yet</p>
+              <p className="text-xs text-empire-text-muted">
+                Members who have opted in to leadership will appear here as nominees.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {candidates.map((candidate) => (
+                <NominationCard
+                  key={candidate.member_id}
+                  candidate={candidate}
+                  canNominate={myNominations < 3 && !candidate.has_nominated}
+                  onNominate={() => {
+                    setNomineeForNomination(candidate);
+                    setNominationError(null);
+                    setNominationSuccess(false);
+                  }}
+                />
+              ))}
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* Election phase */}
+      {cycle?.phase === 'election' && (
+        <section className="space-y-3 animate-fade-up" style={{ animationDelay: '50ms' }}>
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-empire-gold animate-pulse" />
+            <h3 className="font-display text-sm font-semibold text-empire-ivory uppercase tracking-wider">
+              Your Metro's Finalists
+            </h3>
+          </div>
+          <p className="text-xs text-empire-text-muted">
+            These {finalists.length} members received the strongest community support and have advanced to the election.
+            Select up to {cycle.seats} candidates. No credits are used -- one member, one ballot.
+          </p>
+
+          {ballotSubmitted && !ballotSuccess && (
+            <div className="frame-utility p-3 border-empire-success/20 bg-empire-success/5">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-empire-success" />
+                <p className="text-xs text-empire-success font-medium">
+                  Your ballot has been recorded. You selected {selectedCandidates.length} candidates.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {ballotSuccess && (
+            <div className="frame-utility p-3 border-empire-success/20 bg-empire-success/5 animate-fade-up">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-empire-success" />
+                <p className="text-xs text-empire-success font-medium">Ballot submitted successfully.</p>
+              </div>
+            </div>
+          )}
+
+          {finalists.length === 0 ? (
+            <div className="frame-utility p-6 text-center">
+              <p className="text-sm font-medium text-empire-text-secondary mb-1">No finalists yet</p>
+              <p className="text-xs text-empire-text-muted">
+                Finalists will appear here when the nomination period closes.
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="space-y-3">
+                {finalists.map((finalist) => (
+                  <FinalistCard
+                    key={finalist.id}
+                    finalist={finalist}
+                    selected={selectedCandidates.includes(finalist.member_id)}
+                    disabled={ballotSubmitted}
+                    onToggle={() => toggleCandidateSelection(finalist.member_id)}
+                  />
+                ))}
+              </div>
+
+              {!ballotSubmitted && (
+                <>
+                  {ballotError && (
+                    <p className="text-sm text-crimson-300 flex items-center gap-1.5">
+                      <AlertCircle className="w-4 h-4" />
+                      {ballotError}
+                    </p>
+                  )}
+                  <div className="flex items-center justify-between gap-3 frame-utility p-3">
+                    <span className="text-xs text-empire-text-secondary">
+                      {selectedCandidates.length} of {cycle.seats} selected
+                    </span>
+                    <button
+                      onClick={handleCastBallot}
+                      disabled={selectedCandidates.length < 1 || ballotSubmitting}
+                      className="btn-primary text-sm py-2 px-4 disabled:opacity-50"
+                    >
+                      {ballotSubmitting ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <>
+                          <Check className="w-4 h-4" />
+                          Submit Ballot
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </>
+              )}
+            </>
+          )}
+        </section>
+      )}
+
+      {/* Closed phase — show council */}
+      {cycle?.phase === 'closed' && (
+        <section className="space-y-3 animate-fade-up" style={{ animationDelay: '50ms' }}>
+          {council.length > 0 ? (
+            <>
+              <div className="flex items-center gap-2">
+                <Crown className="w-4 h-4 text-empire-gold" />
+                <h3 className="font-display text-sm font-semibold text-empire-ivory uppercase tracking-wider">
+                  Your Metro Council
+                </h3>
+              </div>
+              <p className="text-xs text-empire-text-muted">
+                These {council.length} members were elected by your Metro to serve as council representatives.
+              </p>
+              <div className="space-y-3">
+                {council.map((member) => (
+                  <CouncilCard key={member.member_id} member={member} />
+                ))}
+              </div>
+            </>
+          ) : (
+            <div className="frame-utility p-6 text-center">
+              <p className="text-sm font-medium text-empire-text-secondary mb-1">Election results pending</p>
+              <p className="text-xs text-empire-text-muted">
+                Council members will be announced once the results are finalized.
+              </p>
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* Nomination confirmation modal */}
+      <GlassModal
+        open={!!nomineeForNomination}
+        onClose={() => { setNomineeForNomination(null); setNominationError(null); setNominationSuccess(false); }}
+        title="Nominate for Leadership"
+      >
+        {nominationSuccess ? (
+          <div className="text-center py-8 space-y-3">
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-empire-success/10 border border-empire-success/20">
+              <CheckCircle2 className="w-7 h-7 text-empire-success" />
+            </div>
+            <p className="text-sm font-medium text-empire-text-secondary">Nomination submitted.</p>
+          </div>
+        ) : nomineeForNomination ? (
+          <div className="space-y-4">
+            <p className="text-sm text-empire-text-secondary">
+              Do you believe {nomineeForNomination.display_name ?? nomineeForNomination.email.split('@')[0]} would be a strong leader and supporter of the Empire?
+            </p>
+            <div className="flex items-center gap-3 p-3 frame-utility">
+              <Avatar member={nomineeForNomination} />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-empire-ivory truncate">
+                  {nomineeForNomination.display_name ?? nomineeForNomination.email.split('@')[0]}
+                </p>
+                <p className="text-xs text-empire-text-muted">
+                  Level {nomineeForNomination.level} - {nomineeForNomination.influence.toLocaleString()} Influence
+                </p>
+              </div>
+            </div>
+            {nominationError && (
+              <p className="text-sm text-crimson-300 flex items-center gap-1.5">
+                <AlertCircle className="w-4 h-4" />
+                {nominationError}
+              </p>
+            )}
+            <div className="flex gap-2">
+              <button
+                onClick={() => { setNomineeForNomination(null); setNominationError(null); }}
+                className="btn-secondary flex-1 text-sm py-2.5"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleNominate}
+                disabled={nominationSubmitting}
+                className="btn-primary flex-1 text-sm py-2.5 disabled:opacity-50"
+              >
+                {nominationSubmitting ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <>
+                    <Scale className="w-4 h-4" />
+                    Nominate
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        ) : null}
+      </GlassModal>
+    </>
+  );
+}
+
+// ==================== Cards ====================
+
+function NominationCard({
+  candidate,
+  canNominate,
+  onNominate,
+}: {
+  candidate: NominationCandidate;
+  canNominate: boolean;
+  onNominate: () => void;
+}) {
+  return (
+    <div className="frame-command p-4 space-y-3">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          <Avatar member={candidate} />
+          <div className="flex-1 min-w-0">
+            <h4 className="font-display text-sm font-semibold text-empire-ivory truncate">
+              {candidate.display_name ?? candidate.email.split('@')[0]}
+            </h4>
+            <p className="text-xs text-empire-text-muted">
+              Level {candidate.level} - {candidate.influence.toLocaleString()} Influence
+            </p>
+          </div>
+        </div>
+        <div className="text-right shrink-0">
+          <p className="text-lg font-display font-bold text-empire-gold tabular-nums">
+            {candidate.nomination_count}
+          </p>
+          <p className="text-[10px] text-empire-text-muted uppercase tracking-wider">Nominations</p>
+        </div>
+      </div>
+      <button
+        onClick={onNominate}
+        disabled={!canNominate}
+        className={cn(
+          'w-full text-sm py-2.5 rounded-lg font-medium transition-all flex items-center justify-center gap-2',
+          candidate.has_nominated
+            ? 'frame-utility text-empire-success cursor-default'
+            : canNominate
+            ? 'btn-primary'
+            : 'btn-secondary opacity-50 cursor-not-allowed'
+        )}
+      >
+        {candidate.has_nominated ? (
+          <>
+            <CheckCircle2 className="w-4 h-4" />
+            Nominated
+          </>
+        ) : (
+          <>
+            <Scale className="w-4 h-4" />
+            Nominate
+          </>
+        )}
+      </button>
+    </div>
+  );
+}
+
+function FinalistCard({
+  finalist,
+  selected,
+  disabled,
+  onToggle,
+}: {
+  finalist: LeadershipFinalist;
+  selected: boolean;
+  disabled: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <button
+      onClick={onToggle}
+      disabled={disabled}
+      className={cn(
+        'w-full text-left p-4 rounded-lg border transition-all',
+        selected
+          ? 'bg-empire-gold/10 border-empire-gold/25'
+          : 'frame-command hover:border-empire-gold/15',
+        disabled && 'opacity-60 cursor-not-allowed'
+      )}
+    >
+      <div className="flex items-start gap-3">
+        <div className={cn(
+          'shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center mt-0.5',
+          selected ? 'bg-empire-gold border-empire-gold' : 'border-empire-text-muted'
+        )}>
+          {selected && <Check className="w-3 h-3 text-white" />}
+        </div>
+        <div className="flex-1 min-w-0 space-y-2">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 min-w-0">
+              <Avatar member={finalist} />
+              <div className="min-w-0">
+                <h4 className="font-display text-sm font-semibold text-empire-ivory truncate">
+                  {finalist.display_name ?? finalist.email.split('@')[0]}
+                </h4>
+                <p className="text-xs text-empire-text-muted">
+                  Level {finalist.level} - {finalist.influence.toLocaleString()} Influence - {finalist.nomination_count} nominations
+                </p>
+              </div>
+            </div>
+          </div>
+          {finalist.service_statement && (
+            <p className="text-xs text-empire-text-secondary italic pl-1 border-l-2 border-empire-gold/20 ml-1">
+              {finalist.service_statement}
+            </p>
+          )}
+        </div>
+      </div>
+    </button>
+  );
+}
+
+function CouncilCard({ member }: { member: MetroCouncilMember }) {
+  return (
+    <div className="frame-command p-4 flex items-center gap-3">
+      <div className="shrink-0 w-10 h-10 rounded-lg bg-empire-gold/10 border border-empire-gold/20 flex items-center justify-center">
+        <Crown className="w-5 h-5 text-empire-gold" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <h4 className="font-display text-sm font-semibold text-empire-ivory truncate">
+          {member.display_name ?? member.email.split('@')[0]}
+        </h4>
+        <p className="text-xs text-empire-text-muted">
+          Level {member.level} - {member.influence.toLocaleString()} Influence
+        </p>
+      </div>
+      <div className="text-right shrink-0">
+        <p className="text-xs font-bold text-empire-gold tabular-nums">Seat {member.seat_number}</p>
+        <p className="text-[10px] text-empire-text-muted">{member.vote_count} votes</p>
+      </div>
+    </div>
+  );
+}
+
+// ==================== Shared ====================
+
+function Avatar({ member }: { member: { avatar_url: string | null; display_name: string | null; email: string } }) {
+  const name = member.display_name ?? member.email.split('@')[0];
+  const initials = getInitials(name);
+  return (
+    <div className="shrink-0 w-10 h-10 rounded-full overflow-hidden flex items-center justify-center bg-ink-800/20 border border-ink-700/20">
+      {member.avatar_url ? (
+        <img src={member.avatar_url} alt="" className="w-full h-full object-cover" />
+      ) : (
+        <span className="font-display font-bold text-sm text-empire-text-secondary">{initials}</span>
+      )}
+    </div>
+  );
+}
+
+function getInitials(name: string): string {
+  const parts = name.split(/[\s@._-]/).filter(Boolean);
+  if (parts.length === 0) return '?';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[1][0]).toUpperCase();
+}
+
+function getPhaseDescription(phase: string): string {
+  switch (phase) {
+    case 'nomination': return 'Nomination period is open';
+    case 'election': return 'Election is open for voting';
+    case 'closed': return 'Election has concluded';
+    default: return '';
+  }
+}
+
+// ==================== Vote Card (Initiatives) ====================
 
 function VoteCard({ vote, onOpen }: { vote: Vote; onOpen: () => void }) {
   const hasVoted = !!vote.user_choice;
@@ -409,8 +1052,8 @@ function VoteCard({ vote, onOpen }: { vote: Vote; onOpen: () => void }) {
         <div className="flex items-center gap-2 text-[10px] text-empire-text-muted">
           <Zap className="w-3 h-3 text-empire-gold" />
           Your vote weight: <span className="font-bold text-empire-gold tabular-nums">{vote.user_effective_weight.toFixed(2)}</span>
-          <span className="text-ink-600">·</span>
-          {vote.user_credits_used} credits × {vote.user_voting_power?.toFixed(2)} VP
+          <span className="text-ink-600">-</span>
+          {vote.user_credits_used} credits x {vote.user_voting_power?.toFixed(2)} VP
         </div>
       )}
 
@@ -441,8 +1084,6 @@ function VoteCard({ vote, onOpen }: { vote: Vote; onOpen: () => void }) {
   );
 }
 
-// ==================== Completed Vote Row ====================
-
 function CompletedVoteRow({ vote }: { vote: Vote }) {
   return (
     <div className="frame-utility p-3 flex items-center justify-between gap-3">
@@ -450,8 +1091,8 @@ function CompletedVoteRow({ vote }: { vote: Vote }) {
         <h3 className="font-display text-sm font-medium text-empire-text-secondary line-clamp-1">{vote.question}</h3>
         <p className="text-[10px] text-empire-text-muted mt-0.5">
           Closed {formatVoteDate(vote.closes_at)}
-          {vote.total_votes !== undefined && ` · ${vote.total_votes} votes`}
-          {vote.total_weight !== undefined && vote.total_weight > 0 && ` · ${vote.total_weight.toFixed(1)} total weight`}
+          {vote.total_votes !== undefined && ` - ${vote.total_votes} votes`}
+          {vote.total_weight !== undefined && vote.total_weight > 0 && ` - ${vote.total_weight.toFixed(1)} total weight`}
         </p>
       </div>
       {vote.user_choice && (
@@ -460,8 +1101,6 @@ function CompletedVoteRow({ vote }: { vote: Vote }) {
     </div>
   );
 }
-
-// ==================== Utilities ====================
 
 function formatVoteDate(dateStr: string): string {
   const date = new Date(dateStr);
@@ -478,5 +1117,6 @@ function getTimeLeft(closesAt: string): string {
   const mins = Math.floor(diff / 60000);
   return `${mins}m left`;
 }
+
 
 export default VotePage;
