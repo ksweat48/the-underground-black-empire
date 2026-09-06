@@ -162,9 +162,7 @@ function Screen1() {
   const c = landingCopy.screen1;
   return (
     <SnapSection id="screen-1" className="px-0 py-0 overflow-hidden">
-      <div className="landing-bg-wrapper screen-1-bg">
-        <div className="screen-1-overlay" aria-hidden />
-      </div>
+      <div className="landing-bg-wrapper screen-1-bg" />
       <ScreenContent
         eyebrow={c.eyebrow}
         headline={c.headline}

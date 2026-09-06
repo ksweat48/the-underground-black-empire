@@ -1643,18 +1643,7 @@
   background-attachment: fixed;
 }
 
-.screen-1-overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.08) 0%,
-    rgba(255, 255, 255, 0.02) 45%,
-    rgba(255, 255, 255, 0.08) 100%
-  );
-  pointer-events: none;
-}
+/* ---- Screen 1 overlay (removed) ---- */
 
 /* ---- Screen 2 overlay (removed) ---- */
 /* ---- Screen 3 overlay (removed) ---- */
