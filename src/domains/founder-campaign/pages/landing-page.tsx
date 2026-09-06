@@ -143,7 +143,7 @@ function ScreenContent({
           </h2>
         )}
 
-        <p className="mt-3 max-w-lg text-sm leading-relaxed text-stone-700 sm:text-base">
+        <p className="mt-3 max-w-lg whitespace-pre-line text-sm leading-relaxed text-stone-700 sm:text-base">
           {body}
         </p>
       </div>
