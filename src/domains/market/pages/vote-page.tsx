@@ -74,15 +74,7 @@ export function VotePage() {
 
 function VoteHeader({ tab, onTabChange }: { tab: Tab; onTabChange: (t: Tab) => void }) {
   return (
-    <div className="space-y-3 animate-fade-up">
-      <div className="text-center">
-        <h1 className="font-display text-xl font-bold text-empire-ivory uppercase tracking-wider">
-          The Voting Booth
-        </h1>
-        <p className="text-xs text-empire-text-muted mt-1">
-          Your voice shapes the direction of your Metro and the Empire.
-        </p>
-      </div>
+    <div className="animate-fade-up">
       <div className="flex items-center gap-1 p-1 frame-utility">
         <TabButton
           active={tab === 'initiatives'}
