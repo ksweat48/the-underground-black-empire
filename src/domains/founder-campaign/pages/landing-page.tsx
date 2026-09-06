@@ -56,7 +56,7 @@ function LandingCTA({
       <Link
         to={to}
         className={cn(
-          'inline-flex min-h-[44px] items-center justify-center gap-2 rounded-2xl border border-white/40 bg-white/15 px-6 py-3 font-display text-sm font-bold uppercase tracking-[0.12em] text-white shadow-[0_8px_24px_rgba(0,0,0,0.18)] backdrop-blur-xl transition-all duration-200 hover:bg-white/25 hover:shadow-[0_12px_32px_rgba(0,0,0,0.24)] active:scale-[0.98]',
+          'inline-flex min-h-[44px] items-center justify-center gap-2 rounded-2xl border border-white/55 bg-white/20 px-6 py-3 font-display text-sm font-bold uppercase tracking-[0.12em] text-white shadow-[0_8px_24px_rgba(0,0,0,0.18)] backdrop-blur-md transition-all duration-200 hover:bg-white/30 hover:shadow-[0_12px_32px_rgba(0,0,0,0.24)] active:scale-[0.98]',
           className,
         )}
       >
@@ -68,7 +68,7 @@ function LandingCTA({
     <Link
       to={to}
       className={cn(
-        'inline-flex min-h-[48px] items-center justify-center gap-2 rounded-2xl border border-white/25 bg-black/40 px-8 py-3 font-display text-sm font-bold uppercase tracking-[0.12em] text-white shadow-[0_10px_28px_rgba(0,0,0,0.24)] backdrop-blur-xl transition-all duration-200 hover:-translate-y-0.5 hover:bg-black/55 hover:shadow-[0_14px_36px_rgba(0,0,0,0.30)] active:translate-y-0 active:scale-[0.98] sm:min-h-[52px]',
+        'inline-flex min-h-[48px] items-center justify-center gap-2 rounded-2xl border border-white/45 bg-black/25 px-8 py-3 font-display text-sm font-bold uppercase tracking-[0.12em] text-white shadow-[0_10px_28px_rgba(0,0,0,0.24)] backdrop-blur-md transition-all duration-200 hover:-translate-y-0.5 hover:bg-black/35 hover:shadow-[0_14px_36px_rgba(0,0,0,0.30)] active:translate-y-0 active:scale-[0.98] sm:min-h-[52px]',
         className,
       )}
     >
@@ -120,15 +120,17 @@ function ScreenContent({
         inView ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0',
       )}
     >
-      <div className="landing-glass-card w-full rounded-3xl px-6 py-8 sm:px-10 sm:py-10">
-        {showLogo && (
+      {showLogo && (
+        <div className="landing-glass-card landing-logo-card rounded-3xl px-5 py-4">
           <img
             src={LOGO}
             alt={APP_CONFIG.name}
-            className="mx-auto mb-5 h-16 w-auto object-contain sm:h-20"
+            className="h-14 w-auto object-contain sm:h-16"
           />
-        )}
+        </div>
+      )}
 
+      <div className={cn('landing-glass-card landing-text-card rounded-3xl px-6 py-6 sm:px-10 sm:py-8', showLogo && 'mt-4')}>
         {eyebrow && (
           <p className="font-display text-[11px] font-semibold uppercase tracking-[0.24em] text-plum-600">
             {eyebrow}
@@ -144,13 +146,13 @@ function ScreenContent({
         <p className="mt-3 max-w-lg text-sm leading-relaxed text-stone-700 sm:text-base">
           {body}
         </p>
+      </div>
 
-        <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-          <LandingCTA to={ONBOARDING_ROUTE}>{cta}</LandingCTA>
-          <LandingCTA to={AUTH_ROUTE} variant="secondary">
-            {secondaryCta}
-          </LandingCTA>
-        </div>
+      <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+        <LandingCTA to={ONBOARDING_ROUTE}>{cta}</LandingCTA>
+        <LandingCTA to={AUTH_ROUTE} variant="secondary">
+          {secondaryCta}
+        </LandingCTA>
       </div>
     </div>
   );
@@ -180,9 +182,7 @@ function Screen2() {
   const c = landingCopy.screen2;
   return (
     <SnapSection id="screen-2" className="px-0 py-0 overflow-hidden">
-      <div className="landing-bg-wrapper screen-2-bg">
-        <div className="screen-2-overlay" aria-hidden />
-      </div>
+      <div className="landing-bg-wrapper screen-2-bg" />
       <ScreenContent
         eyebrow={c.eyebrow}
         headline={c.headline}
@@ -199,9 +199,7 @@ function Screen3() {
   const c = landingCopy.screen3;
   return (
     <SnapSection id="screen-3" className="px-0 py-0 overflow-hidden">
-      <div className="landing-bg-wrapper screen-3-bg">
-        <div className="screen-3-overlay" aria-hidden />
-      </div>
+      <div className="landing-bg-wrapper screen-3-bg" />
       <ScreenContent
         eyebrow={c.eyebrow}
         headline={c.headline}
@@ -218,9 +216,7 @@ function Screen4() {
   const c = landingCopy.screen4;
   return (
     <SnapSection id="screen-4" className="px-0 py-0 overflow-hidden">
-      <div className="landing-bg-wrapper screen-4-bg">
-        <div className="screen-4-overlay" aria-hidden />
-      </div>
+      <div className="landing-bg-wrapper screen-4-bg" />
       <ScreenContent
         eyebrow={c.eyebrow}
         headline={c.headline}

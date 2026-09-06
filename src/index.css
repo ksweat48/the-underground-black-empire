@@ -1553,16 +1553,22 @@
   background: linear-gradient(90deg, #0F6B50, transparent);
 }
 
-/* ---- Raised glass card for landing screen content ---- */
+/* ---- Clear glass card for landing screen content ---- */
 .landing-glass-card {
-  background: rgba(255, 255, 255, 0.55);
-  backdrop-filter: blur(28px) saturate(1.4);
-  -webkit-backdrop-filter: blur(28px) saturate(1.4);
-  border: 1px solid rgba(255, 255, 255, 0.50);
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
   box-shadow:
-    0 24px 64px rgba(0, 0, 0, 0.12),
-    0 8px 24px rgba(0, 0, 0, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.60);
+    0 16px 48px rgba(0, 0, 0, 0.10),
+    0 4px 16px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.20);
+}
+
+.landing-logo-card {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* ---- Voice line pill ---- */
@@ -1650,47 +1656,9 @@
   pointer-events: none;
 }
 
-/* ---- Screen 2 overlay ---- */
-.screen-2-overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.42) 0%,
-    rgba(255, 255, 255, 0.24) 48%,
-    rgba(255, 255, 255, 0.34) 100%
-  );
-  pointer-events: none;
-}
-
-/* ---- Screen 3 overlay ---- */
-.screen-3-overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.38) 0%,
-    rgba(255, 255, 255, 0.22) 52%,
-    rgba(255, 255, 255, 0.30) 100%
-  );
-  pointer-events: none;
-}
-
-/* ---- Screen 4 overlay ---- */
-.screen-4-overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.35) 0%,
-    rgba(255, 255, 255, 0.20) 45%,
-    rgba(255, 255, 255, 0.30) 100%
-  );
-  pointer-events: none;
-}
+/* ---- Screen 2 overlay (removed) ---- */
+/* ---- Screen 3 overlay (removed) ---- */
+/* ---- Screen 4 overlay (removed) ---- */
 
 .screen-4-sheet {
   max-width: 36rem;
