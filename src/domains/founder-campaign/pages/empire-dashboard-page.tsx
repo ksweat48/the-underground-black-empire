@@ -253,7 +253,7 @@ export function EmpireDashboardPage() {
     if (data?.city_name) {
       supabase
         .from('members')
-        .select('city:city_id!members_city_id_fkey ( id, metro_id )')
+        .select('city:city_id ( id, metro_id )')
         .eq('id', memberId)
         .maybeSingle()
         .then(({ data: member }) => {

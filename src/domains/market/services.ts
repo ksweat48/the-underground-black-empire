@@ -736,7 +736,7 @@ export async function fetchMemberCityInfo(userId: string): Promise<{ cityId: str
   const { data, error } = await supabase
     .from('members')
     .select(`
-      city:city_id!members_city_id_fkey ( id, name, metro_id )
+      city:city_id ( id, name, metro_id )
     `)
     .eq('id', userId)
     .maybeSingle();

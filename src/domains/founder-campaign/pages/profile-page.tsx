@@ -185,7 +185,7 @@ export function ProfilePage() {
     if (!memberId || !member?.city_name) return;
     supabase
       .from('members')
-      .select('city:city_id!members_city_id_fkey ( id, metro_id )')
+      .select('city:city_id ( id, metro_id )')
       .eq('id', memberId)
       .maybeSingle()
       .then(({ data: memberRow }) => {
@@ -1332,7 +1332,7 @@ function getInitials(name: string): string {
 async function fetchMemberProfile(memberId: string): Promise<MemberProfile | null> {
   const { data: member, error: memberError } = await supabase
     .from('members')
-    .select('id, email, display_name, founder_number, member_number, ethnic_identity, ethnic_identity_detail, gender, gender_detail, date_of_birth, support_role, support_role_detail, avatar_url, city:city_id!members_city_id_fkey ( name, slug, tier, population_count, state )')
+    .select('id, email, display_name, founder_number, member_number, ethnic_identity, ethnic_identity_detail, gender, gender_detail, date_of_birth, support_role, support_role_detail, avatar_url, city:city_id ( name, slug, tier, population_count, state )')
     .eq('id', memberId)
     .maybeSingle();
   if (memberError) throw memberError;
