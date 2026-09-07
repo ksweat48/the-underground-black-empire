@@ -62,13 +62,6 @@ export function OnboardingConfirmPage() {
           <div className="space-y-3 mb-6">
             <div className="flex items-center justify-between text-sm py-2 border-b border-ink-800/50">
               <span className="text-ink-400 flex items-center gap-2">
-                <Building2 className="w-4 h-4" />
-                Metro
-              </span>
-              <span className="text-ink-100 font-medium">{city.metro_name}</span>
-            </div>
-            <div className="flex items-center justify-between text-sm py-2 border-b border-ink-800/50">
-              <span className="text-ink-400 flex items-center gap-2">
                 <MapPin className="w-4 h-4" />
                 State
               </span>
@@ -147,24 +140,39 @@ export function OnboardingConfirmPage() {
         </div>
 
         {city.metro_name && (
-          <div className="bg-ink-900/50 rounded-lg p-4">
-            <p className="text-xs font-medium text-ink-400 uppercase tracking-wider mb-2">
-              Metro Status
-            </p>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-sm text-ink-300">
-                <TrendingUp className="w-4 h-4" />
-                <span>{city.metro_name}</span>
+          <div className="bg-gradient-to-br from-gold-950/30 to-ink-900/50 rounded-lg p-4 border border-gold-800/20 mb-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Building2 className="w-4 h-4 text-gold-400" />
+              <p className="text-xs font-medium text-gold-400 uppercase tracking-wider">
+                Your Metro Community
+              </p>
+            </div>
+            <div className="flex items-end justify-between">
+              <div>
+                <p className="text-lg font-display font-bold text-ink-100">
+                  {city.metro_name}
+                </p>
+                <p className="text-xs text-ink-400 mt-0.5">
+                  {city.metro_city_count} {city.metro_city_count === 1 ? 'city' : 'cities'} in this metro
+                </p>
               </div>
               <div className="text-right">
-                <p className="text-sm text-ink-100 font-medium">
-                  {city.metro_population_count} Members
+                <p className="text-2xl font-display font-bold text-gradient-gold">
+                  {city.metro_population_count.toLocaleString()}
                 </p>
-                {city.metro_rank > 0 && (
-                  <p className="text-xs text-ink-400">National Rank #{city.metro_rank}</p>
-                )}
+                <p className="text-xs text-ink-400">
+                  {city.metro_population_count === 1 ? 'member' : 'members'} in the metro
+                </p>
               </div>
             </div>
+            {city.metro_rank > 0 && (
+              <div className="mt-3 pt-3 border-t border-gold-800/20">
+                <div className="flex items-center gap-1.5 text-xs text-ink-400">
+                  <TrendingUp className="w-3 h-3" />
+                  <span>National Rank #{city.metro_rank}</span>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

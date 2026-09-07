@@ -210,8 +210,8 @@ export function CreateListingPage() {
           {/* City info */}
           <div className="frame-utility p-3">
             <p className="text-xs text-empire-text-muted">
-              Listing will be submitted for approval in <span className="font-medium text-empire-ivory">{cityName}</span>.
-              You can edit it while it's pending.
+              Listing will be published immediately in <span className="font-medium text-empire-ivory">{cityName}</span>
+              with an "In Review" badge until an admin verifies it.
             </p>
           </div>
 

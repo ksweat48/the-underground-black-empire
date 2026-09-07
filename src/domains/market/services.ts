@@ -13,6 +13,8 @@ import type {
   CreateNewsInput,
   CreateEventInput,
   ListingCategory,
+  ListingForReview,
+  ReviewAction,
 } from './types';
 
 // ============================================================
@@ -35,7 +37,7 @@ export async function fetchListings(params: {
       city:city_id ( name ),
       ranking:market_ranking_cache!left ( score )
     `)
-    .eq('status', 'approved')
+    .in('status', ['approved', 'in_review'])
     .order('created_at', { ascending: false })
     .limit(limit);
 
@@ -247,13 +249,36 @@ export async function createListing(input: CreateListingInput): Promise<MarketLi
       external_url: input.external_url,
       contact_info: input.contact_info,
       image_url: input.image_url,
-      status: 'pending',
+      status: input.status ?? 'in_review',
     })
     .select()
     .single();
 
   if (error) throw error;
   return data as MarketListing;
+}
+
+// ============================================================
+// ADMIN LISTING REVIEW
+// ============================================================
+
+export async function fetchListingsForReview(status: string = 'in_review', limit: number = 50): Promise<ListingForReview[]> {
+  const { data, error } = await supabase
+    .rpc('get_listings_for_review', { p_status: status, p_limit: limit });
+
+  if (error) throw error;
+  return (data ?? []) as ListingForReview[];
+}
+
+export async function reviewListing(listingId: string, action: ReviewAction, reason: string = ''): Promise<void> {
+  const { error } = await supabase
+    .rpc('review_market_listing', {
+      p_listing_id: listingId,
+      p_action: action,
+      p_reason: reason,
+    });
+
+  if (error) throw error;
 }
 
 export async function toggleListingLike(listingId: string, userId: string, currentlyLiked: boolean): Promise<boolean> {

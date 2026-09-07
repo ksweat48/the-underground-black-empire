@@ -15,6 +15,7 @@ import {
   Clock,
   Loader2,
   Image as ImageIcon,
+  ShieldAlert,
 } from 'lucide-react';
 import { Layout } from '@/shared/components/layout';
 import { cn } from '@/shared/cn';
@@ -409,6 +410,12 @@ function FeaturedListingCard({ listing, onClick }: { listing: MarketListing; onC
             <BadgeCheck className="w-4 h-4 text-empire-success" />
           </div>
         )}
+        {!listing.is_verified && listing.status === 'in_review' && (
+          <div className="absolute top-1.5 right-1.5 flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-500/90 backdrop-blur-sm border border-amber-400/20">
+            <ShieldAlert className="w-3 h-3 text-amber-900" />
+            <span className="text-[8px] font-semibold text-amber-900">In Review</span>
+          </div>
+        )}
         <div className="absolute bottom-1.5 left-1.5">
           <span className="badge-gold text-[9px] py-0.5 px-1.5 capitalize">
             {listing.category}
@@ -455,6 +462,12 @@ function ListingCard({ listing, onClick }: { listing: MarketListing; onClick: ()
         {listing.is_verified && (
           <div className="absolute top-2 right-2">
             <BadgeCheck className="w-4 h-4 text-empire-success" />
+          </div>
+        )}
+        {!listing.is_verified && listing.status === 'in_review' && (
+          <div className="absolute top-2 right-2 flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-500/90 backdrop-blur-sm border border-amber-400/20">
+            <ShieldAlert className="w-3 h-3 text-amber-900" />
+            <span className="text-[8px] font-semibold text-amber-900">In Review</span>
           </div>
         )}
         <div className="absolute bottom-2 left-2">

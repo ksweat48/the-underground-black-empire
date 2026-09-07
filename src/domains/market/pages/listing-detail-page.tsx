@@ -17,6 +17,7 @@ import {
   Image as ImageIcon,
   Store,
   ChevronRight,
+  ShieldAlert,
 } from 'lucide-react';
 import { Layout } from '@/shared/components/layout';
 import { EmpireFrame } from '@/shared/components/empire-frame';
@@ -169,6 +170,12 @@ export function ListingDetailPage() {
                 <span className="text-[10px] font-semibold text-empire-success">Verified</span>
               </div>
             )}
+            {!listing.is_verified && listing.status === 'in_review' && (
+              <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 rounded-full bg-amber-500/90 backdrop-blur-sm border border-amber-400/20">
+                <ShieldAlert className="w-3.5 h-3.5 text-amber-900" />
+                <span className="text-[10px] font-semibold text-amber-900">In Review</span>
+              </div>
+            )}
           </div>
 
           {/* Content */}
@@ -192,6 +199,25 @@ export function ListingDetailPage() {
                 </span>
               )}
             </div>
+
+            {/* In Review notice */}
+            {!listing.is_verified && listing.status === 'in_review' && (
+              <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                <ShieldAlert className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                <p className="text-xs text-amber-200/90">
+                  This listing has not yet been verified by the Empire. It is still visible and can receive likes, comments, and shares.
+                </p>
+              </div>
+            )}
+            {listing.status === 'needs_changes' && listing.review_reason && (
+              <div className="flex items-start gap-2 p-3 rounded-lg bg-empire-danger/10 border border-empire-danger/20">
+                <ShieldAlert className="w-4 h-4 text-empire-danger shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-xs font-semibold text-empire-danger">Needs Changes</p>
+                  <p className="text-xs text-empire-text-secondary mt-0.5">{listing.review_reason}</p>
+                </div>
+              </div>
+            )}
 
             {/* Description */}
             {listing.description && (

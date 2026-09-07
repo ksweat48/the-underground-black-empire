@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowRight, Loader2 } from 'lucide-react';
+import { ArrowRight, Loader2, Store, Briefcase, Building2, Globe, DollarSign } from 'lucide-react';
 import { OnboardingStep } from '@/shared/components/onboarding-step';
 import { ProfilePhotoUploader } from '@/shared/components/profile-photo-uploader';
 import {
@@ -18,6 +18,32 @@ import {
 import { ProfessionAutocomplete } from '@/shared/components/profession-autocomplete';
 import { supabase } from '@/shared/supabase-client';
 import { parseSupabaseError } from '@/shared/errors';
+import { createListing, fetchMemberCityInfo, type ListingCategory } from '@/domains/market/services';
+
+const BUSINESS_CATEGORIES: { key: ListingCategory; label: string }[] = [
+  { key: 'products', label: 'Products' },
+  { key: 'services', label: 'Services' },
+];
+
+const ORG_TYPES = [
+  'Nonprofit',
+  'Community Organization',
+  'Mission-Based Organization',
+  'Initiative',
+  'Foundation',
+  'Other',
+] as const;
+
+interface ListingFormData {
+  name: string;
+  category: ListingCategory;
+  description: string;
+  products_services: string;
+  price_display: string;
+  external_url: string;
+  contact_info: string;
+  image_url: string;
+}
 
 export function OnboardingIdentityPage() {
   const navigate = useNavigate();
@@ -35,6 +61,28 @@ export function OnboardingIdentityPage() {
   const [avatarDataUrl, setAvatarDataUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  // Listing form state
+  const [listingData, setListingData] = useState<ListingFormData>({
+    name: '',
+    category: 'services',
+    description: '',
+    products_services: '',
+    price_display: '',
+    external_url: '',
+    contact_info: '',
+    image_url: '',
+  });
+  const [orgType, setOrgType] = useState<string>('');
+  const [fundingGoal, setFundingGoal] = useState('');
+  const [createdListingId, setCreatedListingId] = useState<string | null>(null);
+
+  const needsListing = supportRole && supportRole !== 'supporter';
+
+  const updateListingField = (field: keyof ListingFormData, value: string) => {
+    setListingData((prev) => ({ ...prev, [field]: value }));
+    setError(null);
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -76,6 +124,26 @@ export function OnboardingIdentityPage() {
       return;
     }
 
+    // Validate listing form for non-supporters
+    if (needsListing) {
+      if (!listingData.name.trim()) {
+        setError(`Please enter your ${supportRole === 'business_owner' ? 'business name' : supportRole === 'professional' ? 'professional title' : 'organization name'}.`);
+        return;
+      }
+      if (supportRole === 'business_owner' && !listingData.products_services.trim()) {
+        setError('Please describe what your business provides.');
+        return;
+      }
+      if (supportRole === 'professional' && !listingData.products_services.trim()) {
+        setError('Please describe the services you offer.');
+        return;
+      }
+      if (supportRole === 'organization' && !listingData.description.trim()) {
+        setError('Please describe your organization\'s mission.');
+        return;
+      }
+    }
+
     setSubmitting(true);
     try {
       const { data: sessionData } = await supabase.auth.getSession();
@@ -85,7 +153,6 @@ export function OnboardingIdentityPage() {
         return;
       }
 
-      // Upload avatar to storage
       const userId = sessionData.session.user.id;
       const blob = await (await fetch(avatarDataUrl)).blob();
       const { error: uploadError } = await supabase.storage
@@ -121,7 +188,31 @@ export function OnboardingIdentityPage() {
       });
       if (profileError) throw profileError;
 
-      navigate(`/onboarding/welcome?number=${founderNumber}&city=${cityId}`);
+      // Create marketplace listing for non-supporters
+      let listingIdParam = '';
+      if (needsListing && cityId) {
+        try {
+          const listing = await createListing({
+            city_id: cityId,
+            name: listingData.name.trim(),
+            category: listingData.category,
+            description: listingData.description.trim(),
+            products_services: listingData.products_services.trim(),
+            price_display: listingData.price_display.trim(),
+            external_url: listingData.external_url.trim(),
+            contact_info: listingData.contact_info.trim(),
+            image_url: listingData.image_url.trim() || null,
+            status: 'in_review',
+          });
+          setCreatedListingId(listing.id);
+          listingIdParam = `&listing=${listing.id}`;
+        } catch {
+          // Listing creation failure should not block onboarding
+          // The member can create their listing later from the Marketplace
+        }
+      }
+
+      navigate(`/onboarding/welcome?number=${founderNumber}&city=${cityId}${listingIdParam}`);
     } catch (err) {
       setError(parseSupabaseError(err));
     } finally {
@@ -193,6 +284,10 @@ export function OnboardingIdentityPage() {
             setSupportRole(value);
             setSupportRoleDetail('');
             setError(null);
+            // Pre-fill listing name field when role changes
+            if (value !== 'supporter') {
+              setListingData((prev) => ({ ...prev, name: '' }));
+            }
           }}
           onDetailChange={setSupportRoleDetail}
           error={null}
@@ -212,6 +307,309 @@ export function OnboardingIdentityPage() {
           </div>
         )}
 
+        {/* =================== Marketplace Listing Forms =================== */}
+        {supportRole === 'business_owner' && (
+          <div className="animate-fade-up space-y-4 pt-2 border-t border-ink-800/50">
+            <div className="flex items-center gap-2 pt-2">
+              <Store className="w-4 h-4 text-gold-400" />
+              <h3 className="font-display text-sm font-semibold text-ink-100">
+                Your Business Listing
+              </h3>
+            </div>
+            <p className="text-xs text-ink-400 -mt-2">
+              Your business will appear in the Marketplace immediately with an "In Review" badge until an admin verifies it.
+            </p>
+
+            <div>
+              <label className="label-field">Business Name <span className="text-crimson-400">*</span></label>
+              <input
+                type="text"
+                value={listingData.name}
+                onChange={(e) => updateListingField('name', e.target.value)}
+                className="input-field text-sm"
+                placeholder="e.g. Car Battery America"
+                maxLength={100}
+              />
+            </div>
+
+            <div>
+              <label className="label-field">What do you provide? <span className="text-crimson-400">*</span></label>
+              <textarea
+                value={listingData.products_services}
+                onChange={(e) => updateListingField('products_services', e.target.value)}
+                rows={2}
+                className="input-field text-sm resize-none"
+                placeholder="Product / Service"
+              />
+            </div>
+
+            <div>
+              <label className="label-field">Category</label>
+              <div className="flex gap-2">
+                {BUSINESS_CATEGORIES.map((cat) => (
+                  <button
+                    key={cat.key}
+                    type="button"
+                    onClick={() => updateListingField('category', cat.key)}
+                    className={`flex-1 px-3 py-2.5 rounded-lg text-sm font-medium border transition-all ${
+                      listingData.category === cat.key
+                        ? 'bg-gold-500/10 border-gold-500/25 text-gold-300'
+                        : 'bg-ink-900/50 border-ink-700/50 text-ink-400'
+                    }`}
+                  >
+                    {cat.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="label-field">About Your Business</label>
+              <textarea
+                value={listingData.description}
+                onChange={(e) => updateListingField('description', e.target.value)}
+                rows={2}
+                className="input-field text-sm resize-none"
+                placeholder="A short description of your business..."
+              />
+            </div>
+
+            <div>
+              <label className="label-field">Typical Price Range <span className="text-ink-500">(optional)</span></label>
+              <input
+                type="text"
+                value={listingData.price_display}
+                onChange={(e) => updateListingField('price_display', e.target.value)}
+                className="input-field text-sm"
+                placeholder="e.g. $99 - $299, From $50"
+              />
+            </div>
+
+            <div>
+              <label className="label-field">Website or Booking Link <span className="text-ink-500">(optional)</span></label>
+              <input
+                type="url"
+                value={listingData.external_url}
+                onChange={(e) => updateListingField('external_url', e.target.value)}
+                className="input-field text-sm"
+                placeholder="https://your-website.com"
+              />
+            </div>
+
+            <div>
+              <label className="label-field">Contact Info <span className="text-ink-500">(optional)</span></label>
+              <input
+                type="text"
+                value={listingData.contact_info}
+                onChange={(e) => updateListingField('contact_info', e.target.value)}
+                className="input-field text-sm"
+                placeholder="Phone, email, or social handle"
+              />
+            </div>
+
+            <div>
+              <label className="label-field">Business Photo / Logo URL <span className="text-ink-500">(optional)</span></label>
+              <input
+                type="url"
+                value={listingData.image_url}
+                onChange={(e) => updateListingField('image_url', e.target.value)}
+                className="input-field text-sm"
+                placeholder="https://example.com/logo.jpg"
+              />
+            </div>
+          </div>
+        )}
+
+        {supportRole === 'professional' && (
+          <div className="animate-fade-up space-y-4 pt-2 border-t border-ink-800/50">
+            <div className="flex items-center gap-2 pt-2">
+              <Briefcase className="w-4 h-4 text-gold-400" />
+              <h3 className="font-display text-sm font-semibold text-ink-100">
+                Your Professional Profile
+              </h3>
+            </div>
+            <p className="text-xs text-ink-400 -mt-2">
+              Your professional profile will appear in the Marketplace immediately with an "In Review" badge until an admin verifies it.
+            </p>
+
+            <div>
+              <label className="label-field">Name / Professional Title <span className="text-crimson-400">*</span></label>
+              <input
+                type="text"
+                value={listingData.name}
+                onChange={(e) => updateListingField('name', e.target.value)}
+                className="input-field text-sm"
+                placeholder="e.g. Marcus Reed — Licensed Electrician"
+                maxLength={100}
+              />
+            </div>
+
+            <div>
+              <label className="label-field">Services Offered <span className="text-crimson-400">*</span></label>
+              <textarea
+                value={listingData.products_services}
+                onChange={(e) => updateListingField('products_services', e.target.value)}
+                rows={2}
+                className="input-field text-sm resize-none"
+                placeholder="e.g. Residential electrical repair, installations, inspections"
+              />
+            </div>
+
+            <div>
+              <label className="label-field">Typical Price Range <span className="text-ink-500">(optional)</span></label>
+              <input
+                type="text"
+                value={listingData.price_display}
+                onChange={(e) => updateListingField('price_display', e.target.value)}
+                className="input-field text-sm"
+                placeholder="e.g. $75 - $200/hr"
+              />
+            </div>
+
+            <div>
+              <label className="label-field">Website / Contact Link <span className="text-ink-500">(optional)</span></label>
+              <input
+                type="url"
+                value={listingData.external_url}
+                onChange={(e) => updateListingField('external_url', e.target.value)}
+                className="input-field text-sm"
+                placeholder="https://your-portfolio.com"
+              />
+            </div>
+
+            <div>
+              <label className="label-field">Contact Info <span className="text-ink-500">(optional)</span></label>
+              <input
+                type="text"
+                value={listingData.contact_info}
+                onChange={(e) => updateListingField('contact_info', e.target.value)}
+                className="input-field text-sm"
+                placeholder="Phone, email, or social handle"
+              />
+            </div>
+
+            <div>
+              <label className="label-field">Professional Photo URL <span className="text-ink-500">(optional)</span></label>
+              <input
+                type="url"
+                value={listingData.image_url}
+                onChange={(e) => updateListingField('image_url', e.target.value)}
+                className="input-field text-sm"
+                placeholder="https://example.com/photo.jpg"
+              />
+            </div>
+          </div>
+        )}
+
+        {supportRole === 'organization' && (
+          <div className="animate-fade-up space-y-4 pt-2 border-t border-ink-800/50">
+            <div className="flex items-center gap-2 pt-2">
+              <Building2 className="w-4 h-4 text-gold-400" />
+              <h3 className="font-display text-sm font-semibold text-ink-100">
+                Your Organization Listing
+              </h3>
+            </div>
+            <p className="text-xs text-ink-400 -mt-2">
+              Your organization will appear in the Marketplace immediately with an "In Review" badge until an admin verifies it.
+            </p>
+
+            <div>
+              <label className="label-field">Organization Name <span className="text-crimson-400">*</span></label>
+              <input
+                type="text"
+                value={listingData.name}
+                onChange={(e) => updateListingField('name', e.target.value)}
+                className="input-field text-sm"
+                placeholder="e.g. Atlanta Farmers Alliance"
+                maxLength={100}
+              />
+            </div>
+
+            <div>
+              <label className="label-field">Organization Type</label>
+              <select
+                value={orgType}
+                onChange={(e) => setOrgType(e.target.value)}
+                className="input-field text-sm cursor-pointer"
+              >
+                <option value="">Select type...</option>
+                {ORG_TYPES.map((t) => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="label-field">Primary Mission / Cause <span className="text-crimson-400">*</span></label>
+              <textarea
+                value={listingData.products_services}
+                onChange={(e) => updateListingField('products_services', e.target.value)}
+                rows={2}
+                className="input-field text-sm resize-none"
+                placeholder="e.g. Connecting local farmers with local markets"
+              />
+            </div>
+
+            <div>
+              <label className="label-field">Mission Statement</label>
+              <textarea
+                value={listingData.description}
+                onChange={(e) => updateListingField('description', e.target.value)}
+                rows={2}
+                className="input-field text-sm resize-none"
+                placeholder="Describe your organization's mission..."
+              />
+            </div>
+
+            <div>
+              <label className="label-field">Funding Goal <span className="text-ink-500">(optional)</span></label>
+              <input
+                type="text"
+                value={fundingGoal}
+                onChange={(e) => setFundingGoal(e.target.value)}
+                className="input-field text-sm"
+                placeholder="e.g. $5,000 - $25,000"
+              />
+              <p className="text-[10px] text-ink-500 mt-1">
+                Let the community know your funding target, if applicable.
+              </p>
+            </div>
+
+            <div>
+              <label className="label-field">Website <span className="text-ink-500">(optional)</span></label>
+              <input
+                type="url"
+                value={listingData.external_url}
+                onChange={(e) => updateListingField('external_url', e.target.value)}
+                className="input-field text-sm"
+                placeholder="https://your-organization.org"
+              />
+            </div>
+
+            <div>
+              <label className="label-field">Contact Info <span className="text-ink-500">(optional)</span></label>
+              <input
+                type="text"
+                value={listingData.contact_info}
+                onChange={(e) => updateListingField('contact_info', e.target.value)}
+                className="input-field text-sm"
+                placeholder="Phone, email, or social handle"
+              />
+            </div>
+
+            <div>
+              <label className="label-field">Organization Photo / Logo URL <span className="text-ink-500">(optional)</span></label>
+              <input
+                type="url"
+                value={listingData.image_url}
+                onChange={(e) => updateListingField('image_url', e.target.value)}
+                className="input-field text-sm"
+                placeholder="https://example.com/logo.jpg"
+              />
+            </div>
+          </div>
+        )}
+
         {error && <p className="text-sm text-crimson-300 px-1">{error}</p>}
 
         <button
@@ -226,8 +624,19 @@ export function OnboardingIdentityPage() {
             </>
           ) : (
             <>
-              Continue
-              <ArrowRight className="w-4 h-4" />
+              {needsListing ? (
+                <>
+                  {supportRole === 'business_owner' && 'Create My Business Listing'}
+                  {supportRole === 'professional' && 'Create My Professional Profile'}
+                  {supportRole === 'organization' && 'Create Organization Listing'}
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              ) : (
+                <>
+                  Continue
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
             </>
           )}
         </button>

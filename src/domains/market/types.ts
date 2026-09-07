@@ -1,5 +1,5 @@
 export type ListingCategory = 'products' | 'services' | 'events';
-export type ListingStatus = 'pending' | 'approved' | 'needs_changes' | 'removed';
+export type ListingStatus = 'in_review' | 'approved' | 'needs_changes' | 'removed';
 export type ContentStatus = 'pending' | 'approved' | 'needs_changes' | 'removed';
 export type VoteStatus = 'draft' | 'active' | 'closed' | 'tallied';
 
@@ -26,6 +26,7 @@ export interface MarketListing {
   city_name?: string;
   is_saved?: boolean;
   is_liked?: boolean;
+  review_reason?: string;
 }
 
 export interface ListingUpdate {
@@ -128,6 +129,27 @@ export interface ContentReportInput {
   details: string;
 }
 
+export interface ListingForReview {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+  products_services: string;
+  price_display: string;
+  external_url: string;
+  image_url: string | null;
+  status: string;
+  is_verified: boolean;
+  like_count: number;
+  comment_count: number;
+  created_at: string;
+  owner_email: string;
+  city_name: string;
+  review_reason: string;
+}
+
+export type ReviewAction = 'approve' | 'needs_changes' | 'remove';
+
 export interface CreateListingInput {
   city_id: string;
   name: string;
@@ -138,6 +160,7 @@ export interface CreateListingInput {
   external_url: string;
   contact_info: string;
   image_url: string | null;
+  status?: ListingStatus;
 }
 
 export interface CreateUpdateInput {

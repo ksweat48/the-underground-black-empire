@@ -12,12 +12,17 @@ import {
   Activity,
   Crown,
   MessageSquare,
+  Store,
+  CheckCircle2,
+  AlertTriangle,
+  XCircle,
 } from 'lucide-react';
 import { Layout } from '@/shared/components/layout';
 import { EmpireEmblemIcon } from '@/shared/components/empire-emblem-icon';
 import { supabase } from '@/shared/supabase-client';
 import { useAuth } from '@/domains/identity/auth-context';
 import { PROGRESSION_RULES, getCityTier } from '@/config/progression-rules';
+import { fetchListingsForReview, reviewListing, type ListingForReview, type ReviewAction } from '@/domains/market/services';
 
 interface AdminStats {
   totalPopulation: number;
@@ -141,6 +146,11 @@ export function AdminPage() {
   const [participation, setParticipation] = useState<ParticipationStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [participationLoading, setParticipationLoading] = useState(true);
+  const [reviewListings, setReviewListings] = useState<ListingForReview[]>([]);
+  const [reviewLoading, setReviewLoading] = useState(true);
+  const [reviewAction, setReviewAction] = useState<string | null>(null);
+  const [reviewReason, setReviewReason] = useState('');
+  const [reviewReasonFor, setReviewReasonFor] = useState<string | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -235,7 +245,30 @@ export function AdminPage() {
       })
       .catch(() => {})
       .finally(() => setParticipationLoading(false));
+
+    fetchListingsForReview('in_review', 20)
+      .then(setReviewListings)
+      .catch(() => {})
+      .finally(() => setReviewLoading(false));
   }, [sessionVersion]);
+
+  const handleReviewAction = async (listingId: string, action: ReviewAction) => {
+    const reason = action !== 'approve' ? reviewReason.trim() : '';
+    if (action !== 'approve' && !reason) {
+      setReviewReasonFor(listingId);
+      return;
+    }
+    setReviewAction(listingId);
+    try {
+      await reviewListing(listingId, action, reason);
+      setReviewListings((prev) => prev.filter((l) => l.id !== listingId));
+      setReviewReason('');
+      setReviewReasonFor(null);
+    } catch {
+    } finally {
+      setReviewAction(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -259,6 +292,17 @@ export function AdminPage() {
         </div>
         <p className="text-ink-400">Administrative controls and reporting for the Founder Campaign.</p>
       </div>
+
+      {/* Listing Review Queue */}
+      <ListingReviewQueue
+        listings={reviewListings}
+        loading={reviewLoading}
+        reviewAction={reviewAction}
+        reviewReasonFor={reviewReasonFor}
+        reviewReason={reviewReason}
+        onReasonChange={setReviewReason}
+        onAction={handleReviewAction}
+      />
 
       {/* Participation Analytics */}
       <ParticipationAnalytics
@@ -351,6 +395,134 @@ export function AdminPage() {
         )}
       </div>
     </Layout>
+  );
+}
+
+function ListingReviewQueue({
+  listings,
+  loading,
+  reviewAction,
+  reviewReasonFor,
+  reviewReason,
+  onReasonChange,
+  onAction,
+}: {
+  listings: ListingForReview[];
+  loading: boolean;
+  reviewAction: string | null;
+  reviewReasonFor: string | null;
+  reviewReason: string;
+  onReasonChange: (value: string) => void;
+  onAction: (listingId: string, action: ReviewAction) => void;
+}) {
+  if (loading) {
+    return (
+      <div className="mb-8">
+        <div className="flex items-center gap-3 mb-4">
+          <Store className="w-5 h-5 text-gold-400" />
+          <h2 className="font-display text-lg font-semibold text-ink-100">Listing Review Queue</h2>
+        </div>
+        <div className="card p-8 flex items-center justify-center">
+          <Loader2 className="w-5 h-5 text-gold-400 animate-spin" />
+        </div>
+      </div>
+    );
+  }
+
+  if (listings.length === 0) {
+    return (
+      <div className="mb-8">
+        <div className="flex items-center gap-3 mb-4">
+          <Store className="w-5 h-5 text-gold-400" />
+          <h2 className="font-display text-lg font-semibold text-ink-100">Listing Review Queue</h2>
+        </div>
+        <div className="card p-6">
+          <p className="text-sm text-ink-400">No listings awaiting review.</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mb-8 space-y-4">
+      <div className="flex items-center gap-3 mb-2">
+        <Store className="w-5 h-5 text-gold-400" />
+        <h2 className="font-display text-lg font-semibold text-ink-100">Listing Review Queue</h2>
+        <span className="badge-gold text-xs">{listings.length} awaiting</span>
+      </div>
+      <div className="space-y-3">
+        {listings.map((listing) => (
+          <div key={listing.id} className="card p-4 space-y-3">
+            <div className="flex items-start gap-3">
+              {listing.image_url ? (
+                <img src={listing.image_url} alt={listing.name} className="w-16 h-16 rounded-lg object-cover shrink-0" />
+              ) : (
+                <div className="w-16 h-16 rounded-lg bg-ink-800/50 flex items-center justify-center shrink-0">
+                  <Store className="w-6 h-6 text-ink-500" />
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <h3 className="font-display text-sm font-semibold text-ink-100">{listing.name}</h3>
+                <p className="text-xs text-ink-400 mt-0.5">
+                  {listing.category} in {listing.city_name}
+                </p>
+                {listing.description && (
+                  <p className="text-xs text-ink-400 mt-1 line-clamp-2">{listing.description}</p>
+                )}
+                {listing.products_services && (
+                  <p className="text-xs text-ink-500 mt-1 line-clamp-1">{listing.products_services}</p>
+                )}
+                <p className="text-[10px] text-ink-500 mt-1">
+                  by {listing.owner_email} on {new Date(listing.created_at).toLocaleDateString()}
+                </p>
+              </div>
+              {listing.price_display && (
+                <span className="text-sm font-semibold text-gold-300 shrink-0">{listing.price_display}</span>
+              )}
+            </div>
+
+            {reviewReasonFor === listing.id && (
+              <div className="animate-fade-up">
+                <input
+                  type="text"
+                  value={reviewReason}
+                  onChange={(e) => onReasonChange(e.target.value)}
+                  placeholder="Reason for changes or removal..."
+                  className="input-field text-sm"
+                />
+              </div>
+            )}
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => onAction(listing.id, 'approve')}
+                disabled={reviewAction === listing.id}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20 transition-all disabled:opacity-50"
+              >
+                {reviewAction === listing.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
+                Approve
+              </button>
+              <button
+                onClick={() => onAction(listing.id, 'needs_changes')}
+                disabled={reviewAction === listing.id}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-500/10 border border-amber-500/20 text-amber-400 hover:bg-amber-500/20 transition-all disabled:opacity-50"
+              >
+                <AlertTriangle className="w-3.5 h-3.5" />
+                Needs Changes
+              </button>
+              <button
+                onClick={() => onAction(listing.id, 'remove')}
+                disabled={reviewAction === listing.id}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 transition-all disabled:opacity-50 ml-auto"
+              >
+                <XCircle className="w-3.5 h-3.5" />
+                Remove
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
