@@ -154,6 +154,7 @@ export function ProfilePage() {
   const [leadershipEligibility, setLeadershipEligibility] = useState<LeadershipEligibility | null>(null);
   const [leadershipToggling, setLeadershipToggling] = useState(false);
   const [leadershipError, setLeadershipError] = useState<string | null>(null);
+  const [profileError, setProfileError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const memberId = session?.user.id ?? null;
@@ -164,7 +165,7 @@ export function ProfilePage() {
   // Fetch member profile
   useEffect(() => {
     if (!memberId) { setLoading(false); return; }
-    fetchMemberProfile(memberId).then(setMember).catch(() => {}).finally(() => setLoading(false));
+    fetchMemberProfile(memberId).then((m) => { setMember(m); setProfileError(null); }).catch((err: unknown) => { setProfileError(err instanceof Error ? err.message : 'Unknown error'); }).finally(() => setLoading(false));
   }, [memberId, sessionVersion]);
 
   // Fetch influence
@@ -184,7 +185,7 @@ export function ProfilePage() {
     if (!memberId || !member?.city_name) return;
     supabase
       .from('members')
-      .select('city:city_id ( id, metro_id )')
+      .select('city:city_id!members_city_id_fkey ( id, metro_id )')
       .eq('id', memberId)
       .maybeSingle()
       .then(({ data: memberRow }) => {
@@ -294,6 +295,9 @@ export function ProfilePage() {
       <Layout>
         <div className="flex flex-col items-center justify-center py-20 gap-3">
           <p className="text-ink-300">Unable to load profile.</p>
+          {profileError && (
+            <p className="text-xs text-crimson-300 font-mono break-all max-w-md text-center">{profileError}</p>
+          )}
         </div>
       </Layout>
     );
@@ -1328,7 +1332,7 @@ function getInitials(name: string): string {
 async function fetchMemberProfile(memberId: string): Promise<MemberProfile | null> {
   const { data: member, error: memberError } = await supabase
     .from('members')
-    .select('id, email, display_name, founder_number, member_number, ethnic_identity, ethnic_identity_detail, gender, gender_detail, date_of_birth, support_role, support_role_detail, avatar_url, city:city_id ( name, slug, tier, population_count, state )')
+    .select('id, email, display_name, founder_number, member_number, ethnic_identity, ethnic_identity_detail, gender, gender_detail, date_of_birth, support_role, support_role_detail, avatar_url, city:city_id!members_city_id_fkey ( name, slug, tier, population_count, state )')
     .eq('id', memberId)
     .maybeSingle();
   if (memberError) throw memberError;
@@ -1355,7 +1359,9 @@ async function fetchMemberProfile(memberId: string): Promise<MemberProfile | nul
     gender_detail: (member as { gender_detail?: string | null }).gender_detail ?? null,
     referral_count: refList.length,
     verified_referral_count: refList.filter((r) => r.status === 'verified').length,
-    ethnic_identity: (member as { ethnic_identity?: EthnicIdentityValue | null }).ethnic_identity ?? null,
+    ethnic_identity: (Array.isArray((member as { ethnic_identity?: unknown }).ethnic_identity)
+      ? ((member as { ethnic_identity: EthnicIdentityValue[] }).ethnic_identity[0] ?? null)
+      : (member as { ethnic_identity?: EthnicIdentityValue | null }).ethnic_identity ?? null),
     ethnic_identity_detail: (member as { ethnic_identity_detail?: string | null }).ethnic_identity_detail ?? null,
     date_of_birth: (member as { date_of_birth?: string | null }).date_of_birth ?? null,
     support_role: (member as { support_role?: SupportRole | null }).support_role ?? null,

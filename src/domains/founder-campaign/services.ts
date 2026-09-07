@@ -308,7 +308,7 @@ export async function fetchLeaderboard(limit: number = 50, metroId?: string | nu
       email,
       founder_number,
       member_number,
-      city:city_id (
+      city:city_id!members_city_id_fkey (
         name,
         slug,
         metro_id
@@ -473,7 +473,7 @@ export async function fetchMemberDashboard(memberId: string): Promise<MemberDash
       display_name,
       founder_number,
       member_number,
-      city:city_id (
+      city:city_id!members_city_id_fkey (
         name,
         slug,
         tier,
@@ -598,7 +598,7 @@ export async function fetchPublicMemberProfile(memberId: string): Promise<Public
       founder_number,
       member_number,
       created_at,
-      city:city_id ( name, tier, population_count, state )
+      city:city_id!members_city_id_fkey ( name, tier, population_count, state )
     `)
     .eq('id', memberId)
     .maybeSingle();
