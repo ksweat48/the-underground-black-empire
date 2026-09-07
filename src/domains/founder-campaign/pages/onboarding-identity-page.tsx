@@ -1,8 +1,9 @@
 import { useState, type FormEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowRight, Loader2, Store, Briefcase, Building2, Globe, DollarSign } from 'lucide-react';
+import { ArrowRight, Loader2, Store, Briefcase, Building2 } from 'lucide-react';
 import { OnboardingStep } from '@/shared/components/onboarding-step';
 import { ProfilePhotoUploader } from '@/shared/components/profile-photo-uploader';
+import { ListingImageUploader } from '@/shared/components/listing-image-uploader';
 import {
   EthnicIdentitySelector,
   type EthnicIdentityValue,
@@ -18,7 +19,8 @@ import {
 import { ProfessionAutocomplete } from '@/shared/components/profession-autocomplete';
 import { supabase } from '@/shared/supabase-client';
 import { parseSupabaseError } from '@/shared/errors';
-import { createListing, fetchMemberCityInfo, type ListingCategory } from '@/domains/market/services';
+import { createListing } from '@/domains/market/services';
+import type { ListingCategory } from '@/domains/market/types';
 
 const BUSINESS_CATEGORIES: { key: ListingCategory; label: string }[] = [
   { key: 'products', label: 'Products' },
@@ -38,11 +40,9 @@ interface ListingFormData {
   name: string;
   category: ListingCategory;
   description: string;
-  products_services: string;
   price_display: string;
   external_url: string;
   contact_info: string;
-  image_url: string;
 }
 
 export function OnboardingIdentityPage() {
@@ -57,25 +57,21 @@ export function OnboardingIdentityPage() {
   const [genderDetail, setGenderDetail] = useState('');
   const [dateOfBirth, setDateOfBirth] = useState('');
   const [supportRole, setSupportRole] = useState<SupportRole | null>('supporter');
-  const [supportRoleDetail, setSupportRoleDetail] = useState('');
   const [avatarDataUrl, setAvatarDataUrl] = useState<string | null>(null);
+  const [listingImageDataUrl, setListingImageDataUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  // Listing form state
   const [listingData, setListingData] = useState<ListingFormData>({
     name: '',
     category: 'services',
     description: '',
-    products_services: '',
     price_display: '',
     external_url: '',
     contact_info: '',
-    image_url: '',
   });
   const [orgType, setOrgType] = useState<string>('');
   const [fundingGoal, setFundingGoal] = useState('');
-  const [createdListingId, setCreatedListingId] = useState<string | null>(null);
 
   const needsListing = supportRole && supportRole !== 'supporter';
 
@@ -119,23 +115,15 @@ export function OnboardingIdentityPage() {
       return;
     }
 
-    if (supportRole && supportRole !== 'supporter' && !supportRoleDetail.trim()) {
-      setError(`Please provide your ${supportRole === 'business_owner' ? 'business name' : supportRole === 'professional' ? 'profession' : 'organization or initiative name'}.`);
-      return;
-    }
-
     // Validate listing form for non-supporters
     if (needsListing) {
       if (!listingData.name.trim()) {
-        setError(`Please enter your ${supportRole === 'business_owner' ? 'business name' : supportRole === 'professional' ? 'professional title' : 'organization name'}.`);
-        return;
-      }
-      if (supportRole === 'business_owner' && !listingData.products_services.trim()) {
-        setError('Please describe what your business provides.');
-        return;
-      }
-      if (supportRole === 'professional' && !listingData.products_services.trim()) {
-        setError('Please describe the services you offer.');
+        const label = supportRole === 'business_owner'
+          ? 'business name'
+          : supportRole === 'professional'
+            ? 'professional title'
+            : 'organization name';
+        setError(`Please enter your ${label}.`);
         return;
       }
       if (supportRole === 'organization' && !listingData.description.trim()) {
@@ -154,10 +142,12 @@ export function OnboardingIdentityPage() {
       }
 
       const userId = sessionData.session.user.id;
-      const blob = await (await fetch(avatarDataUrl)).blob();
+
+      // Upload profile photo
+      const avatarBlob = await (await fetch(avatarDataUrl)).blob();
       const { error: uploadError } = await supabase.storage
         .from('member-avatars')
-        .upload(`${userId}/avatar.jpg`, blob, {
+        .upload(`${userId}/avatar.jpg`, avatarBlob, {
           contentType: 'image/jpeg',
           upsert: true,
         });
@@ -167,6 +157,26 @@ export function OnboardingIdentityPage() {
         .from('member-avatars')
         .getPublicUrl(`${userId}/avatar.jpg`);
       const avatarUrl = `${urlData.publicUrl}?t=${Date.now()}`;
+
+      // Upload listing image if provided
+      let listingImageUrl: string | null = null;
+      if (needsListing && listingImageDataUrl) {
+        const listingBlob = await (await fetch(listingImageDataUrl)).blob();
+        const ext = listingBlob.type.includes('png') ? 'png' : 'jpg';
+        const listingPath = `${userId}/listing-${Date.now()}.${ext}`;
+        const { error: listingUploadError } = await supabase.storage
+          .from('listing-images')
+          .upload(listingPath, listingBlob, {
+            contentType: listingBlob.type,
+            upsert: false,
+          });
+        if (listingUploadError) throw listingUploadError;
+
+        const { data: listingUrlData } = supabase.storage
+          .from('listing-images')
+          .getPublicUrl(listingPath);
+        listingImageUrl = listingUrlData.publicUrl;
+      }
 
       const { error: ethnicError } = await supabase.rpc('update_ethnic_identity', {
         p_ethnic_identity: ethnicSelected,
@@ -183,7 +193,7 @@ export function OnboardingIdentityPage() {
       const { error: profileError } = await supabase.rpc('update_member_profile', {
         p_date_of_birth: dateOfBirth,
         p_support_role: supportRole,
-        p_support_role_detail: supportRole !== 'supporter' ? supportRoleDetail.trim() : null,
+        p_support_role_detail: supportRole !== 'supporter' ? listingData.name.trim() : null,
         p_avatar_url: avatarUrl,
       });
       if (profileError) throw profileError;
@@ -197,18 +207,16 @@ export function OnboardingIdentityPage() {
             name: listingData.name.trim(),
             category: listingData.category,
             description: listingData.description.trim(),
-            products_services: listingData.products_services.trim(),
+            products_services: '',
             price_display: listingData.price_display.trim(),
             external_url: listingData.external_url.trim(),
             contact_info: listingData.contact_info.trim(),
-            image_url: listingData.image_url.trim() || null,
+            image_url: listingImageUrl,
             status: 'in_review',
           });
-          setCreatedListingId(listing.id);
           listingIdParam = `&listing=${listing.id}`;
         } catch {
           // Listing creation failure should not block onboarding
-          // The member can create their listing later from the Marketplace
         }
       }
 
@@ -279,35 +287,19 @@ export function OnboardingIdentityPage() {
 
         <SupportRoleSelector
           selected={supportRole}
-          detail={supportRoleDetail}
+          detail=""
           onSelect={(value) => {
             setSupportRole(value);
-            setSupportRoleDetail('');
             setError(null);
-            // Pre-fill listing name field when role changes
             if (value !== 'supporter') {
               setListingData((prev) => ({ ...prev, name: '' }));
             }
           }}
-          onDetailChange={setSupportRoleDetail}
+          onDetailChange={() => {}}
           error={null}
         />
 
-        {/* Profession autocomplete replaces the detail input when role is professional */}
-        {supportRole === 'professional' && (
-          <div className="animate-fade-up">
-            <label htmlFor="profession" className="label-field">
-              Profession <span className="text-crimson-400">*</span>
-            </label>
-            <ProfessionAutocomplete
-              value={supportRoleDetail}
-              onChange={setSupportRoleDetail}
-              placeholder="Start typing your profession"
-            />
-          </div>
-        )}
-
-        {/* =================== Marketplace Listing Forms =================== */}
+        {/* =================== Business Owner Listing =================== */}
         {supportRole === 'business_owner' && (
           <div className="animate-fade-up space-y-4 pt-2 border-t border-ink-800/50">
             <div className="flex items-center gap-2 pt-2">
@@ -333,18 +325,7 @@ export function OnboardingIdentityPage() {
             </div>
 
             <div>
-              <label className="label-field">What do you provide? <span className="text-crimson-400">*</span></label>
-              <textarea
-                value={listingData.products_services}
-                onChange={(e) => updateListingField('products_services', e.target.value)}
-                rows={2}
-                className="input-field text-sm resize-none"
-                placeholder="Product / Service"
-              />
-            </div>
-
-            <div>
-              <label className="label-field">Category</label>
+              <label className="label-field">What do you provide?</label>
               <div className="flex gap-2">
                 {BUSINESS_CATEGORIES.map((cat) => (
                   <button
@@ -408,18 +389,13 @@ export function OnboardingIdentityPage() {
             </div>
 
             <div>
-              <label className="label-field">Business Photo / Logo URL <span className="text-ink-500">(optional)</span></label>
-              <input
-                type="url"
-                value={listingData.image_url}
-                onChange={(e) => updateListingField('image_url', e.target.value)}
-                className="input-field text-sm"
-                placeholder="https://example.com/logo.jpg"
-              />
+              <label className="label-field">Business Photo / Logo <span className="text-ink-500">(optional)</span></label>
+              <ListingImageUploader onImageReady={setListingImageDataUrl} />
             </div>
           </div>
         )}
 
+        {/* =================== Professional Listing =================== */}
         {supportRole === 'professional' && (
           <div className="animate-fade-up space-y-4 pt-2 border-t border-ink-800/50">
             <div className="flex items-center gap-2 pt-2">
@@ -433,22 +409,39 @@ export function OnboardingIdentityPage() {
             </p>
 
             <div>
-              <label className="label-field">Name / Professional Title <span className="text-crimson-400">*</span></label>
-              <input
-                type="text"
+              <label className="label-field">Profession <span className="text-crimson-400">*</span></label>
+              <ProfessionAutocomplete
                 value={listingData.name}
-                onChange={(e) => updateListingField('name', e.target.value)}
-                className="input-field text-sm"
-                placeholder="e.g. Marcus Reed — Licensed Electrician"
-                maxLength={100}
+                onChange={(val) => updateListingField('name', val)}
+                placeholder="Start typing your profession"
               />
             </div>
 
             <div>
-              <label className="label-field">Services Offered <span className="text-crimson-400">*</span></label>
+              <label className="label-field">Services Offered</label>
+              <div className="flex gap-2">
+                {BUSINESS_CATEGORIES.map((cat) => (
+                  <button
+                    key={cat.key}
+                    type="button"
+                    onClick={() => updateListingField('category', cat.key)}
+                    className={`flex-1 px-3 py-2.5 rounded-lg text-sm font-medium border transition-all ${
+                      listingData.category === cat.key
+                        ? 'bg-gold-500/10 border-gold-500/25 text-gold-300'
+                        : 'bg-ink-900/50 border-ink-700/50 text-ink-400'
+                    }`}
+                  >
+                    {cat.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="label-field">About Your Services</label>
               <textarea
-                value={listingData.products_services}
-                onChange={(e) => updateListingField('products_services', e.target.value)}
+                value={listingData.description}
+                onChange={(e) => updateListingField('description', e.target.value)}
                 rows={2}
                 className="input-field text-sm resize-none"
                 placeholder="e.g. Residential electrical repair, installations, inspections"
@@ -489,18 +482,13 @@ export function OnboardingIdentityPage() {
             </div>
 
             <div>
-              <label className="label-field">Professional Photo URL <span className="text-ink-500">(optional)</span></label>
-              <input
-                type="url"
-                value={listingData.image_url}
-                onChange={(e) => updateListingField('image_url', e.target.value)}
-                className="input-field text-sm"
-                placeholder="https://example.com/photo.jpg"
-              />
+              <label className="label-field">Professional Photo <span className="text-ink-500">(optional)</span></label>
+              <ListingImageUploader onImageReady={setListingImageDataUrl} />
             </div>
           </div>
         )}
 
+        {/* =================== Organization Listing =================== */}
         {supportRole === 'organization' && (
           <div className="animate-fade-up space-y-4 pt-2 border-t border-ink-800/50">
             <div className="flex items-center gap-2 pt-2">
@@ -540,18 +528,7 @@ export function OnboardingIdentityPage() {
             </div>
 
             <div>
-              <label className="label-field">Primary Mission / Cause <span className="text-crimson-400">*</span></label>
-              <textarea
-                value={listingData.products_services}
-                onChange={(e) => updateListingField('products_services', e.target.value)}
-                rows={2}
-                className="input-field text-sm resize-none"
-                placeholder="e.g. Connecting local farmers with local markets"
-              />
-            </div>
-
-            <div>
-              <label className="label-field">Mission Statement</label>
+              <label className="label-field">Mission Statement <span className="text-crimson-400">*</span></label>
               <textarea
                 value={listingData.description}
                 onChange={(e) => updateListingField('description', e.target.value)}
@@ -598,14 +575,8 @@ export function OnboardingIdentityPage() {
             </div>
 
             <div>
-              <label className="label-field">Organization Photo / Logo URL <span className="text-ink-500">(optional)</span></label>
-              <input
-                type="url"
-                value={listingData.image_url}
-                onChange={(e) => updateListingField('image_url', e.target.value)}
-                className="input-field text-sm"
-                placeholder="https://example.com/logo.jpg"
-              />
+              <label className="label-field">Organization Photo / Logo <span className="text-ink-500">(optional)</span></label>
+              <ListingImageUploader onImageReady={setListingImageDataUrl} />
             </div>
           </div>
         )}

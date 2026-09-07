@@ -49,7 +49,7 @@ export function OnboardingWelcomePage() {
     >
       <div className="text-center mb-6">
         <div className="inline-flex p-4 rounded-full bg-gold-950/40 border border-gold-800/30 mb-4 animate-glow-pulse">
-          <EmpireEmblem variant="dark" className="w-10 h-10" />
+          <EmpireEmblem variant="light" className="w-10 h-10" />
         </div>
         <p className="text-sm text-ink-400 mb-1">You are</p>
         <h2 className="text-5xl font-display font-bold text-gradient-gold mb-2">
@@ -81,13 +81,6 @@ export function OnboardingWelcomePage() {
                 Your listing is now visible in the Marketplace with an "In Review" badge.
                 An admin will review it soon. You can still receive likes, comments, and shares while in review.
               </p>
-              <button
-                onClick={() => navigate(`/market/listing/${listingId}`)}
-                className="mt-2 text-xs text-gold-300 hover:text-gold-200 transition-colors flex items-center gap-1"
-              >
-                View Your Listing
-                <ArrowRight className="w-3 h-3" />
-              </button>
             </div>
           </div>
         </div>

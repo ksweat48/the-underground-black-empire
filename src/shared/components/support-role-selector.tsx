@@ -12,14 +12,14 @@ export const SUPPORT_ROLE_OPTIONS: { value: SupportRole; label: string; descript
   {
     value: 'business_owner',
     label: 'Business Owner',
-    description: 'Add your business name',
-    detailLabel: 'Business Name',
+    description: 'List your business in the Marketplace',
+    detailLabel: '',
   },
   {
     value: 'professional',
     label: 'Professional',
-    description: 'Add or choose your profession',
-    detailLabel: 'Profession',
+    description: 'Add your profession and services',
+    detailLabel: '',
   },
   {
     value: 'organization',
@@ -52,8 +52,8 @@ export function SupportRoleSelector({
   onDetailChange,
   error,
 }: SupportRoleSelectorProps) {
-  const needsDetail = selected && selected !== 'supporter';
   const currentOption = SUPPORT_ROLE_OPTIONS.find((o) => o.value === selected);
+  const needsDetail = Boolean(selected && currentOption?.detailLabel);
 
   return (
     <div>
