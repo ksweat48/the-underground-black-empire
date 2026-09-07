@@ -56,7 +56,7 @@ function LandingCTA({
       <Link
         to={to}
         className={cn(
-          'inline-flex min-h-[44px] items-center justify-center gap-2 rounded-2xl border border-white/55 bg-white/20 px-6 py-3 font-display text-sm font-bold uppercase tracking-[0.12em] text-white shadow-[0_8px_24px_rgba(0,0,0,0.18)] backdrop-blur-md transition-all duration-200 hover:bg-white/30 hover:shadow-[0_12px_32px_rgba(0,0,0,0.24)] active:scale-[0.98]',
+          'inline-flex min-h-[44px] items-center justify-center gap-2 rounded-2xl border border-white/55 bg-plum-700/90 px-6 py-3 font-display text-sm font-bold uppercase tracking-[0.12em] text-white shadow-[0_8px_24px_rgba(0,0,0,0.18)] backdrop-blur-md transition-all duration-200 hover:bg-plum-800 hover:shadow-[0_12px_32px_rgba(0,0,0,0.24)] active:scale-[0.98]',
           className,
         )}
       >
@@ -68,7 +68,7 @@ function LandingCTA({
     <Link
       to={to}
       className={cn(
-        'inline-flex min-h-[48px] items-center justify-center gap-2 rounded-2xl border border-white/45 bg-black/25 px-8 py-3 font-display text-sm font-bold uppercase tracking-[0.12em] text-white shadow-[0_10px_28px_rgba(0,0,0,0.24)] backdrop-blur-md transition-all duration-200 hover:-translate-y-0.5 hover:bg-black/35 hover:shadow-[0_14px_36px_rgba(0,0,0,0.30)] active:translate-y-0 active:scale-[0.98] sm:min-h-[52px]',
+        'inline-flex min-h-[48px] items-center justify-center gap-2 rounded-2xl border border-white/45 bg-emerald-700/90 px-8 py-3 font-display text-sm font-bold uppercase tracking-[0.12em] text-white shadow-[0_10px_28px_rgba(0,0,0,0.24)] backdrop-blur-md transition-all duration-200 hover:-translate-y-0.5 hover:bg-emerald-800 hover:shadow-[0_14px_36px_rgba(0,0,0,0.30)] active:translate-y-0 active:scale-[0.98] sm:min-h-[52px]',
         className,
       )}
     >
@@ -132,7 +132,7 @@ function ScreenContent({
 
       <div className={cn('landing-glass-card landing-text-card rounded-3xl px-6 py-6 sm:px-10 sm:py-8', showLogo && 'mt-4')}>
         {eyebrow && (
-          <p className="font-display text-[11px] font-semibold uppercase tracking-[0.24em] text-plum-600">
+          <p className="font-display text-base font-bold uppercase tracking-[0.24em] text-plum-700 sm:text-lg lg:text-xl">
             {eyebrow}
           </p>
         )}
