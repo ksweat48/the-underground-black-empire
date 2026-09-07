@@ -9,6 +9,16 @@ import type {
   TierDetails,
 } from './types';
 
+export type {
+  MembershipTier,
+  MembershipTierId,
+  VotingCredits,
+  LegacyFund,
+  MemberMembership,
+  BenefitItem,
+  TierDetails,
+};
+
 export async function fetchMembershipTiers(): Promise<MembershipTier[]> {
   const { data, error } = await supabase
     .from('membership_tiers')

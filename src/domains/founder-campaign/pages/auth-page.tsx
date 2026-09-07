@@ -21,7 +21,7 @@ export function AuthPage({ mode }: AuthPageProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
-  const [ethnicSelected, setEthnicSelected] = useState<EthnicIdentityValue[]>([]);
+  const [ethnicSelected, setEthnicSelected] = useState<EthnicIdentityValue | null>(null);
   const [ethnicDetail, setEthnicDetail] = useState('');
   const [gender, setGender] = useState<GenderValue | null>(null);
   const [genderDetail, setGenderDetail] = useState('');
@@ -46,11 +46,11 @@ export function AuthPage({ mode }: AuthPageProps) {
     clearError();
     try {
       if (isSignUp) {
-        if (ethnicSelected.length === 0) {
-          setIdentityError('Please select at least one option.');
+        if (!ethnicSelected) {
+          setIdentityError('Please select your race / ethnic identity.');
           return;
         }
-        if (ethnicSelected.includes('another') && !ethnicDetail.trim()) {
+        if (ethnicSelected === 'another' && !ethnicDetail.trim()) {
           setIdentityError('Please describe your race / ethnic identity.');
           return;
         }
@@ -62,7 +62,7 @@ export function AuthPage({ mode }: AuthPageProps) {
         await createMemberRecord(email);
         const { error: rpcError } = await supabase.rpc('update_ethnic_identity', {
           p_ethnic_identity: ethnicSelected,
-          p_ethnic_identity_detail: ethnicSelected.includes('another') ? ethnicDetail.trim() : null,
+          p_ethnic_identity_detail: ethnicSelected === 'another' ? ethnicDetail.trim() : null,
         });
         if (rpcError) throw new Error(parseSupabaseError(rpcError));
         const { error: genderError } = await supabase.rpc('update_gender', {
@@ -113,10 +113,8 @@ export function AuthPage({ mode }: AuthPageProps) {
               <EthnicIdentitySelector
                 selected={ethnicSelected}
                 detail={ethnicDetail}
-                onToggle={(value) => {
-                  setEthnicSelected((prev) =>
-                    prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value],
-                  );
+                onSelect={(value) => {
+                  setEthnicSelected(value);
                   setIdentityError(null);
                 }}
                 onDetailChange={setEthnicDetail}

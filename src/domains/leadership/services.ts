@@ -9,6 +9,15 @@ import type {
   MyBallot,
 } from './types';
 
+export type {
+  LeadershipCycle,
+  NominationCandidate,
+  LeadershipFinalist,
+  MetroCouncilMember,
+  LeadershipEligibility,
+  MyBallot,
+};
+
 // ============================================================
 // ELIGIBILITY
 // ============================================================
@@ -107,9 +116,9 @@ export async function fetchNominationCandidates(metroId: string | null, currentU
 
   const memberIds = members.map((m) => m.id);
 
-  const { data: influenceMap } = await supabase
-    .rpc('get_member_influence', { p_member_id: '00000000-0000-0000-0000-000000000000' })
-    .catch(() => null);
+  const { data: influenceMap } = await Promise.resolve(
+    supabase.rpc('get_member_influence', { p_member_id: '00000000-0000-0000-0000-000000000000' })
+  ).catch(() => ({ data: null, error: null }));
 
   const candidates: NominationCandidate[] = [];
 
@@ -120,7 +129,7 @@ export async function fetchNominationCandidates(metroId: string | null, currentU
     const influenceValue = Number(influence ?? 0);
     const level = getLevelFromInfluence(influenceValue).level;
 
-    const { data: nomCount } = await supabase
+    const { count: nomCount } = await supabase
       .from('leadership_nominations')
       .select('id', { count: 'exact', head: true })
       .eq('candidate_id', member.id);

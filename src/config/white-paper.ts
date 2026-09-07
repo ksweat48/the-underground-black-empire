@@ -427,6 +427,7 @@ export const whitePaperSections: WhitePaperSection[] = [
     id: 'project-report',
     number: '16',
     title: 'Example Project Report',
+    paragraphs: [],
     blocks: [
       {
         heading: 'South Atlanta Youth Technology Lab',

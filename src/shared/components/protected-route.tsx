@@ -33,8 +33,7 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
     setAdminLoading(true);
     setAdminError(null);
     let cancelled = false;
-    supabase
-      .rpc('is_current_user_admin')
+    Promise.resolve(supabase.rpc('is_current_user_admin'))
       .then(({ data, error }) => {
         if (!cancelled) {
           if (error) {
@@ -46,7 +45,7 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
           setAdminLoading(false);
         }
       })
-      .catch((err) => {
+      .catch((err: unknown) => {
         if (!cancelled) {
           setAdminError(err instanceof Error ? err.message : 'Unknown error');
           setAdminLoading(false);

@@ -90,7 +90,7 @@ interface MemberProfile {
   influence: number;
   referral_count: number;
   verified_referral_count: number;
-  ethnic_identity: EthnicIdentityValue[] | null;
+  ethnic_identity: EthnicIdentityValue | null;
   ethnic_identity_detail: string | null;
   gender: GenderValue | null;
   gender_detail: string | null;
@@ -918,7 +918,7 @@ export function ProfilePage() {
                   if (showIdentityEdit) {
                     setShowIdentityEdit(false);
                   } else {
-                    setEditEthnicSelected(member.ethnic_identity?.[0] ?? 'black_african_american');
+                    setEditEthnicSelected(member.ethnic_identity ?? 'black_african_american');
                     setEditEthnicDetail(member.ethnic_identity_detail ?? '');
                     setEditGender(member.gender ?? null);
                     setEditGenderDetail(member.gender_detail ?? '');
@@ -1060,7 +1060,7 @@ export function ProfilePage() {
                       if (profileError) throw profileError;
                       setMember((prev) => prev ? {
                         ...prev,
-                        ethnic_identity: [editEthnicSelected],
+                        ethnic_identity: editEthnicSelected,
                         ethnic_identity_detail: editEthnicSelected === 'another' ? editEthnicDetail.trim() : null,
                         gender: editGender,
                         gender_detail: editGender === 'other' ? editGenderDetail.trim() : null,
@@ -1082,15 +1082,13 @@ export function ProfilePage() {
                   {editIdentitySaving ? 'Saving...' : 'Save Changes'}
                 </button>
               </div>
-            ) : (member.ethnic_identity && member.ethnic_identity.length > 0) || member.gender || member.date_of_birth || member.support_role ? (
+            ) : member.ethnic_identity || member.gender || member.date_of_birth || member.support_role ? (
               <div className="space-y-1.5 mt-1">
-                {member.ethnic_identity && member.ethnic_identity.length > 0 && (
+                {member.ethnic_identity && (
                   <div className="flex flex-wrap gap-1.5">
-                    {member.ethnic_identity.map((id) => (
-                      <span key={id} className="px-2 py-0.5 rounded-md bg-ink-700/40 border border-ink-600/30 text-xs text-ink-200">
-                        {ETHNIC_IDENTITY_LABELS[id] ?? id}
-                      </span>
-                    ))}
+                    <span className="px-2 py-0.5 rounded-md bg-ink-700/40 border border-ink-600/30 text-xs text-ink-200">
+                      {ETHNIC_IDENTITY_LABELS[member.ethnic_identity] ?? member.ethnic_identity}
+                    </span>
                     {member.ethnic_identity_detail && (
                       <span className="px-2 py-0.5 rounded-md bg-ink-700/40 border border-ink-600/30 text-xs text-ink-200">
                         {member.ethnic_identity_detail}
@@ -1357,7 +1355,7 @@ async function fetchMemberProfile(memberId: string): Promise<MemberProfile | nul
     gender_detail: (member as { gender_detail?: string | null }).gender_detail ?? null,
     referral_count: refList.length,
     verified_referral_count: refList.filter((r) => r.status === 'verified').length,
-    ethnic_identity: (member as { ethnic_identity?: EthnicIdentityValue[] | null }).ethnic_identity ?? null,
+    ethnic_identity: (member as { ethnic_identity?: EthnicIdentityValue | null }).ethnic_identity ?? null,
     ethnic_identity_detail: (member as { ethnic_identity_detail?: string | null }).ethnic_identity_detail ?? null,
     date_of_birth: (member as { date_of_birth?: string | null }).date_of_birth ?? null,
     support_role: (member as { support_role?: SupportRole | null }).support_role ?? null,

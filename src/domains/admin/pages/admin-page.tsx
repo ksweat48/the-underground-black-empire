@@ -128,6 +128,9 @@ export function AdminPage() {
   const { sessionVersion } = useAuth();
   const [stats, setStats] = useState<AdminStats>({
     totalPopulation: 0,
+    activeCities: 0,
+    tribeCities: 0,
+    empireProgress: 0,
   });
   const [reports, setReports] = useState<ReportData>({
     signupsLast7Days: 0,
@@ -236,8 +239,7 @@ export function AdminPage() {
       .catch(() => {})
       .finally(() => setLoading(false));
 
-    supabase
-      .rpc('get_admin_participation_stats')
+    Promise.resolve(supabase.rpc('get_admin_participation_stats'))
       .then(({ data, error }) => {
         if (!error && data) {
           setParticipation(data as ParticipationStats);
@@ -246,7 +248,7 @@ export function AdminPage() {
       .catch(() => {})
       .finally(() => setParticipationLoading(false));
 
-    fetchListingsForReview('in_review', 20)
+    Promise.resolve(fetchListingsForReview('in_review', 20))
       .then(setReviewListings)
       .catch(() => {})
       .finally(() => setReviewLoading(false));

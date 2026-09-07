@@ -17,6 +17,24 @@ import type {
   ReviewAction,
 } from './types';
 
+export type {
+  MarketListing,
+  ListingUpdate,
+  LocalNewsItem,
+  MarketEvent,
+  ListingComment,
+  CommunityFeedItem,
+  Vote,
+  ContentReportInput,
+  CreateListingInput,
+  CreateUpdateInput,
+  CreateNewsInput,
+  CreateEventInput,
+  ListingCategory,
+  ListingForReview,
+  ReviewAction,
+};
+
 // ============================================================
 // LISTINGS
 // ============================================================
