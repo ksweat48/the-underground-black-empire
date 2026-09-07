@@ -185,24 +185,30 @@ export function ProfilePage() {
     if (!memberId || !member?.city_name) return;
     supabase
       .from('members')
-      .select('city:city_id ( id, metro_id )')
+      .select('city_id')
       .eq('id', memberId)
       .maybeSingle()
-      .then(({ data: memberRow }) => {
-        const cityData = (Array.isArray(memberRow?.city) ? memberRow?.city[0] : memberRow?.city) as { id: string; metro_id: string | null } | null;
-        if (cityData?.id) {
-          fetchCityWithMetro(cityData.id).then((metro) => {
-            if (metro) {
-              setMetroData({
-                name: metro.metro_name ?? 'Unassigned',
-                rank: metro.metro_rank,
-                populationCount: metro.metro_population_count,
-                cityCount: metro.metro_city_count,
-                metroId: cityData.metro_id,
-              });
-            }
+      .then(({ data: memberRow, error }) => {
+        if (error || !memberRow?.city_id) return;
+        supabase
+          .from('cities')
+          .select('id, metro_id')
+          .eq('id', memberRow.city_id)
+          .maybeSingle()
+          .then(({ data: cityData, error: cityError }) => {
+            if (cityError || !cityData?.id) return;
+            fetchCityWithMetro(cityData.id).then((metro) => {
+              if (metro) {
+                setMetroData({
+                  name: metro.metro_name ?? 'Unassigned',
+                  rank: metro.metro_rank,
+                  populationCount: metro.metro_population_count,
+                  cityCount: metro.metro_city_count,
+                  metroId: cityData.metro_id,
+                });
+              }
+            });
           });
-        }
       });
   }, [memberId, member?.city_name, sessionVersion]);
 
@@ -1332,18 +1338,26 @@ function getInitials(name: string): string {
 async function fetchMemberProfile(memberId: string): Promise<MemberProfile | null> {
   const { data: member, error: memberError } = await supabase
     .from('members')
-    .select('id, email, display_name, founder_number, member_number, ethnic_identity, ethnic_identity_detail, gender, gender_detail, date_of_birth, support_role, support_role_detail, avatar_url, city:city_id ( name, slug, tier, population_count, state )')
+    .select('id, email, display_name, founder_number, member_number, city_id, ethnic_identity, ethnic_identity_detail, gender, gender_detail, date_of_birth, support_role, support_role_detail, avatar_url')
     .eq('id', memberId)
     .maybeSingle();
   if (memberError) throw memberError;
   if (!member) return null;
 
-  const { data: influenceData } = await supabase.from('influence_ledger').select('amount').eq('member_id', memberId);
-  const { data: refData } = await supabase.from('referrals').select('status').eq('referring_member_id', memberId);
+  const [{ data: influenceData, error: influenceError }, { data: refData, error: refError }, { data: cityData, error: cityError }] = await Promise.all([
+    supabase.from('influence_ledger').select('amount').eq('member_id', memberId),
+    supabase.from('referrals').select('status').eq('referring_member_id', memberId),
+    member.city_id
+      ? supabase.from('cities').select('name, tier, population_count, state').eq('id', member.city_id).maybeSingle()
+      : Promise.resolve({ data: null, error: null }),
+  ]);
+
+  if (influenceError) throw influenceError;
+  if (refError) throw refError;
+  if (cityError) throw cityError;
 
   const totalInfluence = (influenceData ?? []).reduce((sum, e) => sum + e.amount, 0);
   const refList = refData ?? [];
-  const cityData = (Array.isArray(member.city) ? member.city[0] : member.city) as { name: string; tier: string; population_count: number; state: string } | null;
 
   return {
     display_name: member.display_name,

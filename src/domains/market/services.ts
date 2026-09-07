@@ -735,14 +735,20 @@ export async function fetchCityIdsInMetro(metroId: string | null): Promise<strin
 export async function fetchMemberCityInfo(userId: string): Promise<{ cityId: string | null; metroId: string | null; cityName: string | null }> {
   const { data, error } = await supabase
     .from('members')
-    .select(`
-      city:city_id ( id, name, metro_id )
-    `)
+    .select('city_id')
     .eq('id', userId)
     .maybeSingle();
 
   if (error) throw error;
-  const cityData = (Array.isArray(data?.city) ? data?.city[0] : data?.city) as { id: string; name: string; metro_id: string | null } | null;
+  if (!data?.city_id) return { cityId: null, metroId: null, cityName: null };
+
+  const { data: cityData, error: cityError } = await supabase
+    .from('cities')
+    .select('id, name, metro_id')
+    .eq('id', data.city_id)
+    .maybeSingle();
+
+  if (cityError) throw cityError;
   return {
     cityId: cityData?.id ?? null,
     metroId: cityData?.metro_id ?? null,

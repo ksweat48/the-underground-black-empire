@@ -181,7 +181,7 @@ export function EmpireDashboardPage() {
   const [assignedNumber, setAssignedNumber] = useState<number | null>(null);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [showCityDrawer, setShowCityDrawer] = useState(false);
-  const [metroData, setMetroData] = useState<{ name: string; rank: number; populationCount: number; metroId: string | null } | null>(null);
+  const [metroData, setMetroData] = useState<{ name: string; rank: number; populationCount: number; cityCount: number; metroId: string | null } | null>(null);
   const [activeTab, setActiveTab] = useState<FeedTab>('local');
   const [localFeed, setLocalFeed] = useState<FeedEvent[]>([]);
   const [empireFeed, setEmpireFeed] = useState<FeedEvent[]>([]);
@@ -253,23 +253,30 @@ export function EmpireDashboardPage() {
     if (data?.city_name) {
       supabase
         .from('members')
-        .select('city:city_id ( id, metro_id )')
+        .select('city_id')
         .eq('id', memberId)
         .maybeSingle()
-        .then(({ data: member }) => {
-          const cityData = (Array.isArray(member?.city) ? member?.city[0] : member?.city) as { id: string; metro_id: string | null } | null;
-          if (cityData?.id) {
-            fetchCityWithMetro(cityData.id).then((metro) => {
-              if (metro) {
-                setMetroData({
-                  name: metro.metro_name ?? 'Unassigned',
-                  rank: metro.metro_rank,
-                  populationCount: metro.metro_population_count,
-                  metroId: cityData.metro_id,
-                });
-              }
+        .then(({ data: member, error }) => {
+          if (error || !member?.city_id) return;
+          supabase
+            .from('cities')
+            .select('id, metro_id')
+            .eq('id', member.city_id)
+            .maybeSingle()
+            .then(({ data: cityData, error: cityError }) => {
+              if (cityError || !cityData?.id) return;
+              fetchCityWithMetro(cityData.id).then((metro) => {
+                if (metro) {
+                  setMetroData({
+                    name: metro.metro_name ?? 'Unassigned',
+                    rank: metro.metro_rank,
+                    populationCount: metro.metro_population_count,
+                    cityCount: metro.metro_city_count,
+                    metroId: cityData.metro_id,
+                  });
+                }
+              });
             });
-          }
         });
     }
   }, [data?.city_name, memberId, sessionVersion]);

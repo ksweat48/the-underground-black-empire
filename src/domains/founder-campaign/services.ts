@@ -308,11 +308,7 @@ export async function fetchLeaderboard(limit: number = 50, metroId?: string | nu
       email,
       founder_number,
       member_number,
-      city:city_id (
-        name,
-        slug,
-        metro_id
-      )
+      city_id
     `)
     .not('member_number', 'is', null)
     .order('created_at', { ascending: true })
@@ -323,10 +319,21 @@ export async function fetchLeaderboard(limit: number = 50, metroId?: string | nu
   if (error) throw error;
   if (!data || data.length === 0) return [];
 
+  const cityIds = [...new Set(data.map((m) => m.city_id).filter(Boolean))] as string[];
+  const { data: citiesData, error: citiesError } = await supabase
+    .from('cities')
+    .select('id, name, slug, metro_id')
+    .in('id', cityIds);
+  if (citiesError) throw citiesError;
+  const cityMap = new Map<string, { name: string; slug: string; metro_id: string | null }>();
+  for (const c of citiesData ?? []) {
+    cityMap.set(c.id, { name: c.name, slug: c.slug, metro_id: c.metro_id });
+  }
+
   let filtered = data;
   if (metroId) {
     filtered = filtered.filter((m) => {
-      const cityData = (Array.isArray(m.city) ? m.city[0] : m.city) as { metro_id: string | null } | null;
+      const cityData = m.city_id ? cityMap.get(m.city_id) : null;
       return cityData?.metro_id === metroId;
     });
   }
@@ -368,7 +375,7 @@ export async function fetchLeaderboard(limit: number = 50, metroId?: string | nu
   }
 
   return filtered.map((m) => {
-    const cityData = (Array.isArray(m.city) ? m.city[0] : m.city) as { name: string; slug: string; metro_id: string | null } | null;
+    const cityData = m.city_id ? cityMap.get(m.city_id) : null;
     return {
       member_id: m.id,
       display_name: m.display_name,
@@ -473,12 +480,7 @@ export async function fetchMemberDashboard(memberId: string): Promise<MemberDash
       display_name,
       founder_number,
       member_number,
-      city:city_id (
-        name,
-        slug,
-        tier,
-        population_count
-      )
+      city_id
     `)
     .eq('id', memberId)
     .maybeSingle();
@@ -486,33 +488,31 @@ export async function fetchMemberDashboard(memberId: string): Promise<MemberDash
   if (memberError) throw memberError;
   if (!member) return null;
 
-  const { data: influenceData, error: influenceError } = await supabase
-    .from('influence_ledger')
-    .select('amount')
-    .eq('member_id', memberId);
+  const [{ data: influenceData, error: influenceError }, { data: refData, error: refError }, { data: cityData, error: cityError }] = await Promise.all([
+    supabase.from('influence_ledger').select('amount').eq('member_id', memberId),
+    supabase.from('referrals').select('status').eq('referring_member_id', memberId),
+    member.city_id
+      ? supabase.from('cities').select('name, slug, tier, population_count').eq('id', member.city_id).maybeSingle()
+      : Promise.resolve({ data: null, error: null }),
+  ]);
 
   if (influenceError) throw influenceError;
-
-  const { data: refData, error: refError } = await supabase
-    .from('referrals')
-    .select('status')
-    .eq('referring_member_id', memberId);
-
   if (refError) throw refError;
+  if (cityError) throw cityError;
 
   const totalInfluence = (influenceData ?? []).reduce((sum, entry) => sum + entry.amount, 0);
   const referralCount = refData?.length ?? 0;
   const verifiedReferralCount = refData?.filter((r) => r.status === 'verified').length ?? 0;
 
-  const cityData = (Array.isArray(member.city) ? member.city[0] : member.city) as { name: string; slug: string; tier: string; population_count: number } | null;
+  const city = cityData as { name: string; slug: string; tier: string; population_count: number } | null;
 
   return {
     email: member.email,
     display_name: member.display_name,
-    city_name: cityData?.name ?? null,
-    city_slug: cityData?.slug ?? null,
-    city_tier: cityData?.tier ?? null,
-    city_population_count: cityData?.population_count ?? null,
+    city_name: city?.name ?? null,
+    city_slug: city?.slug ?? null,
+    city_tier: city?.tier ?? null,
+    city_population_count: city?.population_count ?? null,
     founder_number: member.founder_number,
     member_number: (member as { member_number?: number | null }).member_number ?? null,
     influence: totalInfluence,
@@ -598,7 +598,7 @@ export async function fetchPublicMemberProfile(memberId: string): Promise<Public
       founder_number,
       member_number,
       created_at,
-      city:city_id ( name, tier, population_count, state )
+      city_id
     `)
     .eq('id', memberId)
     .maybeSingle();
@@ -609,6 +609,7 @@ export async function fetchPublicMemberProfile(memberId: string): Promise<Public
   const [
     { data: refData, error: refError },
     { data: influenceData, error: influenceError },
+    { data: cityData, error: cityError },
   ] = await Promise.all([
     supabase
       .from('referrals')
@@ -618,15 +619,18 @@ export async function fetchPublicMemberProfile(memberId: string): Promise<Public
       .from('influence_ledger')
       .select('amount')
       .eq('member_id', memberId),
+    member.city_id
+      ? supabase.from('cities').select('name, tier, population_count, state').eq('id', member.city_id).maybeSingle()
+      : Promise.resolve({ data: null, error: null }),
   ]);
 
   if (refError) throw refError;
   if (influenceError) throw influenceError;
+  if (cityError) throw cityError;
 
   const totalInfluence = (influenceData ?? []).reduce((sum, e) => sum + e.amount, 0);
   const refList = refData ?? [];
-  const cityData = (Array.isArray(member.city) ? member.city[0] : member.city) as
-    { name: string; tier: string; population_count: number; state: string } | null;
+  const city = cityData as { name: string; tier: string; population_count: number; state: string } | null;
 
   return {
     id: member.id,
@@ -634,10 +638,10 @@ export async function fetchPublicMemberProfile(memberId: string): Promise<Public
     email: member.email,
     founder_number: member.founder_number,
     member_number: (member as { member_number?: number | null }).member_number ?? null,
-    city_name: cityData?.name ?? null,
-    city_tier: cityData?.tier ?? null,
-    city_population_count: cityData?.population_count ?? null,
-    state: cityData?.state ?? null,
+    city_name: city?.name ?? null,
+    city_tier: city?.tier ?? null,
+    city_population_count: city?.population_count ?? null,
+    state: city?.state ?? null,
     influence: totalInfluence,
     referral_count: refList.length,
     verified_referral_count: refList.filter((r) => r.status === 'verified').length,
