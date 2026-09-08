@@ -954,7 +954,6 @@ export function ProfilePage() {
                     setEditIdentityError(null);
                   }}
                   onDetailChange={setEditEthnicDetail}
-                  showExplanation={false}
                   error={null}
                 />
                 <GenderSelector

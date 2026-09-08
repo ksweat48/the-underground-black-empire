@@ -186,11 +186,7 @@ export function ProfilePhotoUploader({ onPhotoReady, className }: ProfilePhotoUp
             </button>
           </div>
         </div>
-      ) : (
-        <p className="text-xs text-ink-500 text-center max-w-[200px]">
-          Drag to reposition your photo within the circle. Required to continue.
-        </p>
-      )}
+      ) : null}
 
       {/* Hidden canvas for cropping */}
       <canvas ref={canvasRef} className="hidden" />

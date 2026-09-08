@@ -36,7 +36,6 @@ interface EthnicIdentitySelectorProps {
   detail: string;
   onSelect: (value: EthnicIdentityValue) => void;
   onDetailChange: (detail: string) => void;
-  showExplanation?: boolean;
   error?: string | null;
 }
 
@@ -45,20 +44,12 @@ export function EthnicIdentitySelector({
   detail,
   onSelect,
   onDetailChange,
-  showExplanation = true,
   error,
 }: EthnicIdentitySelectorProps) {
   const hasAnother = selected === 'another';
 
   return (
     <div>
-      {showExplanation && (
-        <p className="text-sm text-ink-400 mb-4 leading-relaxed">
-          The Empire tracks who is participating so every community can see who is
-          helping build, support, and grow the Empire.
-        </p>
-      )}
-
       <label htmlFor="ethnic-select" className="label-field">
         Race / Ethnic Identity <span className="text-crimson-400">*</span>
       </label>

@@ -24,7 +24,7 @@ export function OnboardingAccountPage() {
   const createMemberRecord = async (userEmail: string): Promise<void> => {
     const { error: rpcError } = await supabase.rpc('create_member', {
       p_email: userEmail,
-      p_display_name: displayName || null,
+      p_display_name: displayName.trim(),
       p_referred_by_code: referralCode || null,
     });
     if (rpcError) throw rpcError;
@@ -73,7 +73,7 @@ export function OnboardingAccountPage() {
 
         <div>
           <label htmlFor="display-name" className="label-field">
-            Display Name <span className="text-ink-500">(optional)</span>
+            Display Name <span className="text-crimson-400">*</span>
           </label>
           <div className="relative">
             <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-400" />
@@ -84,6 +84,7 @@ export function OnboardingAccountPage() {
               onChange={(e) => setDisplayName(e.target.value)}
               placeholder="Your display name"
               className="input-field pl-10"
+              required
               autoComplete="name"
             />
           </div>
