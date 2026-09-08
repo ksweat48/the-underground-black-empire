@@ -70,8 +70,8 @@ export function OnboardingConfirmPage() {
           </div>
         )}
 
-        <div className="bg-ink-900/50 rounded-lg p-4 mb-4">
-          <p className="text-xs font-medium text-ink-400 uppercase tracking-wider mb-3">
+        <div className="bg-white rounded-lg p-4 mb-4 border border-stone-200 shadow-sm">
+          <p className="text-xs font-medium text-stone-500 uppercase tracking-wider mb-3">
             City Status
           </p>
           {isFirstFounder ? (
@@ -81,21 +81,21 @@ export function OnboardingConfirmPage() {
                   <EmpireEmblem variant="dark" className="w-5 h-5" />
                 </div>
                 <div>
-                  <p className="text-lg font-display font-semibold text-gradient-gold">
+                  <p className="text-lg font-display font-semibold text-stone-900">
                     Be the First Member
                   </p>
-                  <p className="text-xs text-ink-400 mt-0.5">
+                  <p className="text-xs text-stone-500 mt-0.5">
                     You'll put {city.name} on the map and claim Member #1.
                   </p>
                 </div>
               </div>
-              <div className="h-px bg-ink-800/60" />
+              <div className="h-px bg-stone-200" />
               <div className="flex items-center justify-between text-sm">
-                <span className="text-ink-400">Current Tier</span>
-                <span className="text-ink-100 font-medium">{tierLabel}</span>
+                <span className="text-stone-500">Current Tier</span>
+                <span className="text-stone-900 font-medium">{tierLabel}</span>
               </div>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-ink-400">Your Member Number</span>
+                <span className="text-stone-500">Your Member Number</span>
                 <span className="text-gold-300 font-semibold">#1</span>
               </div>
             </div>
@@ -106,27 +106,27 @@ export function OnboardingConfirmPage() {
                   <Users className="w-5 h-5 text-emerald-400" />
                 </div>
                 <div>
-                  <p className="text-lg font-display font-semibold text-ink-100">
+                  <p className="text-lg font-display font-semibold text-stone-900">
                     {city.population_count} {city.population_count === 1 ? 'Member' : 'Members'} Already Here
                   </p>
-                  <p className="text-xs text-ink-400 mt-0.5">
+                  <p className="text-xs text-stone-500 mt-0.5">
                     Join them and help {city.name} grow to the next tier.
                   </p>
                 </div>
               </div>
-              <div className="h-px bg-ink-800/60" />
+              <div className="h-px bg-stone-200" />
               <div className="flex items-center justify-between text-sm">
-                <span className="text-ink-400">Your Member Number</span>
+                <span className="text-stone-500">Your Member Number</span>
                 <span className="text-gold-300 font-semibold">#{nextFounderNumber}</span>
               </div>
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-xs text-ink-400">{tierLabel}</span>
-                  <span className="text-xs text-ink-500">
+                  <span className="text-xs text-stone-500">{tierLabel}</span>
+                  <span className="text-xs text-stone-500">
                     {city.population_count} / {progress.next ? PROGRESSION_RULES.city[progress.next].minPopulation : PROGRESSION_RULES.city.tribe.minPopulation} to {progress.next ? PROGRESSION_RULES.city[progress.next].label : 'Tribe'}
                   </span>
                 </div>
-                <div className="h-1.5 rounded-full bg-ink-800 overflow-hidden">
+                <div className="h-1.5 rounded-full bg-stone-200 overflow-hidden">
                   <div
                     className="h-full rounded-full bg-gradient-to-r from-gold-500 to-gold-300 transition-all duration-500"
                     style={{
