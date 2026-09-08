@@ -143,35 +143,35 @@ export function OnboardingConfirmPage() {
           <div className="bg-white rounded-lg p-4 border border-gold-200 shadow-sm mb-4">
             <div className="flex items-center gap-2 mb-2">
               <Building2 className="w-4 h-4 text-gold-400" />
-              <p className="text-xs font-medium text-ink-500 uppercase tracking-wider">
+              <p className="text-xs font-medium text-stone-500 uppercase tracking-wider">
                 Your Metro Community
               </p>
             </div>
             <div className="flex items-end justify-between">
               <div>
-                <p className="text-lg font-display font-bold text-ink-900">
+                <p className="text-lg font-display font-bold text-stone-900">
                   {city.metro_name}
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-xs text-ink-500">Population</p>
-                <p className="text-2xl font-display font-bold text-ink-900">
+                <p className="text-xs text-stone-500">Population</p>
+                <p className="text-2xl font-display font-bold text-stone-900">
                   {city.metro_population_count.toLocaleString()}
                 </p>
               </div>
             </div>
             {city.metro_rank > 0 && (
-              <div className="mt-3 pt-3 border-t border-ink-200 grid grid-cols-2 gap-3">
+              <div className="mt-3 pt-3 border-t border-stone-200 grid grid-cols-2 gap-3">
                 <div>
-                  <p className="text-xs text-ink-500">Cities</p>
-                  <p className="text-sm font-semibold text-ink-900">{city.metro_city_count}</p>
+                  <p className="text-xs text-stone-500">Cities</p>
+                  <p className="text-sm font-semibold text-stone-900">{city.metro_city_count}</p>
                 </div>
                 <div>
-                  <div className="flex items-center gap-1.5 text-xs text-ink-500">
+                  <div className="flex items-center gap-1.5 text-xs text-stone-500">
                     <TrendingUp className="w-3 h-3" />
                     <span>National Ranking</span>
                   </div>
-                  <p className="text-sm font-semibold text-ink-900">
+                  <p className="text-sm font-semibold text-stone-900">
                     {city.metro_rank > 0 ? `#${city.metro_rank}` : 'Unranked'}
                   </p>
                 </div>
