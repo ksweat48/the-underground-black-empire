@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { ImagePlus, X } from 'lucide-react';
+import { ImagePlus, X, Loader2 } from 'lucide-react';
 import { cn } from '@/shared/cn';
 
 interface ListingImageUploaderProps {
@@ -12,6 +12,7 @@ const MAX_FILE_SIZE = 4 * 1024 * 1024;
 export function ListingImageUploader({ onImageReady, className }: ListingImageUploaderProps) {
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -19,21 +20,30 @@ export function ListingImageUploader({ onImageReady, className }: ListingImageUp
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
-      setError('Please choose an image file.');
+      setError('Please choose an image file (JPG, PNG, WebP, etc.).');
+      if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }
 
     if (file.size > MAX_FILE_SIZE) {
       setError('Image must be under 4 MB.');
+      if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }
 
     setError(null);
+    setLoading(true);
     const reader = new FileReader();
     reader.onload = () => {
       const result = reader.result as string;
       setImageSrc(result);
       onImageReady(result);
+      setLoading(false);
+    };
+    reader.onerror = () => {
+      setError('Could not read this image. Please try a different file.');
+      setLoading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
     };
     reader.readAsDataURL(file);
   };
@@ -52,12 +62,27 @@ export function ListingImageUploader({ onImageReady, className }: ListingImageUp
         type="file"
         accept="image/*"
         onChange={handleFileSelect}
-        className="hidden"
+        className="sr-only"
+        aria-label="Upload business photo"
       />
 
-      {imageSrc ? (
+      {loading ? (
+        <div className="w-full max-w-[200px] aspect-video rounded-lg border-2 border-dashed border-gold-500/40 bg-ink-900/50 flex items-center justify-center">
+          <Loader2 className="w-5 h-5 text-gold-400 animate-spin" />
+        </div>
+      ) : imageSrc ? (
         <div className="relative w-full max-w-[200px] aspect-video rounded-lg overflow-hidden border border-gold-500/30">
-          <img src={imageSrc} alt="Listing preview" className="w-full h-full object-cover" />
+          <img
+            src={imageSrc}
+            alt="Listing preview"
+            className="w-full h-full object-cover"
+            onError={() => {
+              setError('This image format is not supported. Please try a JPG or PNG.');
+              setImageSrc(null);
+              onImageReady(null);
+              if (fileInputRef.current) fileInputRef.current.value = '';
+            }}
+          />
           <button
             type="button"
             onClick={handleRemove}

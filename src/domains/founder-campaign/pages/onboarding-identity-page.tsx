@@ -1,4 +1,12 @@
 import { useState, type FormEvent } from 'react';
+
+function normalizeUrl(raw: string): string {
+  const trimmed = raw.trim();
+  if (!trimmed) return '';
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return `https://${trimmed}`;
+}
+
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowRight, Loader2, Store, Briefcase, Building2 } from 'lucide-react';
 import { OnboardingStep } from '@/shared/components/onboarding-step';
@@ -85,7 +93,7 @@ export function OnboardingIdentityPage() {
     setError(null);
 
     if (!avatarDataUrl) {
-      setError('Please add a profile photo to continue.');
+      setError('Please add your personal profile photo to continue.');
       return;
     }
 
@@ -128,6 +136,10 @@ export function OnboardingIdentityPage() {
       }
       if (supportRole === 'organization' && !listingData.description.trim()) {
         setError('Please describe your organization\'s mission.');
+        return;
+      }
+      if (!listingData.external_url.trim() && !listingData.contact_info.trim()) {
+        setError('Please provide either a website link or contact info so customers can reach you.');
         return;
       }
     }
@@ -209,7 +221,7 @@ export function OnboardingIdentityPage() {
             description: listingData.description.trim(),
             products_services: '',
             price_display: listingData.price_display.trim(),
-            external_url: listingData.external_url.trim(),
+            external_url: normalizeUrl(listingData.external_url),
             contact_info: listingData.contact_info.trim(),
             image_url: listingImageUrl,
             status: 'in_review',
@@ -319,7 +331,7 @@ export function OnboardingIdentityPage() {
                 value={listingData.name}
                 onChange={(e) => updateListingField('name', e.target.value)}
                 className="input-field text-sm"
-                placeholder="e.g. Car Battery America"
+                placeholder="e.g. Big Fresh Produce"
                 maxLength={100}
               />
             </div>
@@ -367,18 +379,19 @@ export function OnboardingIdentityPage() {
             </div>
 
             <div>
-              <label className="label-field">Website or Booking Link <span className="text-ink-500">(optional)</span></label>
+              <label className="label-field">Website or Booking Link <span className="text-ink-500">(website or contact required)</span></label>
               <input
-                type="url"
+                type="text"
                 value={listingData.external_url}
                 onChange={(e) => updateListingField('external_url', e.target.value)}
                 className="input-field text-sm"
-                placeholder="https://your-website.com"
+                placeholder="www.your-website.com"
               />
+              <p className="text-[10px] text-ink-500 mt-1">https:// is added automatically.</p>
             </div>
 
             <div>
-              <label className="label-field">Contact Info <span className="text-ink-500">(optional)</span></label>
+              <label className="label-field">Contact Info <span className="text-ink-500">(website or contact required)</span></label>
               <input
                 type="text"
                 value={listingData.contact_info}
@@ -460,18 +473,19 @@ export function OnboardingIdentityPage() {
             </div>
 
             <div>
-              <label className="label-field">Website / Contact Link <span className="text-ink-500">(optional)</span></label>
+              <label className="label-field">Website / Contact Link <span className="text-ink-500">(website or contact required)</span></label>
               <input
-                type="url"
+                type="text"
                 value={listingData.external_url}
                 onChange={(e) => updateListingField('external_url', e.target.value)}
                 className="input-field text-sm"
-                placeholder="https://your-portfolio.com"
+                placeholder="www.your-portfolio.com"
               />
+              <p className="text-[10px] text-ink-500 mt-1">https:// is added automatically.</p>
             </div>
 
             <div>
-              <label className="label-field">Contact Info <span className="text-ink-500">(optional)</span></label>
+              <label className="label-field">Contact Info <span className="text-ink-500">(website or contact required)</span></label>
               <input
                 type="text"
                 value={listingData.contact_info}
@@ -553,18 +567,19 @@ export function OnboardingIdentityPage() {
             </div>
 
             <div>
-              <label className="label-field">Website <span className="text-ink-500">(optional)</span></label>
+              <label className="label-field">Website <span className="text-ink-500">(website or contact required)</span></label>
               <input
-                type="url"
+                type="text"
                 value={listingData.external_url}
                 onChange={(e) => updateListingField('external_url', e.target.value)}
                 className="input-field text-sm"
-                placeholder="https://your-organization.org"
+                placeholder="www.your-organization.org"
               />
+              <p className="text-[10px] text-ink-500 mt-1">https:// is added automatically.</p>
             </div>
 
             <div>
-              <label className="label-field">Contact Info <span className="text-ink-500">(optional)</span></label>
+              <label className="label-field">Contact Info <span className="text-ink-500">(website or contact required)</span></label>
               <input
                 type="text"
                 value={listingData.contact_info}
