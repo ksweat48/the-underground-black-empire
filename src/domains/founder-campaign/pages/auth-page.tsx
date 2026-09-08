@@ -73,7 +73,7 @@ export function AuthPage({ mode }: AuthPageProps) {
       } else {
         await signIn({ email, password });
       }
-      navigate('/empire');
+      navigate('/onboarding/city');
     } catch (err) {
       if (err instanceof Error) {
         // Auth errors are set via context; non-auth errors show inline

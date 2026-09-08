@@ -4,6 +4,7 @@ import { Sparkles, Users, TrendingUp, Target, ArrowRight, Store, Briefcase, Buil
 import { OnboardingStep } from '@/shared/components/onboarding-step';
 import { EmpireEmblem } from '@/shared/components/empire-emblem';
 import { fetchCityWithMetro, type CityWithMetro } from '@/domains/founder-campaign/services';
+import { supabase } from '@/shared/supabase-client';
 
 export function OnboardingWelcomePage() {
   const navigate = useNavigate();
@@ -122,7 +123,10 @@ export function OnboardingWelcomePage() {
       </div>
 
       <button
-        onClick={() => navigate('/empire')}
+        onClick={async () => {
+          await supabase.rpc('mark_onboarding_complete');
+          navigate('/empire');
+        }}
         className="btn-primary w-full text-base py-4"
       >
         Enter The Empire

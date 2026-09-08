@@ -10,7 +10,7 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRouteProps) {
-  const { session, loading } = useAuth();
+  const { session, loading, onboardingComplete } = useAuth();
   const location = useLocation();
   const userId = session?.user?.id ?? null;
   const [adminLoading, setAdminLoading] = useState(requireAdmin);
@@ -57,7 +57,7 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
     };
   }, [requireAdmin, loading, userId]);
 
-  if (loading || adminLoading) {
+  if (loading || adminLoading || onboardingComplete === null) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-ink-950">
         <Loader2 className="w-6 h-6 text-gold-400 animate-spin" />
@@ -67,6 +67,10 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
 
   if (!session) {
     return <Navigate to="/auth/sign-in" state={{ from: location.pathname }} replace />;
+  }
+
+  if (!onboardingComplete) {
+    return <Navigate to="/onboarding/city" replace />;
   }
 
   if (requireAdmin && adminError) {

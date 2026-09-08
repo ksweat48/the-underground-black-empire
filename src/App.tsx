@@ -147,8 +147,9 @@ function App() {
 export default App;
 
 function LandingRedirect() {
-  const { session, loading } = useAuth();
-  if (loading) return <PageLoader />;
-  if (session) return <Navigate to="/empire" replace />;
+  const { session, loading, onboardingComplete } = useAuth();
+  if (loading || (session && onboardingComplete === null)) return <PageLoader />;
+  if (session && onboardingComplete) return <Navigate to="/empire" replace />;
+  if (session && !onboardingComplete) return <Navigate to="/onboarding/city" replace />;
   return <LandingPage />;
 }
