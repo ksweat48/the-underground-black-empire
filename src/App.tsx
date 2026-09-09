@@ -147,9 +147,14 @@ function App() {
 export default App;
 
 function LandingRedirect() {
-  const { session, loading, onboardingComplete } = useAuth();
+  const { session, loading, onboardingComplete, memberState } = useAuth();
   if (loading || (session && onboardingComplete === null)) return <PageLoader />;
   if (session && onboardingComplete) return <Navigate to="/empire" replace />;
-  if (session && !onboardingComplete) return <Navigate to="/onboarding/city" replace />;
+  if (session && !onboardingComplete) {
+    if (memberState?.cityId && memberState.founderNumber) {
+      return <Navigate to={`/onboarding/identity?number=${memberState.founderNumber}&city=${memberState.cityId}`} replace />;
+    }
+    return <Navigate to="/onboarding/city" replace />;
+  }
   return <LandingPage />;
 }

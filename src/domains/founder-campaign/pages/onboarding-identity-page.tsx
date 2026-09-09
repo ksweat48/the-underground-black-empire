@@ -29,6 +29,7 @@ import { supabase } from '@/shared/supabase-client';
 import { parseSupabaseError } from '@/shared/errors';
 import { createListing } from '@/domains/market/services';
 import type { ListingCategory } from '@/domains/market/types';
+import { useAuth } from '@/domains/identity/auth-context';
 
 const BUSINESS_CATEGORIES: { key: ListingCategory; label: string }[] = [
   { key: 'products', label: 'Products' },
@@ -58,6 +59,7 @@ export function OnboardingIdentityPage() {
   const [searchParams] = useSearchParams();
   const cityId = searchParams.get('city');
   const founderNumber = searchParams.get('number');
+  const { signOut } = useAuth();
 
   const [ethnicSelected, setEthnicSelected] = useState<EthnicIdentityValue | null>('black_african_american');
   const [ethnicDetail, setEthnicDetail] = useState('');
@@ -246,7 +248,10 @@ export function OnboardingIdentityPage() {
       totalSteps={4}
       title="Who You Are"
       subtitle="Tell us about yourself and how you'll contribute to the Empire."
-      onBack={() => navigate(`/onboarding/account?city=${cityId}`)}
+      onBack={async () => {
+        await signOut();
+        navigate('/auth/sign-in');
+      }}
     >
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* Profile Photo */}

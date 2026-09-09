@@ -10,7 +10,7 @@ export function OnboardingAccountPage() {
   const [searchParams] = useSearchParams();
   const cityId = searchParams.get('city');
   const referralCode = searchParams.get('ref');
-  const { signUp, error, clearError, session, memberState } = useAuth();
+  const { signUp, signOut, error, clearError, session, memberState } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
@@ -67,7 +67,14 @@ export function OnboardingAccountPage() {
       totalSteps={4}
       title="Create Account"
       subtitle="Just an email and password - that's all we need."
-      onBack={() => navigate(`/onboarding/confirm?city=${cityId}${referralCode ? `&ref=${referralCode}` : ''}`)}
+      onBack={async () => {
+        if (session && memberState?.hasMemberRecord) {
+          await signOut();
+          navigate('/auth/sign-in');
+        } else {
+          navigate(`/onboarding/confirm?city=${cityId}${referralCode ? `&ref=${referralCode}` : ''}`);
+        }
+      }}
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
