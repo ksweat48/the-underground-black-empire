@@ -42,8 +42,8 @@ export function OnboardingWelcomePage() {
 
   return (
     <OnboardingStep
-      step={4}
-      totalSteps={4}
+      step={5}
+      totalSteps={5}
       title="Enter The Empire"
       subtitle="Your journey begins now."
       onBack={() => navigate(`/onboarding/identity?city=${cityId}${founderNumber ? `&number=${founderNumber}` : ''}`)}

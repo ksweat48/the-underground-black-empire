@@ -26,7 +26,7 @@ export function OnboardingConfirmPage() {
 
   if (loading || !city) {
     return (
-      <OnboardingStep step={1} totalSteps={4} title="Loading...">
+      <OnboardingStep step={2} totalSteps={5} title="Loading...">
         <div className="flex justify-center py-12">
           <Loader2 className="w-6 h-6 text-gold-400 animate-spin" />
         </div>
@@ -42,10 +42,10 @@ export function OnboardingConfirmPage() {
 
   return (
     <OnboardingStep
-      step={1}
-      totalSteps={4}
+      step={2}
+      totalSteps={5}
       title="Confirm Your City"
-      subtitle="Review your selection before creating your account."
+      subtitle="Review your selection before continuing."
       onBack={() => navigate('/onboarding/city')}
     >
       <div className="card p-6 mb-6">

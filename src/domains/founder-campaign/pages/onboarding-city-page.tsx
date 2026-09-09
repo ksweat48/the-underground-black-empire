@@ -154,7 +154,7 @@ export function OnboardingCityPage() {
   return (
     <OnboardingStep
       step={1}
-      totalSteps={4}
+      totalSteps={5}
       title="Your Location"
       subtitle="Tell us where you're based so we can place you on the map."
       onBack={async () => {
