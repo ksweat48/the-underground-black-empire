@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '@/shared/supabase-client';
-import type { AuthSession } from './types';
+import type { AuthSession, MemberState } from './types';
 import { signUp, signIn, signOut } from './services';
 import type { SignUpParams, SignInParams } from './services';
 
@@ -11,6 +11,7 @@ interface AuthContextValue {
   error: string | null;
   sessionVersion: number;
   onboardingComplete: boolean | null;
+  memberState: MemberState | null;
   clearError: () => void;
   signUp: (params: SignUpParams) => Promise<AuthSession>;
   signIn: (params: SignInParams) => Promise<void>;
@@ -25,6 +26,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [sessionVersion, setSessionVersion] = useState(0);
   const [onboardingComplete, setOnboardingComplete] = useState<boolean | null>(null);
+  const [memberState, setMemberState] = useState<MemberState | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }: { data: { session: Session | null } }) => {
@@ -47,20 +49,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!session) {
       setOnboardingComplete(null);
+      setMemberState(null);
       return;
     }
     let cancelled = false;
     (async () => {
       const { data, error } = await supabase
         .from('members')
-        .select('onboarding_complete')
+        .select('onboarding_complete, city_id, founder_number, member_number')
         .eq('id', session.user.id)
         .maybeSingle();
       if (!cancelled) {
         if (error || !data) {
           setOnboardingComplete(false);
+          setMemberState(null);
         } else {
           setOnboardingComplete(Boolean(data.onboarding_complete));
+          setMemberState({
+            hasMemberRecord: true,
+            cityId: data.city_id ?? null,
+            founderNumber: data.founder_number ?? null,
+            memberNumber: data.member_number ?? null,
+            onboardingComplete: Boolean(data.onboarding_complete),
+          });
         }
       }
     })();
@@ -99,6 +110,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await signOut();
       setSession(null);
       setOnboardingComplete(null);
+      setMemberState(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Sign out failed');
       throw err;
@@ -113,6 +125,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         error,
         sessionVersion,
         onboardingComplete,
+        memberState,
         clearError,
         signUp: handleSignUp,
         signIn: handleSignIn,

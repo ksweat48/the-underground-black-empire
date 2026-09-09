@@ -12,7 +12,7 @@ import {
 
 export function OnboardingCityPage() {
   const navigate = useNavigate();
-  const { signOut } = useAuth();
+  const { signOut, session, memberState } = useAuth();
 
   const [states, setStates] = useState<StateOption[]>([]);
   const [stateQuery, setStateQuery] = useState('');
@@ -31,6 +31,12 @@ export function OnboardingCityPage() {
   const cityDropdownRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const requestIdRef = useRef(0);
+
+  useEffect(() => {
+    if (session && memberState?.cityId && memberState.founderNumber) {
+      navigate(`/onboarding/identity?number=${memberState.founderNumber}&city=${memberState.cityId}`);
+    }
+  }, [memberState, navigate, session]);
 
   useEffect(() => {
     fetchAllStates()

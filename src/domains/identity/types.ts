@@ -16,3 +16,11 @@ export type AuthErrorCode =
   | 'NETWORK_ERROR'
   | 'SESSION_EXPIRED'
   | 'UNKNOWN_ERROR';
+
+export interface MemberState {
+  hasMemberRecord: boolean;
+  cityId: string | null;
+  founderNumber: number | null;
+  memberNumber: number | null;
+  onboardingComplete: boolean;
+}

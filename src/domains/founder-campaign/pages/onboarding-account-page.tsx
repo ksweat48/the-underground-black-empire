@@ -10,7 +10,7 @@ export function OnboardingAccountPage() {
   const [searchParams] = useSearchParams();
   const cityId = searchParams.get('city');
   const referralCode = searchParams.get('ref');
-  const { signUp, error, clearError } = useAuth();
+  const { signUp, error, clearError, session, memberState } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
@@ -44,8 +44,14 @@ export function OnboardingAccountPage() {
     setSubmitting(true);
     clearError();
     try {
-      await signUp({ email, password });
-      await createMemberRecord(email);
+      if (!session) {
+        await signUp({ email, password });
+      }
+
+      if (!memberState?.hasMemberRecord) {
+        await createMemberRecord(email);
+      }
+
       const founderNumber = await assignFounderNumber();
       navigate(`/onboarding/identity?number=${founderNumber}&city=${cityId}`);
     } catch {
