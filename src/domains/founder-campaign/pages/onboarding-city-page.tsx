@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapPin, X, PlusCircle } from 'lucide-react';
 import { OnboardingStep } from '@/shared/components/onboarding-step';
+import { useAuth } from '@/domains/identity/auth-context';
 import {
   fetchAllStates,
   searchCitiesInState,
@@ -11,6 +12,7 @@ import {
 
 export function OnboardingCityPage() {
   const navigate = useNavigate();
+  const { signOut } = useAuth();
 
   const [states, setStates] = useState<StateOption[]>([]);
   const [stateQuery, setStateQuery] = useState('');
@@ -155,7 +157,10 @@ export function OnboardingCityPage() {
       totalSteps={4}
       title="Your Location"
       subtitle="Tell us where you're based so we can place you on the map."
-      onBack={() => navigate('/')}
+      onBack={async () => {
+        await signOut();
+        navigate('/auth/sign-in');
+      }}
     >
       <div className="space-y-3">
         {/* State Field */}
