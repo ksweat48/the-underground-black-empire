@@ -25,8 +25,10 @@ export async function signIn({ email, password }: SignInParams): Promise<void> {
 }
 
 export async function signOut(): Promise<void> {
-  const { error } = await supabase.auth.signOut();
-  if (error) throw new Error(parseSupabaseError(error));
+  const { error } = await supabase.auth.signOut({ scope: 'local' });
+  if (error && !/auth session missing/i.test(error.message)) {
+    throw new Error(parseSupabaseError(error));
+  }
 }
 
 export async function getCurrentSession(): Promise<AuthSession | null> {
