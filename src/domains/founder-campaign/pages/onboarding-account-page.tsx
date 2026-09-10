@@ -73,7 +73,7 @@ export function OnboardingAccountPage() {
       totalSteps={5}
       title={isReturningMember ? 'Continue Your Membership' : 'Create Account'}
       subtitle={isReturningMember ? 'Your account is ready. Claim your city number to continue.' : 'Just an email and password - that\'s all we need.'}
-      onBack={() => navigate(`/onboarding/confirm?city=${cityId}${referralCode ? `&ref=${referralCode}` : ''}`)}
+      onBack={isReturningMember ? undefined : () => navigate(`/onboarding/confirm?city=${cityId}${referralCode ? `&ref=${referralCode}` : ''}`)}
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
