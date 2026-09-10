@@ -13,6 +13,7 @@ interface AuthContextValue {
   onboardingComplete: boolean | null;
   memberState: MemberState | null;
   clearError: () => void;
+  refreshMemberState: () => Promise<void>;
   signUp: (params: SignUpParams) => Promise<AuthSession>;
   signIn: (params: SignInParams) => Promise<void>;
   signOut: () => Promise<void>;
@@ -80,6 +81,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [session, sessionVersion]);
 
+  const refreshMemberState = async () => {
+    if (!session) return;
+    const { data, error } = await supabase
+      .from('members')
+      .select('onboarding_complete, city_id, founder_number, member_number')
+      .eq('id', session.user.id)
+      .maybeSingle();
+    if (error || !data) {
+      setOnboardingComplete(false);
+      setMemberState(null);
+    } else {
+      setOnboardingComplete(Boolean(data.onboarding_complete));
+      setMemberState({
+        hasMemberRecord: true,
+        cityId: data.city_id ?? null,
+        founderNumber: data.founder_number ?? null,
+        memberNumber: data.member_number ?? null,
+        onboardingComplete: Boolean(data.onboarding_complete),
+      });
+    }
+  };
+
   const clearError = () => setError(null);
 
   const handleSignUp = async (params: SignUpParams) => {
@@ -127,6 +150,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         onboardingComplete,
         memberState,
         clearError,
+        refreshMemberState,
         signUp: handleSignUp,
         signIn: handleSignIn,
         signOut: handleSignOut,

@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Sparkles, Users, TrendingUp, Target, ArrowRight, Store, Briefcase, Building2, CheckCircle2 } from 'lucide-react';
 import { OnboardingStep } from '@/shared/components/onboarding-step';
 import { EmpireEmblem } from '@/shared/components/empire-emblem';
+import { useAuth } from '@/domains/identity/auth-context';
 import { fetchCityWithMetro, type CityWithMetro } from '@/domains/founder-campaign/services';
 import { supabase } from '@/shared/supabase-client';
 
@@ -12,6 +13,7 @@ export function OnboardingWelcomePage() {
   const founderNumber = searchParams.get('number');
   const cityId = searchParams.get('city');
   const listingId = searchParams.get('listing');
+  const { refreshMemberState } = useAuth();
   const [city, setCity] = useState<CityWithMetro | null>(null);
 
   useEffect(() => {
@@ -124,6 +126,7 @@ export function OnboardingWelcomePage() {
       <button
         onClick={async () => {
           await supabase.rpc('mark_onboarding_complete');
+          await refreshMemberState();
           navigate('/empire');
         }}
         className="btn-primary w-full text-base py-4"
