@@ -545,12 +545,18 @@ function EventCard({ event, onClick }: { event: MarketEvent; onClick: () => void
 // ==================== Feed Item Row ====================
 
 function FeedItemRow({ item }: { item: CommunityFeedItem }) {
+  const updateTypeConfig: Record<string, { label: string; color: string; bg: string }> = {
+    offer: { label: 'Offer', color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
+    update: { label: 'Update', color: 'text-gold-400', bg: 'bg-gold-500/10 border-gold-500/20' },
+    progress: { label: 'Progress', color: 'text-purple-300', bg: 'bg-purple-500/10 border-purple-500/20' },
+  };
   const feedTypeConfig = {
     update: { label: 'Update', icon: MessageCircle, color: 'text-empire-info' },
     event: { label: 'Event', icon: CalendarDays, color: 'text-empire-gold' },
   };
   const config = feedTypeConfig[item.feed_type];
   const Icon = config.icon;
+  const typeBadge = item.feed_type === 'update' && item.update_type ? updateTypeConfig[item.update_type] ?? updateTypeConfig.update : null;
 
   return (
     <div className="frame-intel w-full p-3 flex items-start gap-3">
@@ -559,9 +565,16 @@ function FeedItemRow({ item }: { item: CommunityFeedItem }) {
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-0.5">
-          <span className={cn('text-[9px] font-bold uppercase tracking-wider', config.color)}>
-            {config.label}
-          </span>
+          {typeBadge && (
+            <span className={cn('text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md border', typeBadge.bg, typeBadge.color)}>
+              {typeBadge.label}
+            </span>
+          )}
+          {!typeBadge && (
+            <span className={cn('text-[9px] font-bold uppercase tracking-wider', config.color)}>
+              {config.label}
+            </span>
+          )}
           {item.listing_name && (
             <span className="text-xs font-medium text-empire-ivory line-clamp-1">{item.listing_name}</span>
           )}

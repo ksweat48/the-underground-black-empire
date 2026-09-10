@@ -36,6 +36,7 @@ export interface ListingUpdate {
   body: string;
   image_url: string | null;
   status: ContentStatus;
+  update_type: string;
   created_at: string;
   updated_at: string;
   listing_name?: string;
@@ -94,6 +95,7 @@ export interface CommunityFeedItem {
   body: string;
   image_url: string | null;
   author_id: string;
+  update_type: string | null;
   created_at: string;
   rank_score: number;
 }
@@ -163,10 +165,13 @@ export interface CreateListingInput {
   status?: ListingStatus;
 }
 
+export type UpdateType = 'offer' | 'update' | 'progress';
+
 export interface CreateUpdateInput {
   listing_id: string;
   body: string;
   image_url: string | null;
+  update_type?: UpdateType;
 }
 
 export interface CreateNewsInput {

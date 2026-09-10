@@ -15,6 +15,7 @@ import type {
   ListingCategory,
   ListingForReview,
   ReviewAction,
+  UpdateType,
 } from './types';
 
 export type {
@@ -33,6 +34,7 @@ export type {
   ListingCategory,
   ListingForReview,
   ReviewAction,
+  UpdateType,
 };
 
 // ============================================================
@@ -355,6 +357,7 @@ export async function createListingUpdate(input: CreateUpdateInput): Promise<Lis
       listing_id: input.listing_id,
       body: input.body,
       image_url: input.image_url,
+      update_type: input.update_type ?? 'update',
       status: 'pending',
     })
     .select()
@@ -362,6 +365,34 @@ export async function createListingUpdate(input: CreateUpdateInput): Promise<Lis
 
   if (error) throw error;
   return data as ListingUpdate;
+}
+
+export async function updateListing(input: {
+  listing_id: string;
+  name: string;
+  category: ListingCategory;
+  description: string;
+  products_services: string;
+  price_display: string;
+  external_url: string;
+  contact_info: string;
+  image_url: string | null;
+}): Promise<{ id: string; status: string }> {
+  const { data, error } = await supabase
+    .rpc('update_listing', {
+      p_listing_id: input.listing_id,
+      p_name: input.name,
+      p_category: input.category,
+      p_description: input.description,
+      p_products_services: input.products_services,
+      p_price_display: input.price_display,
+      p_external_url: input.external_url,
+      p_contact_info: input.contact_info,
+      p_image_url: input.image_url ?? '',
+    });
+
+  if (error) throw error;
+  return { id: (data as { id: string }).id, status: (data as { status: string }).status };
 }
 
 // ============================================================
@@ -552,7 +583,7 @@ export async function fetchCommunityFeed(cityId?: string, metroCityIds?: string[
   let updatesQuery = supabase
     .from('listing_updates')
     .select(`
-      id, listing_id, body, image_url, author_id, created_at,
+      id, listing_id, body, image_url, author_id, update_type, created_at,
       listing:listing_id ( name, city_id )
     `)
     .eq('status', 'approved')
@@ -583,6 +614,7 @@ export async function fetchCommunityFeed(cityId?: string, metroCityIds?: string[
       body: row.body,
       image_url: row.image_url,
       author_id: row.author_id,
+      update_type: (row as { update_type?: string }).update_type ?? null,
       created_at: row.created_at,
       rank_score: 0,
     });
@@ -598,6 +630,7 @@ export async function fetchCommunityFeed(cityId?: string, metroCityIds?: string[
       body: row.description,
       image_url: row.image_url,
       author_id: row.author_id,
+      update_type: null,
       created_at: row.created_at,
       rank_score: 0,
     });

@@ -47,8 +47,8 @@ const CREATE_OPTIONS: CreateOption[] = [
   },
   {
     key: 'update',
-    label: 'Post an Update',
-    description: 'Share an announcement or update from one of your approved businesses.',
+    label: 'Share an Offer or Update',
+    description: 'Post a short offer, update, or progress milestone from one of your approved businesses.',
     icon: MessageSquarePlus,
     path: '/market/create/update',
     requiresApprovedListing: true,
@@ -198,7 +198,7 @@ export function CreateSheetProvider({ children }: { children: ReactNode }) {
                 {!hasApprovedListing && checkedApproved && (
                   <div className="pt-2 pb-1">
                     <p className="text-xs text-empire-text-muted text-center">
-                      Post an Update becomes available once you have an approved business listing.
+                      Share an Offer or Update becomes available once you have an approved business listing.
                     </p>
                   </div>
                 )}

@@ -48,7 +48,7 @@ import { FOOTER_LINKS } from '@/config/navigation';
 import { APP_CONFIG } from '@/config/app';
 import { Link, useNavigate } from 'react-router-dom';
 import { cn } from '@/shared/cn';
-import { Store, Heart, ChevronRight } from 'lucide-react';
+import { Store, Heart, ChevronRight, Pencil, MessageSquarePlus } from 'lucide-react';
 import { fetchMyListings, fetchSavedListings, type MarketListing } from '@/domains/market/services';
 import { fetchMyMembership, type MemberMembership } from '@/domains/membership/services';
 import type { MembershipTierId, CardColor } from '@/domains/membership/types';
@@ -610,17 +610,50 @@ export function ProfilePage() {
           ) : (
             <div className="space-y-2">
               {myListings.map((listing) => (
-                <button
+                <div
                   key={listing.id}
-                  onClick={() => navigate(`/market/listing/${listing.id}`)}
-                  className="w-full flex items-center justify-between gap-2 p-2.5 rounded-xl bg-ink-800/20 border border-ink-700/15 hover:border-ink-600/30 transition-all text-left"
+                  className="w-full rounded-xl bg-ink-800/20 border border-ink-700/15 hover:border-ink-600/30 transition-all"
                 >
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-ink-100 truncate">{listing.name}</p>
-                    <p className="text-xs text-ink-500 capitalize">{listing.category} · {listing.status}</p>
+                  <button
+                    onClick={() => navigate(`/market/listing/${listing.id}`)}
+                    className="w-full flex items-center justify-between gap-2 p-2.5 text-left"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-ink-100 truncate">{listing.name}</p>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <span className="text-xs text-ink-500 capitalize">{listing.category}</span>
+                        <span className="text-ink-600">·</span>
+                        <span className={cn(
+                          'text-[10px] uppercase tracking-wider font-semibold px-1.5 py-0.5 rounded-md',
+                          listing.status === 'approved' && 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20',
+                          listing.status === 'in_review' && 'bg-amber-500/10 text-amber-400 border border-amber-500/20',
+                          listing.status === 'needs_changes' && 'bg-crimson-500/10 text-crimson-400 border border-crimson-500/20',
+                        )}>
+                          {listing.status === 'in_review' ? 'In Review' : listing.status === 'needs_changes' ? 'Changes Needed' : listing.status === 'approved' ? 'Approved' : listing.status}
+                        </span>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-ink-500 shrink-0" />
+                  </button>
+                  <div className="flex gap-1.5 px-2.5 pb-2.5">
+                    <button
+                      onClick={() => navigate(`/market/edit-listing/${listing.id}`)}
+                      className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-ink-700/30 text-ink-200 hover:bg-ink-600/40 transition-all"
+                    >
+                      <Pencil className="w-3 h-3" />
+                      Edit
+                    </button>
+                    {listing.status === 'approved' && (
+                      <button
+                        onClick={() => navigate(`/market/create/update?listing=${listing.id}`)}
+                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-empire-gold/10 text-empire-gold hover:bg-empire-gold/20 transition-all border border-empire-gold/20"
+                      >
+                        <MessageSquarePlus className="w-3 h-3" />
+                        Share an Update
+                      </button>
+                    )}
                   </div>
-                  <ChevronRight className="w-4 h-4 text-ink-500 shrink-0" />
-                </button>
+                </div>
               ))}
             </div>
           )}
