@@ -3,7 +3,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Sparkles, Users, TrendingUp, Target, ArrowRight, Store, Briefcase, Building2, CheckCircle2 } from 'lucide-react';
 import { OnboardingStep } from '@/shared/components/onboarding-step';
 import { EmpireEmblem } from '@/shared/components/empire-emblem';
-import { useAuth } from '@/domains/identity/auth-context';
 import { fetchCityWithMetro, type CityWithMetro } from '@/domains/founder-campaign/services';
 import { supabase } from '@/shared/supabase-client';
 
@@ -13,8 +12,6 @@ export function OnboardingWelcomePage() {
   const founderNumber = searchParams.get('number');
   const cityId = searchParams.get('city');
   const listingId = searchParams.get('listing');
-  const { session, memberState } = useAuth();
-  const isReturning = Boolean(session && memberState?.hasMemberRecord);
   const [city, setCity] = useState<CityWithMetro | null>(null);
 
   useEffect(() => {
@@ -49,8 +46,6 @@ export function OnboardingWelcomePage() {
       totalSteps={5}
       title="Enter The Empire"
       subtitle="Your journey begins now."
-      isReturning={isReturning}
-      onBack={() => navigate(`/onboarding/identity?city=${cityId}${founderNumber ? `&number=${founderNumber}` : ''}`)}
     >
       <div className="text-center mb-6">
         <div className="inline-flex p-4 rounded-full bg-gold-950/40 border border-gold-800/30 mb-4 animate-glow-pulse">

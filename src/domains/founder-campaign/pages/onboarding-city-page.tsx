@@ -163,7 +163,6 @@ export function OnboardingCityPage() {
       totalSteps={5}
       title="Your Location"
       subtitle="Tell us where you're based so we can place you on the map."
-      isReturning={isReturning}
       onBack={async () => {
         await signOut();
         navigate('/auth/sign-in');

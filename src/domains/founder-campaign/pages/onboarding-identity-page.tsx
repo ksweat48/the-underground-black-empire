@@ -255,10 +255,6 @@ export function OnboardingIdentityPage() {
       totalSteps={5}
       title="Who You Are"
       subtitle="Tell us about yourself and how you'll contribute to the Empire."
-      isReturning={isReturning}
-      onBack={() => {
-        navigate(`/onboarding/account?city=${cityId}`);
-      }}
     >
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* Profile Photo */}

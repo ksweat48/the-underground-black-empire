@@ -8,10 +8,9 @@ interface OnboardingStepProps {
   subtitle?: string;
   children: ReactNode;
   onBack?: () => void;
-  isReturning?: boolean;
 }
 
-export function OnboardingStep({ step, totalSteps, title, subtitle, children, onBack, isReturning = false }: OnboardingStepProps) {
+export function OnboardingStep({ step, totalSteps, title, subtitle, children, onBack }: OnboardingStepProps) {
   const progress = (step / totalSteps) * 100;
 
   return (
@@ -25,7 +24,7 @@ export function OnboardingStep({ step, totalSteps, title, subtitle, children, on
 
       <div className="flex-1 flex flex-col items-center justify-center px-4 py-12">
         <div className="w-full max-w-lg">
-          {onBack && !isReturning && (
+          {onBack && (
             <button
               onClick={onBack}
               className="inline-flex items-center gap-1.5 text-sm text-ink-400 hover:text-gold-400 transition-colors mb-6"

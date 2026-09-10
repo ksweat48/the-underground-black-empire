@@ -53,7 +53,6 @@ export function OnboardingConfirmPage() {
       totalSteps={5}
       title="Confirm Your City"
       subtitle="Review your selection before continuing."
-      isReturning={isReturning}
       onBack={() => navigate('/onboarding/city')}
     >
       <div className="card p-6 mb-6">
