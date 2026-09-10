@@ -154,7 +154,10 @@ function LandingRedirect() {
     if (memberState?.cityId && memberState.founderNumber) {
       return <Navigate to={`/onboarding/identity?number=${memberState.founderNumber}&city=${memberState.cityId}`} replace />;
     }
-    return <Navigate to="/onboarding/city" replace />;
+    if (memberState && !memberState.cityId) {
+      return <Navigate to="/onboarding/city" replace />;
+    }
+    return <PageLoader />;
   }
   return <LandingPage />;
 }

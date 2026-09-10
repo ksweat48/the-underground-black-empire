@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { MapPin, Building2, Users, TrendingUp, ArrowRight, Loader2 } from 'lucide-react';
 import { OnboardingStep } from '@/shared/components/onboarding-step';
 import { EmpireEmblem } from '@/shared/components/empire-emblem';
+import { useAuth } from '@/domains/identity/auth-context';
 import { fetchCityWithMetro, type CityWithMetro } from '@/domains/founder-campaign/services';
 import { PROGRESSION_RULES, getCityTier, getCityTierProgress } from '@/config/progression-rules';
 
@@ -10,10 +11,16 @@ export function OnboardingConfirmPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const cityId = searchParams.get('city');
+  const { session, memberState } = useAuth();
+  const isReturning = Boolean(session && memberState?.hasMemberRecord);
   const [city, setCity] = useState<CityWithMetro | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (isReturning && memberState?.cityId && memberState.founderNumber) {
+      navigate(`/onboarding/identity?number=${memberState.founderNumber}&city=${memberState.cityId}`, { replace: true });
+      return;
+    }
     if (!cityId) {
       navigate('/onboarding/city');
       return;
@@ -22,7 +29,7 @@ export function OnboardingConfirmPage() {
       .then(setCity)
       .catch(() => navigate('/onboarding/city'))
       .finally(() => setLoading(false));
-  }, [cityId, navigate]);
+  }, [cityId, navigate, isReturning, memberState]);
 
   if (loading || !city) {
     return (
@@ -46,6 +53,7 @@ export function OnboardingConfirmPage() {
       totalSteps={5}
       title="Confirm Your City"
       subtitle="Review your selection before continuing."
+      isReturning={isReturning}
       onBack={() => navigate('/onboarding/city')}
     >
       <div className="card p-6 mb-6">

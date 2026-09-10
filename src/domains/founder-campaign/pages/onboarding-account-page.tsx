@@ -17,6 +17,11 @@ export function OnboardingAccountPage() {
   const [displayName, setDisplayName] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  if (isReturning && memberState?.cityId && memberState.founderNumber) {
+    navigate(`/onboarding/identity?number=${memberState.founderNumber}&city=${memberState.cityId}`, { replace: true });
+    return null;
+  }
+
   if (!cityId) {
     navigate('/onboarding/city');
     return null;
@@ -68,6 +73,7 @@ export function OnboardingAccountPage() {
       totalSteps={5}
       title={isReturningMember ? 'Continue Your Membership' : 'Create Account'}
       subtitle={isReturningMember ? 'Your account is ready. Claim your city number to continue.' : 'Just an email and password - that\'s all we need.'}
+      isReturning={isReturning}
       onBack={() => navigate(`/onboarding/confirm?city=${cityId}${referralCode ? `&ref=${referralCode}` : ''}`)}
     >
       <form onSubmit={handleSubmit} className="space-y-4">

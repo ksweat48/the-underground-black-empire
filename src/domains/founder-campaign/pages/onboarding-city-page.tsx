@@ -12,7 +12,8 @@ import {
 
 export function OnboardingCityPage() {
   const navigate = useNavigate();
-  const { signOut } = useAuth();
+  const { signOut, session, memberState } = useAuth();
+  const isReturning = Boolean(session && memberState?.hasMemberRecord);
 
   const [states, setStates] = useState<StateOption[]>([]);
   const [stateQuery, setStateQuery] = useState('');
@@ -151,12 +152,18 @@ export function OnboardingCityPage() {
     hasSearched &&
     searchResults.length === 0;
 
+  if (isReturning && memberState?.cityId && memberState.founderNumber) {
+    navigate(`/onboarding/identity?number=${memberState.founderNumber}&city=${memberState.cityId}`, { replace: true });
+    return null;
+  }
+
   return (
     <OnboardingStep
       step={1}
       totalSteps={5}
       title="Your Location"
       subtitle="Tell us where you're based so we can place you on the map."
+      isReturning={isReturning}
       onBack={async () => {
         await signOut();
         navigate('/auth/sign-in');

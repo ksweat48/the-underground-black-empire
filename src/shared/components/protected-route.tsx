@@ -4,13 +4,20 @@ import { Loader2, Shield } from 'lucide-react';
 import { useAuth } from '@/domains/identity/auth-context';
 import { supabase } from '@/shared/supabase-client';
 
+function getResumePath(memberState: { cityId: string | null; founderNumber: number | null }): string {
+  if (memberState.cityId && memberState.founderNumber) {
+    return `/onboarding/identity?number=${memberState.founderNumber}&city=${memberState.cityId}`;
+  }
+  return '/onboarding/city';
+}
+
 interface ProtectedRouteProps {
   children: ReactNode;
   requireAdmin?: boolean;
 }
 
 export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRouteProps) {
-  const { session, loading, onboardingComplete } = useAuth();
+  const { session, loading, onboardingComplete, memberState } = useAuth();
   const location = useLocation();
   const userId = session?.user?.id ?? null;
   const [adminLoading, setAdminLoading] = useState(requireAdmin);
@@ -70,7 +77,8 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
   }
 
   if (!onboardingComplete) {
-    return <Navigate to="/onboarding/city" replace />;
+    if (!memberState) return <Loader2 className="w-6 h-6 text-gold-400 animate-spin" />;
+    return <Navigate to={getResumePath(memberState)} replace />;
   }
 
   if (requireAdmin && adminError) {

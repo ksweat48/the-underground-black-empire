@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useState, type FormEvent, useEffect } from 'react';
 
 function normalizeUrl(raw: string): string {
   const trimmed = raw.trim();
@@ -12,6 +12,7 @@ import { ArrowRight, Loader2, Store, Briefcase, Building2 } from 'lucide-react';
 import { OnboardingStep } from '@/shared/components/onboarding-step';
 import { ProfilePhotoUploader } from '@/shared/components/profile-photo-uploader';
 import { ListingImageUploader } from '@/shared/components/listing-image-uploader';
+import { useAuth } from '@/domains/identity/auth-context';
 import {
   EthnicIdentitySelector,
   type EthnicIdentityValue,
@@ -58,6 +59,14 @@ export function OnboardingIdentityPage() {
   const [searchParams] = useSearchParams();
   const cityId = searchParams.get('city');
   const founderNumber = searchParams.get('number');
+  const { session, memberState } = useAuth();
+  const isReturning = Boolean(session && memberState?.hasMemberRecord);
+
+  useEffect(() => {
+    if (isReturning && memberState?.cityId && memberState.founderNumber && (!cityId || !founderNumber)) {
+      navigate(`/onboarding/identity?number=${memberState.founderNumber}&city=${memberState.cityId}`, { replace: true });
+    }
+  }, [isReturning, memberState, cityId, founderNumber, navigate]);
 
   const [ethnicSelected, setEthnicSelected] = useState<EthnicIdentityValue | null>('black_african_american');
   const [ethnicDetail, setEthnicDetail] = useState('');
@@ -246,6 +255,7 @@ export function OnboardingIdentityPage() {
       totalSteps={5}
       title="Who You Are"
       subtitle="Tell us about yourself and how you'll contribute to the Empire."
+      isReturning={isReturning}
       onBack={() => {
         navigate(`/onboarding/account?city=${cityId}`);
       }}
