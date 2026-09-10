@@ -366,7 +366,12 @@ export function ProfilePage() {
                 style={profileCardConfig.avatarStyle}
               >
                 {member.avatar_url ? (
-                  <img src={member.avatar_url} alt="" className="w-full h-full object-cover" />
+                  <img
+                    src={member.avatar_url}
+                    alt=""
+                    className="w-full h-full object-cover"
+                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                  />
                 ) : (
                   <span
                     className="font-display font-bold text-xl"
@@ -815,7 +820,12 @@ export function ProfilePage() {
                 style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05), 0 8px 24px rgba(0,0,0,0.4)' }}
               >
                 {member.avatar_url ? (
-                  <img src={member.avatar_url} alt="" className="w-full h-full object-cover" />
+                  <img
+                    src={member.avatar_url}
+                    alt=""
+                    className="w-full h-full object-cover"
+                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                  />
                 ) : (
                   <div className="w-full h-full bg-gradient-to-br from-empire-black-750 to-empire-black-900 flex items-center justify-center">
                     <span

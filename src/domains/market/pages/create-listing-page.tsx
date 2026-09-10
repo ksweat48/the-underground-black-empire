@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Building2, Loader2, Check, Image as ImageIcon } from 'lucide-react';
 import { Layout } from '@/shared/components/layout';
@@ -28,6 +28,7 @@ export function CreateListingPage() {
   const [contactInfo, setContactInfo] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const submittedRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(false);
 
@@ -44,6 +45,8 @@ export function CreateListingPage() {
       setError('Business name and city are required.');
       return;
     }
+    if (submittedRef.current || submitting) return;
+    submittedRef.current = true;
     setSubmitting(true);
     setError(null);
     try {
@@ -61,6 +64,7 @@ export function CreateListingPage() {
       navigate('/market');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create listing.');
+      submittedRef.current = false;
     } finally {
       setSubmitting(false);
     }

@@ -16,6 +16,9 @@ export function parseSupabaseError(error: unknown): string {
     if (msg.includes('Email rate limit') || msg.includes('rate limit')) {
       return 'Too many attempts. Please wait a moment and try again.';
     }
+    if (msg.includes('idx_market_listings_owner_name_active') || msg.includes('duplicate key value')) {
+      return 'You already have a listing with this name. Use the Marketplace to edit your existing listing.';
+    }
     return msg;
   }
   return 'An unexpected error occurred. Please try again.';

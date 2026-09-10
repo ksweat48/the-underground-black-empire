@@ -167,6 +167,7 @@ export async function fetchMyListings(userId: string): Promise<MarketListing[]> 
       city:city_id ( name )
     `)
     .eq('owner_id', userId)
+    .neq('status', 'removed')
     .order('created_at', { ascending: false });
 
   if (error) throw error;

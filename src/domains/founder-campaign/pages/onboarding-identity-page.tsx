@@ -1,4 +1,4 @@
-import { useState, type FormEvent, useEffect } from 'react';
+import { useState, useRef, type FormEvent, useEffect } from 'react';
 
 function normalizeUrl(raw: string): string {
   const trimmed = raw.trim();
@@ -78,6 +78,7 @@ export function OnboardingIdentityPage() {
   const [listingImageDataUrl, setListingImageDataUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const submittedRef = useRef(false);
 
   const [listingData, setListingData] = useState<ListingFormData>({
     name: '',
@@ -153,6 +154,8 @@ export function OnboardingIdentityPage() {
       }
     }
 
+    if (submittedRef.current || submitting) return;
+    submittedRef.current = true;
     setSubmitting(true);
     try {
       const { data: sessionData } = await supabase.auth.getSession();
@@ -244,6 +247,7 @@ export function OnboardingIdentityPage() {
       navigate(`/onboarding/welcome?number=${founderNumber}&city=${cityId}${listingIdParam}`);
     } catch (err) {
       setError(parseSupabaseError(err));
+      submittedRef.current = false;
     } finally {
       setSubmitting(false);
     }
@@ -610,6 +614,7 @@ export function OnboardingIdentityPage() {
           type="submit"
           disabled={submitting}
           className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
+          onDoubleClick={(e) => e.preventDefault()}
         >
           {submitting ? (
             <>
