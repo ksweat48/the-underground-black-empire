@@ -394,7 +394,7 @@ export function MarketPage() {
 // ==================== Featured Listing Card (horizontal) ====================
 
 function FeaturedListingCard({ listing, onClick }: { listing: MarketListing; onClick: () => void }) {
-  const action = getListingAction(listing);
+  const actions = getListingActions(listing);
 
   return (
     <div
@@ -426,7 +426,7 @@ function FeaturedListingCard({ listing, onClick }: { listing: MarketListing; onC
         <h3 className="font-display text-xs font-semibold text-empire-ivory leading-tight line-clamp-1">{listing.name}</h3>
         {listing.price_display && <span className="text-xs font-semibold text-empire-gold">{listing.price_display}</span>}
         {listing.city_name && <span className="flex items-center gap-1 text-[10px] text-empire-text-muted"><MapPin className="w-2.5 h-2.5" />{listing.city_name}</span>}
-        {action && <ContactAction action={action} compact />}
+        <ContactActions actions={actions} />
       </div>
     </div>
   );
@@ -435,7 +435,7 @@ function FeaturedListingCard({ listing, onClick }: { listing: MarketListing; onC
 // ==================== Listing Card (grid) ====================
 
 function ListingCard({ listing, onClick }: { listing: MarketListing; onClick: () => void }) {
-  const action = getListingAction(listing);
+  const actions = getListingActions(listing);
 
   return (
     <div
@@ -494,7 +494,7 @@ function ListingCard({ listing, onClick }: { listing: MarketListing; onClick: ()
           <span className="flex items-center gap-1 text-[10px] text-empire-text-muted"><Heart className="w-2.5 h-2.5" />{listing.like_count}</span>
           <span className="flex items-center gap-1 text-[10px] text-empire-text-muted"><MessageCircle className="w-2.5 h-2.5" />{listing.comment_count}</span>
         </div>
-        {action && <ContactAction action={action} />}
+        <ContactActions actions={actions} />
       </div>
     </div>
   );
@@ -506,7 +506,7 @@ function EventCard({ event, onClick }: { event: MarketEvent; onClick: () => void
   const eventDate = new Date(event.event_date);
   const day = eventDate.toLocaleDateString('en-US', { day: 'numeric' });
   const month = eventDate.toLocaleDateString('en-US', { month: 'short' });
-  const action = getEventAction(event);
+  const actions = getEventActions(event);
 
   return (
     <div
@@ -529,30 +529,17 @@ function EventCard({ event, onClick }: { event: MarketEvent; onClick: () => void
         {event.event_time && `${event.event_time} · `}{event.location_text || 'Location TBA'}
       </p>
       {event.listing_name && <p className="text-[10px] text-empire-text-muted/70 line-clamp-1">{event.listing_name}</p>}
-      {action && <ContactAction action={action} compact />}
+      <ContactActions actions={actions} />
     </div>
   );
 }
 
-type ContactActionData = {
-  label: 'View Website' | 'Call Now';
-  href: string;
-  isExternal: boolean;
-};
-
-function getListingAction(listing: MarketListing): ContactActionData | null {
-  const website = getSafeHttpUrl(listing.external_url);
-  if (website) return { label: 'View Website', href: website, isExternal: true };
-
-  const phone = getPhoneHref(listing.contact_info);
-  if (phone) return { label: 'Call Now', href: phone, isExternal: false };
-
-  return null;
+function getListingActions(listing: MarketListing): { website: string | null; phone: string | null } {
+  return { website: getSafeHttpUrl(listing.external_url), phone: getPhoneHref(listing.contact_info) };
 }
 
-function getEventAction(event: MarketEvent): ContactActionData | null {
-  const website = getSafeHttpUrl(event.external_url);
-  return website ? { label: 'View Website', href: website, isExternal: true } : null;
+function getEventActions(event: MarketEvent): { website: string | null; phone: string | null } {
+  return { website: getSafeHttpUrl(event.external_url), phone: null };
 }
 
 function getSafeHttpUrl(value: string | null | undefined): string | null {
@@ -573,23 +560,34 @@ function getPhoneHref(value: string | null | undefined): string | null {
   return digits.length >= 7 ? `tel:${digits}` : null;
 }
 
-function ContactAction({ action, compact = false }: { action: ContactActionData; compact?: boolean }) {
-  const Icon = action.isExternal ? ExternalLink : Phone;
+function ContactActions({ actions }: { actions: { website: string | null; phone: string | null } }) {
+  if (!actions.website && !actions.phone) return null;
 
   return (
-    <a
-      href={action.href}
-      target={action.isExternal ? '_blank' : undefined}
-      rel={action.isExternal ? 'noopener noreferrer' : undefined}
-      onClick={(event) => event.stopPropagation()}
-      className={cn(
-        'inline-flex items-center justify-center gap-1.5 rounded-lg border border-empire-gold/20 bg-empire-gold/8 text-empire-gold font-medium transition-colors hover:bg-empire-gold/15 hover:border-empire-gold/35',
-        compact ? 'w-full px-2 py-1.5 text-[10px]' : 'w-full mt-2 px-3 py-2 text-xs',
+    <div className="flex items-center gap-1.5 mt-2">
+      {actions.website && (
+        <a
+          href={actions.website}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(event) => event.stopPropagation()}
+          aria-label="Visit website"
+          className="flex items-center justify-center w-8 h-8 rounded-lg border border-empire-gold/20 bg-empire-gold/8 text-empire-gold transition-colors hover:bg-empire-gold/15 hover:border-empire-gold/35"
+        >
+          <ExternalLink className="w-3.5 h-3.5" />
+        </a>
       )}
-    >
-      <Icon className={compact ? 'w-3 h-3' : 'w-3.5 h-3.5'} />
-      {action.label}
-    </a>
+      {actions.phone && (
+        <a
+          href={actions.phone}
+          onClick={(event) => event.stopPropagation()}
+          aria-label="Call now"
+          className="flex items-center justify-center w-8 h-8 rounded-lg border border-empire-gold/20 bg-empire-gold/8 text-empire-gold transition-colors hover:bg-empire-gold/15 hover:border-empire-gold/35"
+        >
+          <Phone className="w-3.5 h-3.5" />
+        </a>
+      )}
+    </div>
   );
 }
 
