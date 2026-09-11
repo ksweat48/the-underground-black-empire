@@ -177,7 +177,6 @@ export function MembershipPage() {
                     </button>
                     {details && (
                       <TierDetails
-                        tier={tier}
                         details={details}
                         isCurrent={myMembership?.membership_tier === tier.id}
                         onSelect={() => chooseTier(tier.id)}
@@ -251,7 +250,6 @@ function TierCard({ tier, active, memberName }: { tier: MembershipTier; active: 
 }
 
 function TierDetails({
-  tier,
   details,
   isCurrent,
   onSelect,
@@ -259,7 +257,6 @@ function TierDetails({
   disabled,
   onLearnMore,
 }: {
-  tier: MembershipTier;
   details: TierDetails;
   isCurrent: boolean;
   onSelect: () => void;

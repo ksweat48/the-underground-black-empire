@@ -266,7 +266,8 @@ export function AdminPage() {
       setReviewListings((prev) => prev.filter((l) => l.id !== listingId));
       setReviewReason('');
       setReviewReasonFor(null);
-    } catch {
+    } catch (err) {
+      console.error('Review action failed:', err);
     } finally {
       setReviewAction(null);
     }
@@ -702,7 +703,6 @@ function BreakdownCard({
   icon: Icon,
   title,
   items,
-  total,
 }: {
   icon: ComponentType<{ className?: string }>;
   title: string;

@@ -9,18 +9,14 @@ import {
   ExternalLink,
   BadgeCheck,
   CalendarDays,
-  Clock,
   Send,
   Flag,
-  X,
   Loader2,
   Image as ImageIcon,
   Store,
-  ChevronRight,
   ShieldAlert,
 } from 'lucide-react';
 import { Layout } from '@/shared/components/layout';
-import { EmpireFrame } from '@/shared/components/empire-frame';
 import { GlassModal } from '@/shared/components/glass-modal';
 import { cn } from '@/shared/cn';
 import { useAuth } from '@/domains/identity/auth-context';
@@ -71,7 +67,8 @@ export function ListingDetailPage() {
         setEvents(evs);
         setComments(coms);
       }
-    } catch {
+    } catch (err) {
+      console.error('Failed to load listing:', err);
       setListing(null);
     } finally {
       setLoading(false);
@@ -89,7 +86,9 @@ export function ListingDetailPage() {
         is_liked: newLiked,
         like_count: newLiked ? listing.like_count + 1 : Math.max(0, listing.like_count - 1),
       });
-    } catch {}
+    } catch (err) {
+      console.error('Like failed:', err);
+    }
   };
 
   const handleSave = async () => {
@@ -97,7 +96,9 @@ export function ListingDetailPage() {
     try {
       const newSaved = await toggleListingSave(listing.id, userId, listing.is_saved ?? false);
       setListing({ ...listing, is_saved: newSaved });
-    } catch {}
+    } catch (err) {
+      console.error('Save failed:', err);
+    }
   };
 
   const handleComment = async () => {
@@ -109,7 +110,8 @@ export function ListingDetailPage() {
       const coms = await fetchListingComments(listing.id);
       setComments(coms);
       setListing({ ...listing, comment_count: listing.comment_count + 1 });
-    } catch {
+    } catch (err) {
+      console.error('Comment failed:', err);
     } finally {
       setCommentSubmitting(false);
     }
@@ -451,7 +453,8 @@ export function ReportModal({
         setReason('');
         setDetails('');
       }, 2000);
-    } catch {
+    } catch (err) {
+      console.error('Report failed:', err);
     } finally {
       setSubmitting(false);
     }

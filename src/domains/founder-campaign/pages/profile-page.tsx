@@ -12,16 +12,13 @@ import {
   Shield,
   Mail,
   Loader2,
-  Map as MapIcon,
   Users,
   Star,
   Share2,
   FileText,
   Gift,
   Settings,
-  HelpCircle,
   TrendingUp,
-  Vote as VoteIcon,
   Camera,
 } from 'lucide-react';
 import { Layout } from '@/shared/components/layout';
@@ -31,7 +28,6 @@ import { ProfilePhotoUploader } from '@/shared/components/profile-photo-uploader
 import { useAuth } from '@/domains/identity/auth-context';
 import { supabase } from '@/shared/supabase-client';
 import {
-  PROGRESSION_RULES,
   getCityTier,
   getLevelFromInfluence,
   getVotingPowerBreakdown,
@@ -317,7 +313,6 @@ export function ProfilePage() {
   const membershipTier: MembershipTierId = myMembership?.membership_tier ?? 'white';
   const profileCardColor = MEMBERSHIP_CARD_COLOR[membershipTier];
   const profileCardConfig = PROFILE_CARD_STYLE[profileCardColor];
-  const membershipLabel = MEMBERSHIP_STAT_LABELS[membershipTier];
   const cardLabel = CARD_LABELS[membershipTier];
 
   const achievements = getAchievements(member, cityTier);
@@ -462,7 +457,6 @@ export function ProfilePage() {
                 type={activeStatPill}
                 level={founderLevel.level}
                 influence={influence}
-                votingPower={votingPower}
               />
             </div>
           )}
@@ -1281,11 +1275,10 @@ function StatButton({ label, value, icon: Icon, locked, variant, isActive, onCli
 
 /* ---------- Stat Pill (dropdown explanation) ---------- */
 
-function StatPill({ type, level, influence, votingPower }: {
+function StatPill({ type, level, influence }: {
   type: 'level' | 'influence' | 'vp';
   level: number;
   influence: number;
-  votingPower: number;
 }) {
   const colorMap = {
     level: { bg: 'bg-stone-100/90 border-stone-300/50', title: 'text-stone-900', body: 'text-stone-700', muted: 'text-stone-500', value: 'text-stone-900' },
@@ -1436,14 +1429,6 @@ const MEMBERSHIP_CARD_COLOR: Record<MembershipTierId, CardColor> = {
   black_plus: 'black',
   emerald: 'emerald',
   plum: 'plum',
-};
-
-const MEMBERSHIP_STAT_LABELS: Record<MembershipTierId, string> = {
-  white: 'Free',
-  black: 'Black',
-  black_plus: 'Black+',
-  emerald: 'Emerald',
-  plum: 'Plum',
 };
 
 const CARD_LABELS: Record<MembershipTierId, string> = {

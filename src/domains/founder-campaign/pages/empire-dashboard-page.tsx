@@ -44,7 +44,6 @@ import {
   fetchLocalCouncilNews,
   fetchMapData,
   type MemberDashboardData,
-  type CityWithProgress,
   type EmpireProgressData,
   type FeedEvent,
   type CouncilNewsEvent,
@@ -178,7 +177,7 @@ export function EmpireDashboardPage() {
   const [data, setData] = useState<MemberDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [empire, setEmpire] = useState<EmpireProgressData>({ tribe_city_count: 0, total_population: 0, total_cities: 0, total_states: 0 });
-  const [assignedNumber, setAssignedNumber] = useState<number | null>(null);
+  const [assignedNumber] = useState<number | null>(null);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [showCityDrawer, setShowCityDrawer] = useState(false);
   const [metroData, setMetroData] = useState<{ name: string; rank: number; populationCount: number; cityCount: number; metroId: string | null } | null>(null);

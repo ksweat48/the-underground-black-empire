@@ -1,4 +1,4 @@
-import { useState, useEffect, type ComponentType } from 'react';
+import { useState, type ComponentType } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   User,

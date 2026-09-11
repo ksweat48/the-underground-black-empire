@@ -300,7 +300,7 @@ export async function fetchEmpireProgress(): Promise<EmpireProgressData> {
 }
 
 export async function fetchLeaderboard(limit: number = 50, metroId?: string | null): Promise<LeaderboardEntry[]> {
-  let query = supabase
+  const query = supabase
     .from('members')
     .select(`
       id,

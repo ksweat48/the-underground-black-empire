@@ -81,7 +81,7 @@ export async function fetchListings(params: {
 
   const listingIds = (data ?? []).map((r) => r.id);
 
-  let savedSet = new Set<string>();
+  const savedSet = new Set<string>();
   if (currentUserId && listingIds.length > 0) {
     const { data: savedData } = await supabase
       .from('listing_saves')
@@ -542,7 +542,7 @@ export async function createMarketEvent(input: CreateEventInput): Promise<Market
   return data as MarketEvent;
 }
 
-export async function checkInToEvent(eventId: string, userId: string): Promise<void> {
+export async function checkInToEvent(eventId: string): Promise<void> {
   const { error } = await supabase
     .rpc('check_in_to_event', { p_event_id: eventId });
 

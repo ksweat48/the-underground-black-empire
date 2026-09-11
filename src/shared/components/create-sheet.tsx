@@ -7,7 +7,6 @@ import {
   CalendarPlus,
   X,
 } from 'lucide-react';
-import { cn } from '@/shared/cn';
 import { useAuth } from '@/domains/identity/auth-context';
 import { supabase } from '@/shared/supabase-client';
 

@@ -114,12 +114,6 @@ export async function fetchNominationCandidates(metroId: string | null, currentU
   if (error) throw error;
   if (!members || members.length === 0) return [];
 
-  const memberIds = members.map((m) => m.id);
-
-  const { data: influenceMap } = await Promise.resolve(
-    supabase.rpc('get_member_influence', { p_member_id: '00000000-0000-0000-0000-000000000000' })
-  ).catch(() => ({ data: null, error: null }));
-
   const candidates: NominationCandidate[] = [];
 
   for (const member of members) {

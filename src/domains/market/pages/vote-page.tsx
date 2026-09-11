@@ -13,10 +13,6 @@ import {
   Scale,
   Landmark,
   Crown,
-  ChevronRight,
-  Award,
-  TrendingUp,
-  Star,
 } from 'lucide-react';
 import { Layout } from '@/shared/components/layout';
 import { GlassModal } from '@/shared/components/glass-modal';
@@ -31,7 +27,7 @@ import {
   fetchMemberCityInfo,
   type Vote,
 } from '@/domains/market/services';
-import { BALLOT_CREDIT_CAP, getLevelFromInfluence } from '@/config/progression-rules';
+import { BALLOT_CREDIT_CAP } from '@/config/progression-rules';
 import {
   fetchActiveCycle,
   fetchNominationCandidates,

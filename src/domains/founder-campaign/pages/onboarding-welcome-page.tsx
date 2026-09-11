@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Sparkles, Users, TrendingUp, Target, ArrowRight, Store, Briefcase, Building2, CheckCircle2 } from 'lucide-react';
+import { Sparkles, Users, TrendingUp, Target, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { OnboardingStep } from '@/shared/components/onboarding-step';
 import { EmpireEmblem } from '@/shared/components/empire-emblem';
 import { useAuth } from '@/domains/identity/auth-context';

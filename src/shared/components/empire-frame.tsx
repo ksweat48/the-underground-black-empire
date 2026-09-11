@@ -8,8 +8,6 @@ interface EmpireFrameProps {
   variant?: FrameVariant;
   className?: string;
   style?: CSSProperties;
-  withOrnaments?: boolean;
-  withSvgBorder?: boolean;
   onClick?: () => void;
   role?: string;
   'aria-label'?: string;
@@ -26,8 +24,6 @@ export function EmpireFrame({
   variant = 'utility',
   className,
   style,
-  withOrnaments = false,
-  withSvgBorder = false,
   onClick,
   role,
   'aria-label': ariaLabel,

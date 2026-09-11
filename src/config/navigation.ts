@@ -2,7 +2,6 @@ import type { ComponentType } from 'react';
 import {
   User,
   Shield,
-  Lock,
   Store,
   Vote,
   CreditCard,

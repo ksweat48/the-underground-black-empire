@@ -1,5 +1,4 @@
 import { ChevronDown } from 'lucide-react';
-import { cn } from '@/shared/cn';
 
 export type EthnicIdentityValue =
   | 'black_african_american'

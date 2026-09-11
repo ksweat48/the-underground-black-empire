@@ -2,7 +2,6 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Building2, Loader2, Check, Image as ImageIcon } from 'lucide-react';
 import { Layout } from '@/shared/components/layout';
-import { EmpireFrame } from '@/shared/components/empire-frame';
 import { cn } from '@/shared/cn';
 import { useAuth } from '@/domains/identity/auth-context';
 import { createListing, fetchMemberCityInfo, type ListingCategory } from '@/domains/market/services';
