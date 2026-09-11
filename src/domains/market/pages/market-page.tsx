@@ -453,11 +453,12 @@ function FeaturedListingCard({ listing, onClick, onToggleSave }: { listing: Mark
         )}
         <div className="absolute bottom-1.5 left-1.5"><span className="badge-gold text-[9px] py-0.5 px-1.5 capitalize">{listing.category}</span></div>
       </div>
-      <div className="p-2.5 space-y-1.5">
-        <h3 className="font-display text-xs font-semibold text-empire-ivory leading-tight line-clamp-1">{listing.name}</h3>
+      <div className="relative p-2.5 space-y-1.5">
+        <h3 className="font-display text-xs font-semibold text-empire-ivory leading-tight line-clamp-1 pr-9">{listing.name}</h3>
         {listing.price_display && <span className="text-xs font-semibold text-empire-gold">{listing.price_display}</span>}
         {listing.city_name && <span className="flex items-center gap-1 text-[10px] text-empire-text-muted"><MapPin className="w-2.5 h-2.5" />{listing.city_name}</span>}
         <ContactActions actions={actions} />
+        <FavoriteButton listing={listing} onToggleSave={onToggleSave} />
       </div>
     </div>
   );
@@ -506,7 +507,7 @@ function ListingCard({ listing, onClick, onToggleSave }: { listing: MarketListin
       </div>
 
       {/* Content */}
-      <div className="p-3 space-y-1.5">
+      <div className="relative p-3 space-y-1.5">
         <div className="flex items-start justify-between gap-2">
           <h3 className="font-display text-sm font-semibold text-empire-ivory leading-tight line-clamp-1">
             {listing.name}
@@ -523,19 +524,30 @@ function ListingCard({ listing, onClick, onToggleSave }: { listing: MarketListin
         <div className="flex items-center gap-3 pt-1">
           {listing.city_name && <span className="flex items-center gap-1 text-[10px] text-empire-text-muted"><MapPin className="w-2.5 h-2.5" />{listing.city_name}</span>}
           <span className="flex items-center gap-1 text-[10px] text-empire-text-muted"><Heart className="w-2.5 h-2.5" />{listing.like_count}</span>
-          <button
-            onClick={(e) => { e.stopPropagation(); onToggleSave?.(listing.id, listing.is_saved ?? false); }}
-            className={cn('flex items-center gap-1 text-[10px] transition-colors', listing.is_saved ? 'text-empire-gold' : 'text-empire-text-muted hover:text-empire-ivory')}
-            aria-label={listing.is_saved ? 'Remove from favorites' : 'Add to favorites'}
-          >
-            <Heart className={cn('w-2.5 h-2.5 transition-all', listing.is_saved && 'fill-current')} />
-            {listing.save_count}
-          </button>
           <span className="flex items-center gap-1 text-[10px] text-empire-text-muted"><MessageCircle className="w-2.5 h-2.5" />{listing.comment_count}</span>
         </div>
         <ContactActions actions={actions} />
+        <FavoriteButton listing={listing} onToggleSave={onToggleSave} />
       </div>
     </div>
+  );
+}
+
+function FavoriteButton({ listing, onToggleSave }: { listing: MarketListing; onToggleSave?: (listingId: string, currentlySaved: boolean) => void }) {
+  return (
+    <button
+      onClick={(event) => { event.stopPropagation(); onToggleSave?.(listing.id, listing.is_saved ?? false); }}
+      className={cn(
+        'absolute bottom-2.5 right-2.5 flex items-center gap-1.5 rounded-full border px-2 py-1.5 text-[10px] transition-all',
+        listing.is_saved
+          ? 'border-empire-gold/40 bg-empire-gold/15 text-empire-gold'
+          : 'border-empire-gold/20 bg-ink-900/40 text-empire-text-muted hover:border-empire-gold/35 hover:bg-empire-gold/10 hover:text-empire-ivory'
+      )}
+      aria-label={listing.is_saved ? 'Remove from favorites' : 'Add to favorites'}
+    >
+      <Heart className={cn('h-3.5 w-3.5 transition-transform', listing.is_saved && 'fill-current scale-110')} />
+      <span>{listing.save_count}</span>
+    </button>
   );
 }
 
