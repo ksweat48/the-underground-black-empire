@@ -81,24 +81,15 @@ export async function fetchListings(params: {
 
   const listingIds = (data ?? []).map((r) => r.id);
 
-  // Fetch save counts and current user's saved listings in parallel
-  let saveCountMap = new Map<string, number>();
   let savedSet = new Set<string>();
-  if (listingIds.length > 0) {
-    const [saveCountsRes, savedRes] = await Promise.all([
-      supabase.from('listing_saves').select('listing_id').in('listing_id', listingIds),
-      currentUserId
-        ? supabase.from('listing_saves').select('listing_id').eq('member_id', currentUserId).in('listing_id', listingIds)
-        : Promise.resolve({ data: null, error: null }),
-    ]);
-    if (saveCountsRes.data) {
-      for (const row of saveCountsRes.data) {
-        const lid = row.listing_id as string;
-        saveCountMap.set(lid, (saveCountMap.get(lid) ?? 0) + 1);
-      }
-    }
-    if (savedRes.data) {
-      for (const row of savedRes.data) {
+  if (currentUserId && listingIds.length > 0) {
+    const { data: savedData } = await supabase
+      .from('listing_saves')
+      .select('listing_id')
+      .eq('member_id', currentUserId)
+      .in('listing_id', listingIds);
+    if (savedData) {
+      for (const row of savedData) {
         savedSet.add(row.listing_id as string);
       }
     }
@@ -122,7 +113,7 @@ export async function fetchListings(params: {
       status: row.status,
       is_verified: row.is_verified,
       like_count: row.like_count,
-      save_count: saveCountMap.get(row.id) ?? 0,
+      save_count: row.save_count ?? 0,
       comment_count: row.comment_count,
       check_in_count: row.check_in_count,
       created_at: row.created_at,
@@ -178,7 +169,7 @@ export async function fetchListingById(id: string, currentUserId?: string): Prom
     status: data.status,
     is_verified: data.is_verified,
     like_count: data.like_count,
-    save_count: 0,
+    save_count: data.save_count ?? 0,
     comment_count: data.comment_count,
     check_in_count: data.check_in_count,
     created_at: data.created_at,
@@ -220,7 +211,7 @@ export async function fetchMyListings(userId: string): Promise<MarketListing[]> 
       status: row.status,
       is_verified: row.is_verified,
       like_count: row.like_count,
-      save_count: 0,
+      save_count: row.save_count ?? 0,
       comment_count: row.comment_count,
       check_in_count: row.check_in_count,
       created_at: row.created_at,
@@ -276,7 +267,7 @@ export async function fetchSavedListings(userId: string): Promise<MarketListing[
         status: listing.status,
         is_verified: listing.is_verified,
         like_count: listing.like_count,
-        save_count: 0,
+        save_count: listing.save_count ?? 0,
         comment_count: listing.comment_count,
         check_in_count: listing.check_in_count,
         created_at: listing.created_at,
