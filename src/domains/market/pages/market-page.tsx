@@ -39,7 +39,7 @@ type CategoryFilter = 'feed' | 'market' | ListingCategory;
 type ScopeFilter = 'local' | 'empire';
 
 const CATEGORY_CONFIG: Record<CategoryFilter, { label: string; icon: typeof Store }> = {
-  feed: { label: 'Feed', icon: Search },
+  feed: { label: 'Feed', icon: MessageCircle },
   market: { label: 'Market', icon: Store },
   products: { label: 'Products', icon: Package },
   services: { label: 'Services', icon: Wrench },
@@ -206,6 +206,27 @@ export function MarketPage() {
           className="flex w-full min-w-0 items-center gap-2 overflow-x-auto scrollbar-none animate-fade-up pb-0.5"
           style={{ animationDelay: '100ms' }}
         >
+          {(Object.keys(CATEGORY_CONFIG) as CategoryFilter[]).map((key) => {
+            const config = CATEGORY_CONFIG[key];
+            const Icon = config.icon;
+            const isActive = category === key;
+            return (
+              <button
+                key={key}
+                onClick={() => setCategory(key)}
+                className={cn(
+                  'flex h-[34px] shrink-0 items-center gap-1.5 rounded-lg border px-3 text-xs font-medium whitespace-nowrap transition-all duration-200',
+                  isActive
+                    ? 'bg-ink-900 border-empire-gold/30 text-empire-ivory'
+                    : 'frame-utility text-empire-text-muted hover:text-empire-ivory'
+                )}
+              >
+                <Icon className="w-3.5 h-3.5" />
+                {config.label}
+              </button>
+            );
+          })}
+
           <div className={cn(
             'relative shrink-0 overflow-hidden transition-[width,opacity] duration-300 ease-out',
             searchOpen ? 'w-[190px] opacity-100 sm:w-[240px]' : 'w-0 opacity-0'
@@ -224,33 +245,17 @@ export function MarketPage() {
           </div>
           <button
             onClick={() => setSearchOpen((isOpen) => !isOpen)}
-            className="btn-primary flex h-[34px] w-[38px] shrink-0 items-center justify-center rounded-lg p-0"
+            className={cn(
+              'flex h-[34px] w-[38px] shrink-0 items-center justify-center rounded-lg border p-0 transition-all duration-200',
+              searchOpen
+                ? 'bg-ink-900 border-empire-gold/30 text-empire-ivory'
+                : 'frame-utility text-empire-text-muted hover:text-empire-ivory'
+            )}
             aria-label={searchOpen ? 'Close search' : 'Open search'}
             title={searchOpen ? 'Close search' : 'Open search'}
           >
             {searchOpen ? <X className="h-4 w-4" /> : <Search className="h-4 w-4" />}
           </button>
-
-          {(Object.keys(CATEGORY_CONFIG) as CategoryFilter[]).map((key) => {
-            const config = CATEGORY_CONFIG[key];
-            const Icon = config.icon;
-            const isActive = category === key;
-            return (
-              <button
-                key={key}
-                onClick={() => setCategory(key)}
-                className={cn(
-                  'flex h-[34px] shrink-0 items-center gap-1.5 rounded-lg border px-3 text-xs font-medium whitespace-nowrap transition-all duration-200',
-                  isActive
-                    ? 'bg-empire-gold/10 border-empire-gold/30 text-empire-gold'
-                    : 'frame-utility text-empire-text-muted hover:text-empire-ivory'
-                )}
-              >
-                <Icon className="w-3.5 h-3.5" />
-                {config.label}
-              </button>
-            );
-          })}
         </div>
 
         {/* ==================== FEED VIEW ==================== */}
