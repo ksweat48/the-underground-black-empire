@@ -37,37 +37,43 @@ interface CreateOption {
   requiresCorrespondent?: boolean;
 }
 
-const CREATE_OPTIONS: CreateOption[] = [
-  {
-    key: 'listing',
-    label: 'List a Business',
-    description: 'Showcase your business, products, or services with external links for purchasing.',
-    icon: Building2,
-    path: '/market/create/listing',
-  },
-  {
-    key: 'update',
-    label: 'Share an Offer or Update',
-    description: 'Post a short offer, update, or progress milestone from one of your approved businesses.',
-    icon: MessageSquarePlus,
-    path: '/market/create/update',
-    requiresApprovedListing: true,
-  },
-  {
-    key: 'news',
-    label: 'Post Local News',
-    description: 'Report on something happening in your city. Only approved Correspondents can post news.',
-    icon: Newspaper,
-    path: '/market/create/news',
-    requiresCorrespondent: true,
-  },
-  {
-    key: 'event',
-    label: 'Create an Event',
-    description: 'Add a community event with date, time, location, and check-in support.',
-    icon: CalendarPlus,
-    path: '/market/create/event',
-  },
+const CREATE_GROUPS: CreateOption[][] = [
+  [
+    {
+      key: 'update',
+      label: 'Share an Offer or Update',
+      description: 'Post a short offer, update, or progress milestone from one of your approved businesses.',
+      icon: MessageSquarePlus,
+      path: '/market/create/update',
+      requiresApprovedListing: true,
+    },
+  ],
+  [
+    {
+      key: 'listing',
+      label: 'List a Business',
+      description: 'Showcase your business, products, or services with external links for purchasing.',
+      icon: Building2,
+      path: '/market/create/listing',
+    },
+    {
+      key: 'event',
+      label: 'Create an Event',
+      description: 'Add a community event with date, time, location, and check-in support.',
+      icon: CalendarPlus,
+      path: '/market/create/event',
+    },
+  ],
+  [
+    {
+      key: 'news',
+      label: 'Post Local News',
+      description: 'Report on something happening in your city. Only approved Correspondents can post news.',
+      icon: Newspaper,
+      path: '/market/create/news',
+      requiresCorrespondent: true,
+    },
+  ],
 ];
 
 export function CreateSheetProvider({ children }: { children: ReactNode }) {
@@ -132,11 +138,15 @@ export function CreateSheetProvider({ children }: { children: ReactNode }) {
     [navigate],
   );
 
-  const visibleOptions = CREATE_OPTIONS.filter((opt) => {
+  const isOptionVisible = (opt: CreateOption) => {
     if (opt.requiresApprovedListing) return hasApprovedListing;
     if (opt.requiresCorrespondent) return isCorrespondent;
     return true;
-  });
+  };
+
+  const visibleGroups = CREATE_GROUPS
+    .map((group) => group.filter(isOptionVisible))
+    .filter((group) => group.length > 0);
 
   return (
     <CreateSheetContext.Provider value={{ openSheet, closeSheet, isOpen }}>
@@ -165,35 +175,48 @@ export function CreateSheetProvider({ children }: { children: ReactNode }) {
                 </button>
               </div>
 
-              <div className="space-y-2">
-                {visibleOptions.map((option) => {
-                  const Icon = option.icon;
-                  return (
-                    <button
-                      key={option.key}
-                      onClick={() => handleSelect(option)}
-                      className="w-full flex items-start gap-4 p-4 rounded-xl border border-transparent hover:border-empire-gold/20 hover:bg-ink-800/20 transition-all duration-200 text-left group active:scale-[0.99]"
-                    >
-                      <div
-                        className="flex items-center justify-center shrink-0 w-12 h-12 rounded-xl transition-all duration-200 group-hover:scale-105"
-                        style={{
-                          background: 'linear-gradient(135deg, rgba(17,17,17,0.06), rgba(17,17,17,0.02))',
-                          border: '1px solid rgba(17,17,17,0.12)',
-                        }}
-                      >
-                        <Icon className="w-5 h-5 text-empire-gold" />
+              <div className="space-y-1">
+                {visibleGroups.map((group, groupIdx) => (
+                  <div key={groupIdx}>
+                    {groupIdx > 0 && (
+                      <div className="flex items-center gap-3 py-3" aria-hidden="true">
+                        <div className="h-px flex-1 bg-ink-700/40" />
+                        <div className="w-1.5 h-1.5 rounded-full bg-empire-gold/30" />
+                        <div className="h-px flex-1 bg-ink-700/40" />
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-display text-base font-semibold text-empire-ivory mb-0.5">
-                          {option.label}
-                        </p>
-                        <p className="text-sm text-empire-text-secondary leading-snug">
-                          {option.description}
-                        </p>
-                      </div>
-                    </button>
-                  );
-                })}
+                    )}
+                    <div className="space-y-2">
+                      {group.map((option) => {
+                        const Icon = option.icon;
+                        return (
+                          <button
+                            key={option.key}
+                            onClick={() => handleSelect(option)}
+                            className="w-full flex items-start gap-4 p-4 rounded-xl border border-transparent hover:border-empire-gold/20 hover:bg-ink-800/20 transition-all duration-200 text-left group active:scale-[0.99]"
+                          >
+                            <div
+                              className="flex items-center justify-center shrink-0 w-12 h-12 rounded-xl transition-all duration-200 group-hover:scale-105"
+                              style={{
+                                background: 'linear-gradient(135deg, rgba(17,17,17,0.06), rgba(17,17,17,0.02))',
+                                border: '1px solid rgba(17,17,17,0.12)',
+                              }}
+                            >
+                              <Icon className="w-5 h-5 text-empire-gold" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-display text-base font-semibold text-empire-ivory mb-0.5">
+                                {option.label}
+                              </p>
+                              <p className="text-sm text-empire-text-secondary leading-snug">
+                                {option.description}
+                              </p>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
 
                 {!hasApprovedListing && checkedApproved && (
                   <div className="pt-2 pb-1">

@@ -1,9 +1,11 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, MessageSquarePlus, Loader2, Check, AlertCircle, Tag, TrendingUp, Megaphone } from 'lucide-react';
 import { Layout } from '@/shared/components/layout';
+import { ListingImageUploader } from '@/shared/components/listing-image-uploader';
 import { cn } from '@/shared/cn';
 import { useAuth } from '@/domains/identity/auth-context';
+import { supabase } from '@/shared/supabase-client';
 import {
   fetchApprovedListingsByOwner,
   createListingUpdate,
@@ -16,7 +18,7 @@ const MAX_CHARS = 280;
 
 const UPDATE_TYPES: { key: UpdateType; label: string; description: string; icon: typeof Tag }[] = [
   { key: 'offer', label: 'Special Offer', description: 'Promotion, discount, or deal', icon: Tag },
-  { key: 'update', label: 'Business Update', description: 'Announcement or change', icon: Megaphone },
+  { key: 'update', label: 'Business Update', description: '', icon: Megaphone },
   { key: 'progress', label: 'Progress', description: 'Milestone or achievement', icon: TrendingUp },
 ];
 
@@ -32,9 +34,10 @@ export function CreateUpdatePage() {
   const [selectedListing, setSelectedListing] = useState<string>('');
   const [updateType, setUpdateType] = useState<UpdateType>('update');
   const [body, setBody] = useState('');
-  const [imageUrl, setImageUrl] = useState('');
+  const [imageDataUrl, setImageDataUrl] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const submittedRef = useRef(false);
 
   useEffect(() => {
     if (!userId) return;
@@ -58,6 +61,7 @@ export function CreateUpdatePage() {
   const canSubmit = charCount >= MIN_CHARS && charCount <= MAX_CHARS && !!selectedListing && !submitting;
 
   const handleSubmit = useCallback(async () => {
+    if (submittedRef.current || submitting) return;
     if (!selectedListing || !canSubmit) {
       if (charCount < MIN_CHARS) {
         setError(`Your post needs at least ${MIN_CHARS} characters. You have ${charCount}.`);
@@ -73,22 +77,39 @@ export function CreateUpdatePage() {
       }
       return;
     }
+    submittedRef.current = true;
     setSubmitting(true);
     setError(null);
     try {
+      let imageUrl: string | null = null;
+
+      if (imageDataUrl) {
+        const blob = await (await fetch(imageDataUrl)).blob();
+        const fileName = `${userId}/update-${Date.now()}.jpg`;
+        const { error: uploadError } = await supabase.storage
+          .from('listing-images')
+          .upload(fileName, blob, { contentType: 'image/jpeg', upsert: false });
+        if (uploadError) throw uploadError;
+        const { data: urlData } = supabase.storage
+          .from('listing-images')
+          .getPublicUrl(fileName);
+        imageUrl = `${urlData.publicUrl}?t=${Date.now()}`;
+      }
+
       await createListingUpdate({
         listing_id: selectedListing,
         body: body.trim(),
-        image_url: imageUrl.trim() || null,
+        image_url: imageUrl,
         update_type: updateType,
       });
       navigate('/market');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to post update.');
+      submittedRef.current = false;
     } finally {
       setSubmitting(false);
     }
-  }, [selectedListing, body, imageUrl, updateType, canSubmit, charCount, navigate]);
+  }, [selectedListing, body, imageDataUrl, updateType, canSubmit, charCount, userId, navigate, submitting]);
 
   if (loading) {
     return (
@@ -162,9 +183,11 @@ export function CreateUpdatePage() {
                 );
               })}
             </div>
-            <p className="text-[10px] text-empire-text-muted mt-1.5">
-              {UPDATE_TYPES.find((t) => t.key === updateType)?.description}
-            </p>
+            {UPDATE_TYPES.find((t) => t.key === updateType)?.description && (
+              <p className="text-[10px] text-empire-text-muted mt-1.5">
+                {UPDATE_TYPES.find((t) => t.key === updateType)?.description}
+              </p>
+            )}
           </div>
 
           {/* Select listing */}
@@ -203,38 +226,14 @@ export function CreateUpdatePage() {
               rows={4}
               maxLength={MAX_CHARS + 20}
               className="input-field text-sm resize-none"
-              placeholder={`Write your ${UPDATE_TYPES.find((t) => t.key === updateType)?.label.toLowerCase() ?? 'post'}... Keep it brief — ${MIN_CHARS}-${MAX_CHARS} characters.`}
+              placeholder={`Write your ${UPDATE_TYPES.find((t) => t.key === updateType)?.label.toLowerCase() ?? 'post'}...`}
             />
-            <div className="flex items-center justify-between mt-1.5">
-              <p className="text-[10px] text-empire-text-muted">
-                {charCount < MIN_CHARS
-                  ? `${MIN_CHARS - charCount} more characters needed`
-                  : charCount > MAX_CHARS
-                    ? `${charCount - MAX_CHARS} characters over the limit`
-                    : 'Looks good!'}
-              </p>
-              <p className="text-[10px] text-empire-text-muted">
-                No long-form posts. Keep it short and useful.
-              </p>
-            </div>
           </div>
 
-          {/* Image URL */}
+          {/* Image upload */}
           <div>
-            <label className="label-field">Image URL (optional)</label>
-            <input
-              type="url"
-              value={imageUrl}
-              onChange={(e) => setImageUrl(e.target.value)}
-              className="input-field text-sm"
-              placeholder="https://example.com/image.jpg"
-            />
-          </div>
-
-          <div className="frame-utility p-3">
-            <p className="text-xs text-empire-text-muted">
-              Your post will be submitted for review and linked to your business listing. Keep it brief — the marketplace feed values short, useful updates over long posts.
-            </p>
+            <label className="label-field">Image (optional)</label>
+            <ListingImageUploader onImageReady={setImageDataUrl} />
           </div>
 
           {/* Submit */}
