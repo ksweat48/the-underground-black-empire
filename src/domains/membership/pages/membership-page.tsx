@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { Layout } from '@/shared/components/layout';
 import { GlassModal } from '@/shared/components/glass-modal';
+import { ErrorBanner } from '@/shared/components/error-banner';
 import { EmpireEmblem } from '@/shared/components/empire-emblem';
 import { cn } from '@/shared/cn';
 import { useAuth } from '@/domains/identity/auth-context';
@@ -78,7 +79,9 @@ export function MembershipPage() {
   const [myMembership, setMyMembership] = useState<MemberMembership | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [selecting, setSelecting] = useState<MembershipTierId | null>(null);
+  const [selectError, setSelectError] = useState<string | null>(null);
   const [learnMoreTier, setLearnMoreTier] = useState<MembershipTierId | null>(null);
   const touchStartX = useRef<number | null>(null);
 
@@ -87,6 +90,7 @@ export function MembershipPage() {
       setLoading(false);
       return;
     }
+    setLoadError(false);
     try {
       const [tierData, membership] = await Promise.all([
         fetchMembershipTiers(),
@@ -98,6 +102,7 @@ export function MembershipPage() {
       setActiveIndex(index >= 0 ? index : 0);
     } catch {
       setTiers([]);
+      setLoadError(true);
     } finally {
       setLoading(false);
     }
@@ -108,9 +113,12 @@ export function MembershipPage() {
   const chooseTier = async (tierId: MembershipTierId) => {
     if (!userId || !myMembership || myMembership.membership_tier === tierId) return;
     setSelecting(tierId);
+    setSelectError(null);
     try {
       await updateMembershipTier(userId, tierId);
       await loadData();
+    } catch {
+      setSelectError('Unable to update your membership tier. Please try again.');
     } finally {
       setSelecting(null);
     }
@@ -135,6 +143,16 @@ export function MembershipPage() {
     );
   }
 
+  if (loadError) {
+    return (
+      <Layout fullWidth>
+        <div className="flex items-center justify-center py-24">
+          <ErrorBanner message="Unable to load membership options. Please try again." onRetry={loadData} />
+        </div>
+      </Layout>
+    );
+  }
+
   const memberName = myMembership?.display_name?.trim()
     || (typeof session?.user.user_metadata?.display_name === 'string' ? session.user.user_metadata.display_name.trim() : '')
     || session?.user.email?.split('@')[0]
@@ -144,6 +162,11 @@ export function MembershipPage() {
 
   return (
     <Layout fullWidth>
+      {selectError && (
+        <div className="flex items-center gap-2 p-3 rounded-lg bg-empire-danger/10 border border-empire-danger/20 animate-fade-up mb-4">
+          <p className="text-xs text-empire-danger flex-1">{selectError}</p>
+        </div>
+      )}
       <div className="membership-page w-full overflow-hidden pb-24">
         {tiers.length > 0 ? (
           <section

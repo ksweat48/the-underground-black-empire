@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Sparkles, Users, TrendingUp, Target, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { Sparkles, Users, TrendingUp, Target, ArrowRight, CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
 import { OnboardingStep } from '@/shared/components/onboarding-step';
 import { EmpireEmblem } from '@/shared/components/empire-emblem';
 import { useAuth } from '@/domains/identity/auth-context';
@@ -15,13 +15,20 @@ export function OnboardingWelcomePage() {
   const listingId = searchParams.get('listing');
   const { refreshMemberState } = useAuth();
   const [city, setCity] = useState<CityWithMetro | null>(null);
+  const [cityLoading, setCityLoading] = useState(true);
+  const [cityError, setCityError] = useState(false);
 
   useEffect(() => {
     if (!cityId || !founderNumber) {
       navigate('/onboarding/city');
       return;
     }
-    fetchCityWithMetro(cityId).then(setCity).catch(() => {});
+    setCityLoading(true);
+    setCityError(false);
+    fetchCityWithMetro(cityId)
+      .then((c) => setCity(c))
+      .catch(() => setCityError(true))
+      .finally(() => setCityLoading(false));
   }, [cityId, founderNumber, navigate]);
 
   const features = [
@@ -57,6 +64,17 @@ export function OnboardingWelcomePage() {
         <h2 className="text-5xl font-display font-bold text-gradient-gold mb-2">
           Member #{founderNumber}
         </h2>
+        {cityLoading && (
+          <div className="flex justify-center py-2">
+            <Loader2 className="w-5 h-5 text-gold-400 animate-spin" />
+          </div>
+        )}
+        {cityError && (
+          <div className="flex items-center justify-center gap-2 py-2 text-ink-400">
+            <AlertCircle className="w-4 h-4 text-ink-500" />
+            <p className="text-sm">Unable to load city details.</p>
+          </div>
+        )}
         {city && (
           <p className="text-lg text-ink-200">
             {city.name}, {city.state}

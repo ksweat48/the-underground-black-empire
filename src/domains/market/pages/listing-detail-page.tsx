@@ -15,6 +15,8 @@ import {
   Image as ImageIcon,
   Store,
   ShieldAlert,
+  AlertCircle,
+  X,
 } from 'lucide-react';
 import { Layout } from '@/shared/components/layout';
 import { GlassModal } from '@/shared/components/glass-modal';
@@ -50,6 +52,7 @@ export function ListingDetailPage() {
   const [commentSubmitting, setCommentSubmitting] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [showComments, setShowComments] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const loadListing = useCallback(async () => {
     if (!id) return;
@@ -79,6 +82,7 @@ export function ListingDetailPage() {
 
   const handleLike = async () => {
     if (!listing || !userId) return;
+    setActionError(null);
     try {
       const newLiked = await toggleListingLike(listing.id, userId, listing.is_liked ?? false);
       setListing({
@@ -88,22 +92,26 @@ export function ListingDetailPage() {
       });
     } catch (err) {
       console.error('Like failed:', err);
+      setActionError('Unable to like this listing. Please try again.');
     }
   };
 
   const handleSave = async () => {
     if (!listing || !userId) return;
+    setActionError(null);
     try {
       const newSaved = await toggleListingSave(listing.id, userId, listing.is_saved ?? false);
       setListing({ ...listing, is_saved: newSaved });
     } catch (err) {
       console.error('Save failed:', err);
+      setActionError('Unable to save this listing. Please try again.');
     }
   };
 
   const handleComment = async () => {
     if (!listing || !commentText.trim()) return;
     setCommentSubmitting(true);
+    setActionError(null);
     try {
       await createListingComment(listing.id, commentText.trim());
       setCommentText('');
@@ -112,6 +120,7 @@ export function ListingDetailPage() {
       setListing({ ...listing, comment_count: listing.comment_count + 1 });
     } catch (err) {
       console.error('Comment failed:', err);
+      setActionError('Unable to post your comment. Please try again.');
     } finally {
       setCommentSubmitting(false);
     }
@@ -154,6 +163,16 @@ export function ListingDetailPage() {
           <ArrowLeft className="w-4 h-4" />
           Back to Market
         </button>
+
+        {actionError && (
+          <div className="flex items-center gap-2 p-3 rounded-lg bg-empire-danger/10 border border-empire-danger/20 animate-fade-up">
+            <AlertCircle className="w-4 h-4 text-empire-danger shrink-0" />
+            <p className="text-xs text-empire-danger flex-1">{actionError}</p>
+            <button onClick={() => setActionError(null)} className="text-empire-danger/60 hover:text-empire-danger transition-colors">
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
 
         {/* Listing header card */}
         <div className="frame-command overflow-hidden animate-fade-up">

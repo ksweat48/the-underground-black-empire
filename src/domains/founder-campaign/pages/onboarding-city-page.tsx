@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MapPin, X, PlusCircle } from 'lucide-react';
+import { MapPin, X, PlusCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { OnboardingStep } from '@/shared/components/onboarding-step';
 import { useAuth } from '@/domains/identity/auth-context';
 import {
@@ -25,6 +25,9 @@ export function OnboardingCityPage() {
   const [showCityDropdown, setShowCityDropdown] = useState(false);
   const [citiesLoading, setCitiesLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const [statesLoading, setStatesLoading] = useState(true);
+  const [statesError, setStatesError] = useState(false);
+  const [searchError, setSearchError] = useState(false);
 
   const stateInputRef = useRef<HTMLInputElement>(null);
   const cityInputRef = useRef<HTMLInputElement>(null);
@@ -34,9 +37,12 @@ export function OnboardingCityPage() {
   const requestIdRef = useRef(0);
 
   useEffect(() => {
+    setStatesLoading(true);
+    setStatesError(false);
     fetchAllStates()
       .then(setStates)
-      .catch(() => {});
+      .catch(() => setStatesError(true))
+      .finally(() => setStatesLoading(false));
   }, []);
 
   const performSearch = useCallback(async (stateAbbr: string, query: string) => {
@@ -52,6 +58,7 @@ export function OnboardingCityPage() {
       if (reqId === requestIdRef.current) {
         setSearchResults([]);
         setHasSearched(true);
+        setSearchError(true);
       }
     } finally {
       if (reqId === requestIdRef.current) {
@@ -185,6 +192,15 @@ export function OnboardingCityPage() {
                 <X className="w-4 h-4" />
               </button>
             </div>
+          ) : statesLoading ? (
+            <div className="flex items-center justify-center py-3.5 rounded-xl bg-ink-900 border border-ink-700">
+              <Loader2 className="w-4 h-4 text-gold-400 animate-spin" />
+            </div>
+          ) : statesError ? (
+            <div className="flex items-center gap-2 px-4 py-3.5 rounded-xl bg-ink-900 border border-red-800/40">
+              <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+              <p className="text-sm text-ink-400">Unable to load states. Please try again.</p>
+            </div>
           ) : (
             <div className="relative">
               <input
@@ -307,6 +323,12 @@ export function OnboardingCityPage() {
             )}
           </div>
 
+          {searchError && !citiesLoading && (
+            <div className="mt-2 flex items-center gap-2 px-1">
+              <AlertCircle className="w-3.5 h-3.5 text-red-400 shrink-0" />
+              <span className="text-xs text-ink-500">Unable to search cities. Please try again.</span>
+            </div>
+          )}
           {noMatchAfterTyping && (
             <div className="mt-2 flex items-center justify-between px-1">
               <span className="text-xs text-ink-500">

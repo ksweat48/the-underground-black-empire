@@ -18,6 +18,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import { Layout } from '@/shared/components/layout';
+import { ErrorBanner } from '@/shared/components/error-banner';
 import { EmpireEmblemIcon } from '@/shared/components/empire-emblem-icon';
 import { supabase } from '@/shared/supabase-client';
 import { useAuth } from '@/domains/identity/auth-context';
@@ -154,6 +155,10 @@ export function AdminPage() {
   const [reviewAction, setReviewAction] = useState<string | null>(null);
   const [reviewReason, setReviewReason] = useState('');
   const [reviewReasonFor, setReviewReasonFor] = useState<string | null>(null);
+  const [statsError, setStatsError] = useState(false);
+  const [reviewError, setReviewError] = useState(false);
+  const [participationError, setParticipationError] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -236,7 +241,7 @@ export function AdminPage() {
           setAuditLog((auditRes.data ?? []) as AuditLogEntry[]);
         },
       )
-      .catch(() => {})
+      .catch(() => { setStatsError(true); })
       .finally(() => setLoading(false));
 
     Promise.resolve(supabase.rpc('get_admin_participation_stats'))
@@ -245,12 +250,12 @@ export function AdminPage() {
           setParticipation(data as ParticipationStats);
         }
       })
-      .catch(() => {})
+      .catch(() => { setParticipationError(true); })
       .finally(() => setParticipationLoading(false));
 
     Promise.resolve(fetchListingsForReview('in_review', 20))
       .then(setReviewListings)
-      .catch(() => {})
+      .catch(() => { setReviewError(true); })
       .finally(() => setReviewLoading(false));
   }, [sessionVersion]);
 
@@ -268,6 +273,7 @@ export function AdminPage() {
       setReviewReasonFor(null);
     } catch (err) {
       console.error('Review action failed:', err);
+      setActionError('Unable to process review. Please try again.');
     } finally {
       setReviewAction(null);
     }
@@ -283,11 +289,29 @@ export function AdminPage() {
     );
   }
 
+  if (statsError) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center py-20">
+          <ErrorBanner message="Unable to load admin data. Please try again." onRetry={() => window.location.reload()} />
+        </div>
+      </Layout>
+    );
+  }
+
   const activeFlags = flags.filter((f) => f.status === 'active');
   const lockedFlags = flags.filter((f) => f.status === 'locked');
 
   return (
     <Layout>
+      {actionError && (
+        <div className="flex items-center gap-2 p-3 rounded-lg bg-empire-danger/10 border border-empire-danger/20 animate-fade-up mb-4">
+          <p className="text-xs text-empire-danger flex-1">{actionError}</p>
+          <button onClick={() => setActionError(null)} className="text-empire-danger/60 hover:text-empire-danger">
+            <XCircle className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-2">
           <Shield className="w-7 h-7 text-gold-400" />
@@ -300,6 +324,8 @@ export function AdminPage() {
       <ListingReviewQueue
         listings={reviewListings}
         loading={reviewLoading}
+        hasError={reviewError}
+        onRetry={() => { setReviewError(false); fetchListingsForReview('in_review', 20).then(setReviewListings).catch(() => setReviewError(true)).finally(() => setReviewLoading(false)); }}
         reviewAction={reviewAction}
         reviewReasonFor={reviewReasonFor}
         reviewReason={reviewReason}
@@ -311,6 +337,8 @@ export function AdminPage() {
       <ParticipationAnalytics
         stats={participation}
         loading={participationLoading}
+        hasError={participationError}
+        onRetry={() => { setParticipationError(false); setParticipationLoading(true); supabase.rpc('get_admin_participation_stats').then(({ data, error }) => { if (!error && data) setParticipation(data as ParticipationStats); else setParticipationError(true); }).catch(() => setParticipationError(true)).finally(() => setParticipationLoading(false)); }}
       />
 
       {/* Overview Stats */}
@@ -404,6 +432,8 @@ export function AdminPage() {
 function ListingReviewQueue({
   listings,
   loading,
+  hasError,
+  onRetry,
   reviewAction,
   reviewReasonFor,
   reviewReason,
@@ -412,6 +442,8 @@ function ListingReviewQueue({
 }: {
   listings: ListingForReview[];
   loading: boolean;
+  hasError: boolean;
+  onRetry: () => void;
   reviewAction: string | null;
   reviewReasonFor: string | null;
   reviewReason: string;
@@ -427,6 +459,20 @@ function ListingReviewQueue({
         </div>
         <div className="card p-8 flex items-center justify-center">
           <Loader2 className="w-5 h-5 text-gold-400 animate-spin" />
+        </div>
+      </div>
+    );
+  }
+
+  if (hasError) {
+    return (
+      <div className="mb-8">
+        <div className="flex items-center gap-3 mb-4">
+          <Store className="w-5 h-5 text-gold-400" />
+          <h2 className="font-display text-lg font-semibold text-ink-100">Listing Review Queue</h2>
+        </div>
+        <div className="card p-6">
+          <ErrorBanner message="Unable to load listings for review." onRetry={onRetry} />
         </div>
       </div>
     );
@@ -532,9 +578,13 @@ function ListingReviewQueue({
 function ParticipationAnalytics({
   stats,
   loading,
+  hasError,
+  onRetry,
 }: {
   stats: ParticipationStats | null;
   loading: boolean;
+  hasError: boolean;
+  onRetry: () => void;
 }) {
   if (loading) {
     return (
@@ -550,7 +600,7 @@ function ParticipationAnalytics({
     );
   }
 
-  if (!stats) {
+  if (hasError || !stats) {
     return (
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-4">
@@ -558,7 +608,7 @@ function ParticipationAnalytics({
           <h2 className="font-display text-lg font-semibold text-ink-100">Participation Analytics</h2>
         </div>
         <div className="card p-6">
-          <p className="text-sm text-ink-400">Unable to load participation data.</p>
+          <ErrorBanner message="Unable to load participation data." onRetry={onRetry} />
         </div>
       </div>
     );

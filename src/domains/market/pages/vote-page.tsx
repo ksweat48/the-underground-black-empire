@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { Layout } from '@/shared/components/layout';
 import { GlassModal } from '@/shared/components/glass-modal';
+import { ErrorBanner } from '@/shared/components/error-banner';
 import { cn } from '@/shared/cn';
 import { supabase } from '@/shared/supabase-client';
 import { useAuth } from '@/domains/identity/auth-context';
@@ -131,15 +132,18 @@ function InitiativesTab({ userId, sessionVersion }: { userId: string; sessionVer
   const [votingPower, setVotingPower] = useState(1.0);
   const [creditsToUse, setCreditsToUse] = useState(1);
   const [voteError, setVoteError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState(false);
 
   const loadVotes = useCallback(async () => {
     if (!userId) { setLoading(false); return; }
     setLoading(true);
+    setLoadError(false);
     try {
       const data = await fetchVotes(userId);
       setVotes(data);
     } catch {
       setVotes([]);
+      setLoadError(true);
     } finally {
       setLoading(false);
     }
@@ -204,6 +208,12 @@ function InitiativesTab({ userId, sessionVersion }: { userId: string; sessionVer
       <div className="flex items-center justify-center py-20">
         <Loader2 className="w-6 h-6 text-empire-text-muted animate-spin" />
       </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <ErrorBanner message="Unable to load active votes. Please try again." onRetry={loadVotes} />
     );
   }
 
@@ -499,7 +509,7 @@ function LeadershipTab({ userId, sessionVersion }: { userId: string; sessionVers
         }
       }
     } catch {
-      // ignore
+      setLoadError(true);
     } finally {
       setLoading(false);
     }
@@ -566,6 +576,12 @@ function LeadershipTab({ userId, sessionVersion }: { userId: string; sessionVers
       <div className="flex items-center justify-center py-20">
         <Loader2 className="w-6 h-6 text-empire-text-muted animate-spin" />
       </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <ErrorBanner message="Unable to load active votes. Please try again." onRetry={loadVotes} />
     );
   }
 

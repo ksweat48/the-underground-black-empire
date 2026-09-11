@@ -35,6 +35,7 @@ import {
   type ListingCategory,
 } from '@/domains/market/services';
 import { PLACEHOLDER_LISTINGS, PLACEHOLDER_EVENTS, PLACEHOLDER_FEED } from '@/domains/market/placeholder-data';
+import { ErrorBanner } from '@/shared/components/error-banner';
 
 type CategoryFilter = 'feed' | 'market' | ListingCategory;
 type ScopeFilter = 'local' | 'empire';
@@ -69,6 +70,9 @@ export function MarketPage() {
   const [loading, setLoading] = useState(true);
   const [feedLoading, setFeedLoading] = useState(true);
   const [eventsLoading, setEventsLoading] = useState(true);
+  const [listingsError, setListingsError] = useState(false);
+  const [feedError, setFeedError] = useState(false);
+  const [eventsError, setEventsError] = useState(false);
 
   useEffect(() => {
     if (!userId) return;
@@ -78,6 +82,7 @@ export function MarketPage() {
   const loadListings = useCallback(async () => {
     if (!cityInfo.cityId) { setLoading(false); return; }
     setLoading(true);
+    setListingsError(false);
     try {
       let metroIds: string[] = [];
       if (scope === 'local' && cityInfo.metroId) {
@@ -94,6 +99,7 @@ export function MarketPage() {
       setListings(data);
     } catch {
       setListings([]);
+      setListingsError(true);
     } finally {
       setLoading(false);
     }
@@ -102,6 +108,7 @@ export function MarketPage() {
   const loadFeed = useCallback(async () => {
     if (!cityInfo.cityId) { setFeedLoading(false); return; }
     setFeedLoading(true);
+    setFeedError(false);
     try {
       let metroIds: string[] = [];
       if (scope === 'local' && cityInfo.metroId) {
@@ -113,6 +120,7 @@ export function MarketPage() {
       setFeed(data);
     } catch {
       setFeed([]);
+      setFeedError(true);
     } finally {
       setFeedLoading(false);
     }
@@ -121,6 +129,7 @@ export function MarketPage() {
   const loadEvents = useCallback(async () => {
     if (!cityInfo.cityId) { setEventsLoading(false); return; }
     setEventsLoading(true);
+    setEventsError(false);
     try {
       let metroIds: string[] = [];
       if (scope === 'local' && cityInfo.metroId) {
@@ -135,6 +144,7 @@ export function MarketPage() {
       setEvents(data);
     } catch {
       setEvents([]);
+      setEventsError(true);
     } finally {
       setEventsLoading(false);
     }
@@ -297,6 +307,8 @@ export function MarketPage() {
                 <div className="flex justify-center py-4">
                   <Loader2 className="w-4 h-4 text-empire-text-muted animate-spin" />
                 </div>
+              ) : eventsError ? (
+                <ErrorBanner message="Unable to load events." onRetry={loadEvents} />
               ) : displayEvents.length === 0 ? (
                 <EmptyState
                   icon={CalendarDays}
@@ -325,6 +337,8 @@ export function MarketPage() {
                 <div className="flex justify-center py-6">
                   <Loader2 className="w-5 h-5 text-empire-text-muted animate-spin" />
                 </div>
+              ) : feedError ? (
+                <ErrorBanner message="Unable to load feed." onRetry={loadFeed} />
               ) : displayFeed.length === 0 ? (
                 <EmptyState
                   icon={MessageCircle}
@@ -353,6 +367,8 @@ export function MarketPage() {
               <div className="flex justify-center py-8">
                 <Loader2 className="w-5 h-5 text-empire-text-muted animate-spin" />
               </div>
+            ) : eventsError ? (
+              <ErrorBanner message="Unable to load events." onRetry={loadEvents} />
             ) : displayEvents.length === 0 ? (
               <EmptyState
                 icon={CalendarDays}
@@ -384,6 +400,8 @@ export function MarketPage() {
                 <div className="flex justify-center py-8">
                   <Loader2 className="w-5 h-5 text-empire-text-muted animate-spin" />
                 </div>
+              ) : listingsError ? (
+                <ErrorBanner message="Unable to load listings." onRetry={loadListings} />
               ) : featuredListings.length === 0 ? (
                 <EmptyState
                   icon={Store}

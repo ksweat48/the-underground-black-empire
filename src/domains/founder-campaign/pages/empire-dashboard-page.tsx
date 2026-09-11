@@ -23,6 +23,7 @@ import { SwipeableCardContainer } from '@/shared/components/swipeable-card-conta
 import { EmpireFrame } from '@/shared/components/empire-frame';
 import { EmpireEmblem } from '@/shared/components/empire-emblem';
 import { MemberProfileModal } from '@/shared/components/member-profile-modal';
+import { ErrorBanner } from '@/shared/components/error-banner';
 
 import { useAuth } from '@/domains/identity/auth-context';
 import {
@@ -187,6 +188,8 @@ export function EmpireDashboardPage() {
   const [localCouncilNews, setLocalCouncilNews] = useState<CouncilNewsEvent[]>([]);
   const [empireCouncilNews, setEmpireCouncilNews] = useState<CouncilNewsEvent[]>([]);
   const [feedLoading, setFeedLoading] = useState(true);
+  const [feedError, setFeedError] = useState(false);
+  const [dashboardError, setDashboardError] = useState(false);
   const [mobileCollapsed, setMobileCollapsed] = useState(false);
   const [desktopCompact, setDesktopCompact] = useState(false);
   const [mapData, setMapData] = useState<Map<string, StateMapData> | null>(null);
@@ -224,9 +227,10 @@ export function EmpireDashboardPage() {
 
   const loadDashboard = useCallback(() => {
     if (!memberId) { setLoading(false); return; }
+    setDashboardError(false);
     fetchMemberDashboard(memberId)
       .then(setData)
-      .catch(() => setData(null))
+      .catch(() => { setData(null); setDashboardError(true); })
       .finally(() => setLoading(false));
   }, [memberId, sessionVersion]);
 
@@ -304,6 +308,7 @@ export function EmpireDashboardPage() {
         setLocalFeed([]);
         setEmpireCouncilNews([]);
         setLocalCouncilNews([]);
+        setFeedError(true);
       } finally {
         setFeedLoading(false);
       }
@@ -322,6 +327,16 @@ export function EmpireDashboardPage() {
       <Layout fullWidth showTopBar>
         <div className="flex items-center justify-center py-20">
           <div className="w-10 h-10 rounded-full border-2 border-antique-gold/30 border-t-antique-gold animate-spin" />
+        </div>
+      </Layout>
+    );
+  }
+
+  if (dashboardError) {
+    return (
+      <Layout fullWidth showTopBar>
+        <div className="flex items-center justify-center py-20">
+          <ErrorBanner message="Unable to load your dashboard. Please try again." onRetry={loadDashboard} />
         </div>
       </Layout>
     );
@@ -423,7 +438,11 @@ export function EmpireDashboardPage() {
                   onClick={() => setShowCityDrawer(true)}
                 />
               )}
-              <FeedList events={currentFeed} loading={feedLoading} onCardClick={setProfileMemberId} />
+              {feedError ? (
+                <ErrorBanner message="Unable to load activity feed." onRetry={() => { setFeedError(false); setFeedLoading(true); }} />
+              ) : (
+                <FeedList events={currentFeed} loading={feedLoading} onCardClick={setProfileMemberId} />
+              )}
             </div>
           </div>
         </div>
