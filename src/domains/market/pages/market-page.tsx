@@ -217,7 +217,7 @@ export function MarketPage() {
                 className={cn(
                   'flex h-[34px] shrink-0 items-center gap-1.5 rounded-lg border px-3 text-xs font-medium whitespace-nowrap transition-all duration-200',
                   isActive
-                    ? 'bg-ink-900 border-empire-gold/30 text-empire-ivory'
+                    ? 'bg-ink-50 border-empire-gold/30 text-white'
                     : 'frame-utility text-empire-text-muted hover:text-empire-ivory'
                 )}
               >
@@ -248,7 +248,7 @@ export function MarketPage() {
             className={cn(
               'flex h-[34px] w-[38px] shrink-0 items-center justify-center rounded-lg border p-0 transition-all duration-200',
               searchOpen
-                ? 'bg-ink-900 border-empire-gold/30 text-empire-ivory'
+                ? 'bg-ink-50 border-empire-gold/30 text-white'
                 : 'frame-utility text-empire-text-muted hover:text-empire-ivory'
             )}
             aria-label={searchOpen ? 'Close search' : 'Open search'}
