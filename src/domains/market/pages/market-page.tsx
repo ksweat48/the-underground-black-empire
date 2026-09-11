@@ -554,9 +554,9 @@ function getSafeHttpUrl(value: string | null | undefined): string | null {
 
 function getPhoneHref(value: string | null | undefined): string | null {
   if (!value?.trim()) return null;
-  const match = value.match(/(?:\\+?\\d[\\d\\s().-]{6,}\\d)/);
+  const match = value.match(/(?:\+?\d[\d\s().-]{6,}\d)/);
   if (!match) return null;
-  const digits = match[0].replace(/[^\\d+]/g, '');
+  const digits = match[0].replace(/[^\d+]/g, '');
   return digits.length >= 7 ? `tel:${digits}` : null;
 }
 
