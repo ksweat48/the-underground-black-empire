@@ -28,6 +28,7 @@ import {
   fetchEvents,
   fetchMemberCityInfo,
   fetchCityIdsInMetro,
+  toggleListingSave,
   type MarketListing,
   type CommunityFeedItem,
   type MarketEvent,
@@ -88,6 +89,7 @@ export function MarketPage() {
         category,
         search,
         limit: 50,
+        currentUserId: userId,
       });
       setListings(data);
     } catch {
@@ -144,6 +146,30 @@ export function MarketPage() {
 
   const handleSearch = () => {
     setSearch(searchInput.trim());
+  };
+
+  const handleToggleSave = async (listingId: string, currentlySaved: boolean) => {
+    if (!userId) return;
+    // Optimistic update
+    setListings((prev) =>
+      prev.map((l) =>
+        l.id === listingId
+          ? { ...l, is_saved: !currentlySaved, save_count: Math.max(0, l.save_count + (currentlySaved ? -1 : 1)) }
+          : l
+      )
+    );
+    try {
+      await toggleListingSave(listingId, userId, currentlySaved);
+    } catch {
+      // Revert on error
+      setListings((prev) =>
+        prev.map((l) =>
+          l.id === listingId
+            ? { ...l, is_saved: currentlySaved, save_count: Math.max(0, l.save_count + (currentlySaved ? 1 : -1)) }
+            : l
+        )
+      );
+    }
   };
 
   useEffect(() => {
@@ -369,7 +395,7 @@ export function MarketPage() {
               ) : (
                 <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1 -mx-1 px-1">
                   {featuredListings.map((listing) => (
-                    <FeaturedListingCard key={listing.id} listing={listing} onClick={() => navigate(`/market/listing/${listing.id}`)} />
+                    <FeaturedListingCard key={listing.id} listing={listing} onClick={() => navigate(`/market/listing/${listing.id}`)} onToggleSave={handleToggleSave} />
                   ))}
                 </div>
               )}
@@ -384,7 +410,7 @@ export function MarketPage() {
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {filteredListings.slice(5).map((listing) => (
-                    <ListingCard key={listing.id} listing={listing} onClick={() => navigate(`/market/listing/${listing.id}`)} />
+                    <ListingCard key={listing.id} listing={listing} onClick={() => navigate(`/market/listing/${listing.id}`)} onToggleSave={handleToggleSave} />
                   ))}
                 </div>
               </section>
@@ -398,7 +424,7 @@ export function MarketPage() {
 
 // ==================== Featured Listing Card (horizontal) ====================
 
-function FeaturedListingCard({ listing, onClick }: { listing: MarketListing; onClick: () => void }) {
+function FeaturedListingCard({ listing, onClick, onToggleSave }: { listing: MarketListing; onClick: () => void; onToggleSave?: (listingId: string, currentlySaved: boolean) => void }) {
   const actions = getListingActions(listing);
 
   return (
@@ -439,7 +465,7 @@ function FeaturedListingCard({ listing, onClick }: { listing: MarketListing; onC
 
 // ==================== Listing Card (grid) ====================
 
-function ListingCard({ listing, onClick }: { listing: MarketListing; onClick: () => void }) {
+function ListingCard({ listing, onClick, onToggleSave }: { listing: MarketListing; onClick: () => void; onToggleSave?: (listingId: string, currentlySaved: boolean) => void }) {
   const actions = getListingActions(listing);
 
   return (
@@ -497,6 +523,14 @@ function ListingCard({ listing, onClick }: { listing: MarketListing; onClick: ()
         <div className="flex items-center gap-3 pt-1">
           {listing.city_name && <span className="flex items-center gap-1 text-[10px] text-empire-text-muted"><MapPin className="w-2.5 h-2.5" />{listing.city_name}</span>}
           <span className="flex items-center gap-1 text-[10px] text-empire-text-muted"><Heart className="w-2.5 h-2.5" />{listing.like_count}</span>
+          <button
+            onClick={(e) => { e.stopPropagation(); onToggleSave?.(listing.id, listing.is_saved ?? false); }}
+            className={cn('flex items-center gap-1 text-[10px] transition-colors', listing.is_saved ? 'text-empire-gold' : 'text-empire-text-muted hover:text-empire-ivory')}
+            aria-label={listing.is_saved ? 'Remove from favorites' : 'Add to favorites'}
+          >
+            <Heart className={cn('w-2.5 h-2.5 transition-all', listing.is_saved && 'fill-current')} />
+            {listing.save_count}
+          </button>
           <span className="flex items-center gap-1 text-[10px] text-empire-text-muted"><MessageCircle className="w-2.5 h-2.5" />{listing.comment_count}</span>
         </div>
         <ContactActions actions={actions} />

@@ -47,8 +47,9 @@ export async function fetchListings(params: {
   category?: ListingCategory | 'all' | 'market' | 'feed';
   search?: string;
   limit?: number;
+  currentUserId?: string;
 }): Promise<MarketListing[]> {
-  const { cityId, metroCityIds, category, search, limit = 50 } = params;
+  const { cityId, metroCityIds, category, search, limit = 50, currentUserId } = params;
 
   let query = supabase
     .from('market_listings')
@@ -78,6 +79,31 @@ export async function fetchListings(params: {
   const { data, error } = await query;
   if (error) throw error;
 
+  const listingIds = (data ?? []).map((r) => r.id);
+
+  // Fetch save counts and current user's saved listings in parallel
+  let saveCountMap = new Map<string, number>();
+  let savedSet = new Set<string>();
+  if (listingIds.length > 0) {
+    const [saveCountsRes, savedRes] = await Promise.all([
+      supabase.from('listing_saves').select('listing_id').in('listing_id', listingIds),
+      currentUserId
+        ? supabase.from('listing_saves').select('listing_id').eq('member_id', currentUserId).in('listing_id', listingIds)
+        : Promise.resolve({ data: null, error: null }),
+    ]);
+    if (saveCountsRes.data) {
+      for (const row of saveCountsRes.data) {
+        const lid = row.listing_id as string;
+        saveCountMap.set(lid, (saveCountMap.get(lid) ?? 0) + 1);
+      }
+    }
+    if (savedRes.data) {
+      for (const row of savedRes.data) {
+        savedSet.add(row.listing_id as string);
+      }
+    }
+  }
+
   return (data ?? []).map((row) => {
     const cityData = (Array.isArray(row.city) ? row.city[0] : row.city) as { name: string } | null;
     const rankingData = (Array.isArray(row.ranking) ? row.ranking[0] : row.ranking) as { score: number } | null;
@@ -96,12 +122,14 @@ export async function fetchListings(params: {
       status: row.status,
       is_verified: row.is_verified,
       like_count: row.like_count,
+      save_count: saveCountMap.get(row.id) ?? 0,
       comment_count: row.comment_count,
       check_in_count: row.check_in_count,
       created_at: row.created_at,
       updated_at: row.updated_at,
       rank_score: rankingData?.score ?? 0,
       city_name: cityData?.name ?? undefined,
+      is_saved: savedSet.has(row.id),
     } as MarketListing;
   }).sort((a, b) => (b.rank_score ?? 0) - (a.rank_score ?? 0));
 }
@@ -150,6 +178,7 @@ export async function fetchListingById(id: string, currentUserId?: string): Prom
     status: data.status,
     is_verified: data.is_verified,
     like_count: data.like_count,
+    save_count: 0,
     comment_count: data.comment_count,
     check_in_count: data.check_in_count,
     created_at: data.created_at,
@@ -191,6 +220,7 @@ export async function fetchMyListings(userId: string): Promise<MarketListing[]> 
       status: row.status,
       is_verified: row.is_verified,
       like_count: row.like_count,
+      save_count: 0,
       comment_count: row.comment_count,
       check_in_count: row.check_in_count,
       created_at: row.created_at,
@@ -246,6 +276,7 @@ export async function fetchSavedListings(userId: string): Promise<MarketListing[
         status: listing.status,
         is_verified: listing.is_verified,
         like_count: listing.like_count,
+        save_count: 0,
         comment_count: listing.comment_count,
         check_in_count: listing.check_in_count,
         created_at: listing.created_at,

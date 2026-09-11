@@ -18,6 +18,7 @@ export interface MarketListing {
   status: ListingStatus;
   is_verified: boolean;
   like_count: number;
+  save_count: number;
   comment_count: number;
   check_in_count: number;
   created_at: string;
@@ -143,6 +144,7 @@ export interface ListingForReview {
   status: string;
   is_verified: boolean;
   like_count: number;
+  save_count: number;
   comment_count: number;
   created_at: string;
   owner_email: string;

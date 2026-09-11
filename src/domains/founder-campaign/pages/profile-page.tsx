@@ -663,12 +663,12 @@ export function ProfilePage() {
         <section className="glass-card p-4 animate-fade-up" style={{ animationDelay: '300ms' }}>
           <div className="flex items-center gap-2 mb-3">
             <Heart className="w-4 h-4 text-ink-400" />
-            <h2 className="font-display text-sm font-semibold text-ink-100">Saved Listings</h2>
+            <h2 className="font-display text-sm font-semibold text-ink-100">Favorites</h2>
           </div>
           {savedListings.length === 0 ? (
             <div className="text-center py-4">
-              <p className="text-sm text-ink-400">No saved listings yet.</p>
-              <p className="text-xs text-ink-500 mt-1">Browse the Market and save listings you like.</p>
+              <p className="text-sm text-ink-400">No favorites yet.</p>
+              <p className="text-xs text-ink-500 mt-1">Browse the Market and tap the heart to save listings.</p>
             </div>
           ) : (
             <div className="space-y-2">
