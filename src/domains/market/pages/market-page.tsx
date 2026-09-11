@@ -16,6 +16,8 @@ import {
   Loader2,
   Image as ImageIcon,
   ShieldAlert,
+  ExternalLink,
+  Phone,
 } from 'lucide-react';
 import { Layout } from '@/shared/components/layout';
 import { cn } from '@/shared/cn';
@@ -392,10 +394,17 @@ export function MarketPage() {
 // ==================== Featured Listing Card (horizontal) ====================
 
 function FeaturedListingCard({ listing, onClick }: { listing: MarketListing; onClick: () => void }) {
+  const action = getListingAction(listing);
+
   return (
-    <button
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onClick}
-      className="frame-intel shrink-0 w-[200px] p-0 overflow-hidden text-left transition-all duration-200 hover:border-empire-gold/25 group active:scale-[0.98]"
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') onClick();
+      }}
+      className="frame-intel shrink-0 w-[200px] p-0 overflow-hidden text-left transition-all duration-200 hover:border-empire-gold/25 group active:scale-[0.98] cursor-pointer"
     >
       <div className="relative h-24 overflow-hidden bg-ink-800/10">
         {listing.image_url ? (
@@ -405,50 +414,38 @@ function FeaturedListingCard({ listing, onClick }: { listing: MarketListing; onC
             <ImageIcon className="w-7 h-7 text-empire-text-muted/30" />
           </div>
         )}
-        {listing.is_verified && (
-          <div className="absolute top-1.5 right-1.5">
-            <BadgeCheck className="w-4 h-4 text-empire-success" />
-          </div>
-        )}
+        {listing.is_verified && <div className="absolute top-1.5 right-1.5"><BadgeCheck className="w-4 h-4 text-empire-success" /></div>}
         {!listing.is_verified && listing.status === 'in_review' && (
           <div className="absolute top-1.5 right-1.5 flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-500/90 backdrop-blur-sm border border-amber-400/20">
-            <ShieldAlert className="w-3 h-3 text-amber-900" />
-            <span className="text-[8px] font-semibold text-amber-900">In Review</span>
+            <ShieldAlert className="w-3 h-3 text-amber-900" /><span className="text-[8px] font-semibold text-amber-900">In Review</span>
           </div>
         )}
-        <div className="absolute bottom-1.5 left-1.5">
-          <span className="badge-gold text-[9px] py-0.5 px-1.5 capitalize">
-            {listing.category}
-          </span>
-        </div>
+        <div className="absolute bottom-1.5 left-1.5"><span className="badge-gold text-[9px] py-0.5 px-1.5 capitalize">{listing.category}</span></div>
       </div>
-      <div className="p-2.5 space-y-1">
-        <h3 className="font-display text-xs font-semibold text-empire-ivory leading-tight line-clamp-1">
-          {listing.name}
-        </h3>
-        {listing.price_display && (
-          <span className="text-xs font-semibold text-empire-gold">
-            {listing.price_display}
-          </span>
-        )}
-        {listing.city_name && (
-          <span className="flex items-center gap-1 text-[10px] text-empire-text-muted">
-            <MapPin className="w-2.5 h-2.5" />
-            {listing.city_name}
-          </span>
-        )}
+      <div className="p-2.5 space-y-1.5">
+        <h3 className="font-display text-xs font-semibold text-empire-ivory leading-tight line-clamp-1">{listing.name}</h3>
+        {listing.price_display && <span className="text-xs font-semibold text-empire-gold">{listing.price_display}</span>}
+        {listing.city_name && <span className="flex items-center gap-1 text-[10px] text-empire-text-muted"><MapPin className="w-2.5 h-2.5" />{listing.city_name}</span>}
+        {action && <ContactAction action={action} compact />}
       </div>
-    </button>
+    </div>
   );
 }
 
 // ==================== Listing Card (grid) ====================
 
 function ListingCard({ listing, onClick }: { listing: MarketListing; onClick: () => void }) {
+  const action = getListingAction(listing);
+
   return (
-    <button
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onClick}
-      className="frame-intel p-0 overflow-hidden text-left transition-all duration-200 hover:border-empire-gold/25 group active:scale-[0.99]"
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') onClick();
+      }}
+      className="frame-intel p-0 overflow-hidden text-left transition-all duration-200 hover:border-empire-gold/25 group active:scale-[0.99] cursor-pointer"
     >
       {/* Image or placeholder */}
       <div className="relative h-32 overflow-hidden bg-ink-800/10">
@@ -493,23 +490,13 @@ function ListingCard({ listing, onClick }: { listing: MarketListing; onClick: ()
           {listing.description}
         </p>
         <div className="flex items-center gap-3 pt-1">
-          {listing.city_name && (
-            <span className="flex items-center gap-1 text-[10px] text-empire-text-muted">
-              <MapPin className="w-2.5 h-2.5" />
-              {listing.city_name}
-            </span>
-          )}
-          <span className="flex items-center gap-1 text-[10px] text-empire-text-muted">
-            <Heart className="w-2.5 h-2.5" />
-            {listing.like_count}
-          </span>
-          <span className="flex items-center gap-1 text-[10px] text-empire-text-muted">
-            <MessageCircle className="w-2.5 h-2.5" />
-            {listing.comment_count}
-          </span>
+          {listing.city_name && <span className="flex items-center gap-1 text-[10px] text-empire-text-muted"><MapPin className="w-2.5 h-2.5" />{listing.city_name}</span>}
+          <span className="flex items-center gap-1 text-[10px] text-empire-text-muted"><Heart className="w-2.5 h-2.5" />{listing.like_count}</span>
+          <span className="flex items-center gap-1 text-[10px] text-empire-text-muted"><MessageCircle className="w-2.5 h-2.5" />{listing.comment_count}</span>
         </div>
+        {action && <ContactAction action={action} />}
       </div>
-    </button>
+    </div>
   );
 }
 
@@ -519,11 +506,17 @@ function EventCard({ event, onClick }: { event: MarketEvent; onClick: () => void
   const eventDate = new Date(event.event_date);
   const day = eventDate.toLocaleDateString('en-US', { day: 'numeric' });
   const month = eventDate.toLocaleDateString('en-US', { month: 'short' });
+  const action = getEventAction(event);
 
   return (
-    <button
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onClick}
-      className="frame-intel shrink-0 w-[200px] p-2.5 flex flex-col gap-2 text-left transition-all duration-200 hover:border-empire-gold/25 group active:scale-[0.98]"
+      onKeyDown={(keyboardEvent) => {
+        if (keyboardEvent.key === 'Enter' || keyboardEvent.key === ' ') onClick();
+      }}
+      className="frame-intel shrink-0 w-[200px] p-2.5 flex flex-col gap-2 text-left transition-all duration-200 hover:border-empire-gold/25 group active:scale-[0.98] cursor-pointer"
     >
       <div className="flex items-center gap-2">
         <div className="flex flex-col items-center justify-center shrink-0 w-10 h-10 rounded-lg bg-empire-gold/8 border border-empire-gold/15">
@@ -535,10 +528,68 @@ function EventCard({ event, onClick }: { event: MarketEvent; onClick: () => void
       <p className="text-[10px] text-empire-text-muted line-clamp-1">
         {event.event_time && `${event.event_time} · `}{event.location_text || 'Location TBA'}
       </p>
-      {event.listing_name && (
-        <p className="text-[10px] text-empire-text-muted/70 line-clamp-1">{event.listing_name}</p>
+      {event.listing_name && <p className="text-[10px] text-empire-text-muted/70 line-clamp-1">{event.listing_name}</p>}
+      {action && <ContactAction action={action} compact />}
+    </div>
+  );
+}
+
+type ContactActionData = {
+  label: 'View Website' | 'Call Now';
+  href: string;
+  isExternal: boolean;
+};
+
+function getListingAction(listing: MarketListing): ContactActionData | null {
+  const website = getSafeHttpUrl(listing.external_url);
+  if (website) return { label: 'View Website', href: website, isExternal: true };
+
+  const phone = getPhoneHref(listing.contact_info);
+  if (phone) return { label: 'Call Now', href: phone, isExternal: false };
+
+  return null;
+}
+
+function getEventAction(event: MarketEvent): ContactActionData | null {
+  const website = getSafeHttpUrl(event.external_url);
+  return website ? { label: 'View Website', href: website, isExternal: true } : null;
+}
+
+function getSafeHttpUrl(value: string | null | undefined): string | null {
+  if (!value?.trim()) return null;
+  try {
+    const url = new URL(value.trim());
+    return url.protocol === 'http:' || url.protocol === 'https:' ? url.toString() : null;
+  } catch {
+    return null;
+  }
+}
+
+function getPhoneHref(value: string | null | undefined): string | null {
+  if (!value?.trim()) return null;
+  const match = value.match(/(?:\\+?\\d[\\d\\s().-]{6,}\\d)/);
+  if (!match) return null;
+  const digits = match[0].replace(/[^\\d+]/g, '');
+  return digits.length >= 7 ? `tel:${digits}` : null;
+}
+
+function ContactAction({ action, compact = false }: { action: ContactActionData; compact?: boolean }) {
+  const Icon = action.isExternal ? ExternalLink : Phone;
+
+  return (
+    <a
+      href={action.href}
+      target={action.isExternal ? '_blank' : undefined}
+      rel={action.isExternal ? 'noopener noreferrer' : undefined}
+      onClick={(event) => event.stopPropagation()}
+      className={cn(
+        'inline-flex items-center justify-center gap-1.5 rounded-lg border border-empire-gold/20 bg-empire-gold/8 text-empire-gold font-medium transition-colors hover:bg-empire-gold/15 hover:border-empire-gold/35',
+        compact ? 'w-full px-2 py-1.5 text-[10px]' : 'w-full mt-2 px-3 py-2 text-xs',
       )}
-    </button>
+    >
+      <Icon className={compact ? 'w-3 h-3' : 'w-3.5 h-3.5'} />
+      {action.label}
+    </a>
   );
 }
 
