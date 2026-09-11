@@ -55,7 +55,7 @@ export async function fetchListings(params: {
     .from('market_listings')
     .select(`
       *,
-      city:city_id ( name ),
+      city:city_id ( name, state ),
       ranking:market_ranking_cache!left ( score )
     `)
     .in('status', ['approved', 'in_review'])
@@ -96,7 +96,7 @@ export async function fetchListings(params: {
   }
 
   return (data ?? []).map((row) => {
-    const cityData = (Array.isArray(row.city) ? row.city[0] : row.city) as { name: string } | null;
+    const cityData = (Array.isArray(row.city) ? row.city[0] : row.city) as { name: string; state: string } | null;
     const rankingData = (Array.isArray(row.ranking) ? row.ranking[0] : row.ranking) as { score: number } | null;
     return {
       id: row.id,
@@ -120,6 +120,7 @@ export async function fetchListings(params: {
       updated_at: row.updated_at,
       rank_score: rankingData?.score ?? 0,
       city_name: cityData?.name ?? undefined,
+      city_state: cityData?.state ?? undefined,
       is_saved: savedSet.has(row.id),
     } as MarketListing;
   }).sort((a, b) => (b.rank_score ?? 0) - (a.rank_score ?? 0));
@@ -130,7 +131,7 @@ export async function fetchListingById(id: string, currentUserId?: string): Prom
     .from('market_listings')
     .select(`
       *,
-      city:city_id ( name ),
+      city:city_id ( name, state ),
       ranking:market_ranking_cache!left ( score )
     `)
     .eq('id', id)
@@ -139,7 +140,7 @@ export async function fetchListingById(id: string, currentUserId?: string): Prom
   if (error) throw error;
   if (!data) return null;
 
-  const cityData = (Array.isArray(data.city) ? data.city[0] : data.city) as { name: string } | null;
+  const cityData = (Array.isArray(data.city) ? data.city[0] : data.city) as { name: string; state: string } | null;
   const rankingData = (Array.isArray(data.ranking) ? data.ranking[0] : data.ranking) as { score: number } | null;
 
   let is_saved = false;
@@ -176,6 +177,7 @@ export async function fetchListingById(id: string, currentUserId?: string): Prom
     updated_at: data.updated_at,
     rank_score: rankingData?.score ?? 0,
     city_name: cityData?.name ?? undefined,
+    city_state: cityData?.state ?? undefined,
     is_saved,
     is_liked,
   } as MarketListing;
@@ -186,7 +188,7 @@ export async function fetchMyListings(userId: string): Promise<MarketListing[]> 
     .from('market_listings')
     .select(`
       *,
-      city:city_id ( name )
+      city:city_id ( name, state )
     `)
     .eq('owner_id', userId)
     .neq('status', 'removed')
@@ -195,7 +197,7 @@ export async function fetchMyListings(userId: string): Promise<MarketListing[]> 
   if (error) throw error;
 
   return (data ?? []).map((row) => {
-    const cityData = (Array.isArray(row.city) ? row.city[0] : row.city) as { name: string } | null;
+    const cityData = (Array.isArray(row.city) ? row.city[0] : row.city) as { name: string; state: string } | null;
     return {
       id: row.id,
       owner_id: row.owner_id,
@@ -217,6 +219,7 @@ export async function fetchMyListings(userId: string): Promise<MarketListing[]> 
       created_at: row.created_at,
       updated_at: row.updated_at,
       city_name: cityData?.name ?? undefined,
+      city_state: cityData?.state ?? undefined,
     } as MarketListing;
   });
 }
@@ -239,7 +242,7 @@ export async function fetchSavedListings(userId: string): Promise<MarketListing[
     .select(`
       listing:listing_id (
         *,
-        city:city_id ( name )
+        city:city_id ( name, state )
       )
     `)
     .eq('member_id', userId)
@@ -251,7 +254,7 @@ export async function fetchSavedListings(userId: string): Promise<MarketListing[
     .map((row) => {
       const listing = (Array.isArray(row.listing) ? row.listing[0] : row.listing) as Record<string, unknown> | null;
       if (!listing) return null;
-      const cityData = (Array.isArray(listing.city) ? listing.city[0] : listing.city) as { name: string } | null;
+      const cityData = (Array.isArray(listing.city) ? listing.city[0] : listing.city) as { name: string; state: string } | null;
       return {
         id: listing.id,
         owner_id: listing.owner_id,
@@ -273,6 +276,7 @@ export async function fetchSavedListings(userId: string): Promise<MarketListing[
         created_at: listing.created_at,
         updated_at: listing.updated_at,
         city_name: cityData?.name ?? undefined,
+        city_state: cityData?.state ?? undefined,
         is_saved: true,
       } as MarketListing;
     })

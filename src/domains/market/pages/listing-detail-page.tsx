@@ -188,7 +188,7 @@ export function ListingDetailPage() {
                   {listing.city_name && (
                     <span className="flex items-center gap-1 text-xs text-empire-text-muted">
                       <MapPin className="w-3 h-3" />
-                      {listing.city_name}
+                      {listing.city_state ? `${listing.city_name}, ${listing.city_state}` : listing.city_name}
                     </span>
                   )}
                 </div>

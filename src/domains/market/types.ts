@@ -25,6 +25,7 @@ export interface MarketListing {
   updated_at: string;
   rank_score?: number;
   city_name?: string;
+  city_state?: string;
   is_saved?: boolean;
   is_liked?: boolean;
   review_reason?: string;

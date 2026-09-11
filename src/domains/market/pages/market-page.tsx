@@ -456,7 +456,7 @@ function FeaturedListingCard({ listing, onClick, onToggleSave }: { listing: Mark
       <div className="relative p-2.5 space-y-1.5">
         <h3 className="font-display text-xs font-semibold text-empire-ivory leading-tight line-clamp-1 pr-9">{listing.name}</h3>
         {listing.price_display && <span className="text-xs font-semibold text-empire-gold">{listing.price_display}</span>}
-        {listing.city_name && <span className="flex items-center gap-1 text-[10px] text-empire-text-muted"><MapPin className="w-2.5 h-2.5" />{listing.city_name}</span>}
+        {listing.city_name && <span className="flex items-center gap-1 text-[10px] text-empire-text-muted"><MapPin className="w-2.5 h-2.5" />{listing.city_state ? `${listing.city_name}, ${listing.city_state}` : listing.city_name}</span>}
         <ContactActions actions={actions} />
         <FavoriteButton listing={listing} onToggleSave={onToggleSave} />
       </div>
@@ -522,7 +522,7 @@ function ListingCard({ listing, onClick, onToggleSave }: { listing: MarketListin
           {listing.description}
         </p>
         <div className="flex items-center gap-3 pt-1">
-          {listing.city_name && <span className="flex items-center gap-1 text-[10px] text-empire-text-muted"><MapPin className="w-2.5 h-2.5" />{listing.city_name}</span>}
+          {listing.city_name && <span className="flex items-center gap-1 text-[10px] text-empire-text-muted"><MapPin className="w-2.5 h-2.5" />{listing.city_state ? `${listing.city_name}, ${listing.city_state}` : listing.city_name}</span>}
           <span className="flex items-center gap-1 text-[10px] text-empire-text-muted"><Heart className="w-2.5 h-2.5" />{listing.like_count}</span>
           <span className="flex items-center gap-1 text-[10px] text-empire-text-muted"><MessageCircle className="w-2.5 h-2.5" />{listing.comment_count}</span>
         </div>

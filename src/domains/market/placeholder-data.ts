@@ -30,6 +30,8 @@ export const PLACEHOLDER_LISTINGS: MarketListing[] = [
     updated_at: hoursAgo(12),
     rank_score: 95,
     city_name: 'Atlanta',
+    city_state: 'GA',
+    city_state: 'GA',
   },
   {
     id: 'ph-listing-2',
@@ -52,6 +54,7 @@ export const PLACEHOLDER_LISTINGS: MarketListing[] = [
     updated_at: hoursAgo(6),
     rank_score: 92,
     city_name: 'Atlanta',
+    city_state: 'GA',
   },
   {
     id: 'ph-listing-3',
@@ -74,6 +77,7 @@ export const PLACEHOLDER_LISTINGS: MarketListing[] = [
     updated_at: hoursAgo(24),
     rank_score: 88,
     city_name: 'Atlanta',
+    city_state: 'GA',
   },
   {
     id: 'ph-listing-4',
@@ -96,6 +100,7 @@ export const PLACEHOLDER_LISTINGS: MarketListing[] = [
     updated_at: hoursAgo(18),
     rank_score: 81,
     city_name: 'Atlanta',
+    city_state: 'GA',
   },
   {
     id: 'ph-listing-5',
@@ -118,6 +123,7 @@ export const PLACEHOLDER_LISTINGS: MarketListing[] = [
     updated_at: hoursAgo(8),
     rank_score: 79,
     city_name: 'Atlanta',
+    city_state: 'GA',
   },
   {
     id: 'ph-listing-6',
@@ -140,6 +146,7 @@ export const PLACEHOLDER_LISTINGS: MarketListing[] = [
     updated_at: hoursAgo(4),
     rank_score: 74,
     city_name: 'Atlanta',
+    city_state: 'GA',
   },
   {
     id: 'ph-listing-7',
@@ -162,6 +169,7 @@ export const PLACEHOLDER_LISTINGS: MarketListing[] = [
     updated_at: hoursAgo(2),
     rank_score: 71,
     city_name: 'Atlanta',
+    city_state: 'GA',
   },
   {
     id: 'ph-listing-8',
@@ -184,6 +192,7 @@ export const PLACEHOLDER_LISTINGS: MarketListing[] = [
     updated_at: hoursAgo(1),
     rank_score: 68,
     city_name: 'Atlanta',
+    city_state: 'GA',
   },
 ];
 
