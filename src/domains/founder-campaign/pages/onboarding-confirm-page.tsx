@@ -43,7 +43,6 @@ export function OnboardingConfirmPage() {
 
   const tier = getCityTier(city.population_count);
   const tierLabel = PROGRESSION_RULES.city[tier].label;
-  const nextFounderNumber = city.population_count + 1;
   const isFirstFounder = city.population_count === 0;
   const progress = getCityTierProgress(city.population_count);
 
@@ -124,7 +123,7 @@ export function OnboardingConfirmPage() {
               <div className="h-px bg-stone-200" />
               <div className="flex items-center justify-between text-sm">
                 <span className="text-stone-500">Your Member Number</span>
-                <span className="text-gold-300 font-semibold">#{nextFounderNumber}</span>
+                <span className="text-gold-300 font-semibold">Next available</span>
               </div>
               <div>
                 <div className="flex items-center justify-between mb-1.5">

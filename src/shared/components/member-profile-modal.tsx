@@ -107,16 +107,17 @@ function ProfileContent({ profile }: { profile: PublicMemberProfile }) {
             {displayName}
           </h4>
           <div className="flex items-center gap-2 mt-1 flex-wrap">
-            {isFounder ? (
-              <span className="inline-flex items-center gap-1.5 rounded-md bg-plum-50 px-2 py-0.5 text-[10px] font-semibold text-plum-700">
-                Founder #{profile.founder_number}
-                <span className="text-plum-400 font-normal">· First 10,000 users</span>
-              </span>
-            ) : profile.member_number !== null ? (
+            {profile.member_number !== null && (
               <span className="inline-flex items-center rounded-md bg-gray-100 px-2 py-0.5 text-[10px] font-semibold text-gray-600">
                 Member #{profile.member_number}
               </span>
-            ) : null}
+            )}
+            {isFounder && (
+              <span className="inline-flex items-center gap-1.5 rounded-md bg-plum-50 px-2 py-0.5 text-[10px] font-semibold text-plum-700">
+                Founder
+                <span className="text-plum-400 font-normal">· First 10,000 users</span>
+              </span>
+            )}
           </div>
         </div>
       </div>

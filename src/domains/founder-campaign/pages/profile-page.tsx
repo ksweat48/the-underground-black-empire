@@ -766,7 +766,7 @@ export function ProfilePage() {
                     <div className="flex items-center gap-2">
                       <span className="font-display font-bold text-emerald-300 text-lg">#{myRank + 1}</span>
                       <div>
-                        <p className="text-sm font-medium text-ink-100">{myEntry.display_name || `Founder #${myEntry.founder_number ?? '?'}`}</p>
+                        <p className="text-sm font-medium text-ink-100">{myEntry.display_name || `Member #${myEntry.member_number ?? myEntry.founder_number ?? '?'}`}</p>
                         <p className="text-xs text-ink-400">{myEntry.city_name ?? 'No city'}</p>
                       </div>
                     </div>
@@ -797,7 +797,7 @@ export function ProfilePage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-ink-100 truncate">
-                        {entry.display_name || `Member #${entry.member_number ?? '?'}`}
+                        {entry.display_name || `Member #${entry.member_number ?? entry.founder_number ?? '?'}`}
                       </p>
                       <p className="text-xs text-ink-500 truncate">{entry.city_name ?? 'No city'}</p>
                     </div>
