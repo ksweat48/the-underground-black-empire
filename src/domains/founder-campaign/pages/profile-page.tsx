@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { Layout } from '@/shared/components/layout';
 import { GlassModal } from '@/shared/components/glass-modal';
+import { Avatar } from '@/shared/components/avatar';
 import { EmpireEmblem } from '@/shared/components/empire-emblem';
 import { ProfilePhotoUploader } from '@/shared/components/profile-photo-uploader';
 import { useAuth } from '@/domains/identity/auth-context';
@@ -360,21 +361,12 @@ export function ProfilePage() {
                 className="w-16 h-16 rounded-full flex items-center justify-center transition-transform group-hover:scale-105 overflow-hidden"
                 style={profileCardConfig.avatarStyle}
               >
-                {member.avatar_url ? (
-                  <img
-                    src={member.avatar_url}
-                    alt=""
-                    className="w-full h-full object-cover"
-                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                  />
-                ) : (
-                  <span
-                    className="font-display font-bold text-xl"
-                    style={profileCardConfig.initialsStyle}
-                  >
-                    {initials}
-                  </span>
-                )}
+                <Avatar
+                  src={member.avatar_url}
+                  initials={initials}
+                  initialsClassName="font-display font-bold text-xl"
+                  initialsStyle={profileCardConfig.initialsStyle}
+                />
               </div>
               <div className={cn('absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-2 flex items-center justify-center shadow-md', profileCardConfig.badgeBg, profileCardConfig.badgeBorder)}>
                 <Award className={cn('w-3.5 h-3.5', profileCardConfig.badgeIcon)} />
@@ -846,23 +838,12 @@ export function ProfilePage() {
                 className="w-16 h-16 rounded-full overflow-hidden border-2 border-white/25 shadow-lg shadow-black/40 flex items-center justify-center transition-transform group-hover:scale-105"
                 style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05), 0 8px 24px rgba(0,0,0,0.4)' }}
               >
-                {member.avatar_url ? (
-                  <img
-                    src={member.avatar_url}
-                    alt=""
-                    className="w-full h-full object-cover"
-                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-empire-black-750 to-empire-black-900 flex items-center justify-center">
-                    <span
-                      className="font-display font-bold text-xl text-white"
-                      style={{ textShadow: '0 1px 3px rgba(0,0,0,0.65)' }}
-                    >
-                      {initials}
-                    </span>
-                  </div>
-                )}
+                <Avatar
+                  src={member.avatar_url}
+                  initials={initials}
+                  initialsClassName="bg-gradient-to-br from-empire-black-750 to-empire-black-900 font-display font-bold text-xl text-white"
+                  initialsStyle={{ textShadow: '0 1px 3px rgba(0,0,0,0.65)' }}
+                />
               </div>
               <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
                 <Camera className="w-5 h-5 text-white" />

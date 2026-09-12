@@ -987,10 +987,12 @@ function CouncilCard({ member }: { member: MetroCouncilMember }) {
 function Avatar({ member }: { member: { avatar_url: string | null; display_name: string | null; email: string } }) {
   const name = member.display_name ?? member.email.split('@')[0];
   const initials = getInitials(name);
+  const [imgError, setImgError] = useState(false);
+  useEffect(() => { setImgError(false); }, [member.avatar_url]);
   return (
     <div className="shrink-0 w-10 h-10 rounded-full overflow-hidden flex items-center justify-center bg-ink-800/20 border border-ink-700/20">
-      {member.avatar_url ? (
-        <img src={member.avatar_url} alt="" className="w-full h-full object-cover" />
+      {member.avatar_url && !imgError ? (
+        <img src={member.avatar_url} alt="" className="w-full h-full object-cover" onError={() => setImgError(true)} />
       ) : (
         <span className="font-display font-bold text-sm text-empire-text-secondary">{initials}</span>
       )}
