@@ -413,7 +413,7 @@ export function MarketPage() {
               ) : (
                 <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1 -mx-1 px-1">
                   {featuredListings.map((listing) => (
-                    <FeaturedListingCard key={listing.id} listing={listing} onClick={() => navigate(`/market/listing/${listing.id}`)} onToggleSave={handleToggleSave} />
+                    <FeaturedListingCard key={listing.id} listing={listing} onClick={() => navigate(`/market/listing/${listing.id}`)} />
                   ))}
                 </div>
               )}
@@ -442,9 +442,7 @@ export function MarketPage() {
 
 // ==================== Featured Listing Card (horizontal) ====================
 
-function FeaturedListingCard({ listing, onClick, onToggleSave }: { listing: MarketListing; onClick: () => void; onToggleSave?: (listingId: string, currentlySaved: boolean) => void }) {
-  const actions = getListingActions(listing);
-
+function FeaturedListingCard({ listing, onClick }: { listing: MarketListing; onClick: () => void }) {
   return (
     <div
       role="button"
@@ -453,30 +451,30 @@ function FeaturedListingCard({ listing, onClick, onToggleSave }: { listing: Mark
       onKeyDown={(event) => {
         if (event.key === 'Enter' || event.key === ' ') onClick();
       }}
-      className="frame-intel shrink-0 w-[200px] p-0 overflow-hidden text-left transition-all duration-200 hover:border-empire-gold/25 group active:scale-[0.98] cursor-pointer"
+      className="frame-intel shrink-0 w-[240px] p-2.5 flex items-center gap-2.5 text-left transition-all duration-200 hover:border-empire-gold/25 group active:scale-[0.98] cursor-pointer"
     >
-      <div className="relative h-24 overflow-hidden bg-ink-800/10">
+      <div className="relative shrink-0 w-12 h-12 rounded-lg overflow-hidden bg-ink-800/10">
         {listing.image_url ? (
           <img src={listing.image_url} alt={listing.name} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
         ) : (
           <div className="flex items-center justify-center w-full h-full">
-            <ImageIcon className="w-7 h-7 text-empire-text-muted/30" />
+            <ImageIcon className="w-5 h-5 text-empire-text-muted/30" />
           </div>
         )}
-        {listing.is_verified && <div className="absolute top-1.5 right-1.5"><BadgeCheck className="w-4 h-4 text-empire-success" /></div>}
-        {!listing.is_verified && listing.status === 'in_review' && (
-          <div className="absolute top-1.5 right-1.5 flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-500/90 backdrop-blur-sm border border-amber-400/20">
-            <ShieldAlert className="w-3 h-3 text-amber-900" /><span className="text-[8px] font-semibold text-amber-900">In Review</span>
-          </div>
-        )}
-        <div className="absolute bottom-1.5 left-1.5"><span className="badge-gold text-[9px] py-0.5 px-1.5 capitalize">{listing.category}</span></div>
+        {listing.is_verified && <div className="absolute top-0.5 right-0.5"><BadgeCheck className="w-3.5 h-3.5 text-empire-success" /></div>}
       </div>
-      <div className="relative p-2.5 space-y-1.5">
-        <h3 className="font-display text-xs font-semibold text-empire-ivory leading-tight line-clamp-1 pr-9">{listing.name}</h3>
-        {listing.price_display && <span className="text-xs font-semibold text-empire-gold">{listing.price_display}</span>}
-        {listing.city_name && <span className="flex items-center gap-1 text-[10px] text-empire-text-muted"><MapPin className="w-2.5 h-2.5" />{listing.city_state ? `${listing.city_name}, ${listing.city_state}` : listing.city_name}</span>}
-        <ContactActions actions={actions} />
-        <FavoriteButton listing={listing} onToggleSave={onToggleSave} />
+      <div className="flex-1 min-w-0 space-y-0.5">
+        <div className="flex items-center gap-1.5">
+          <span className="badge-gold text-[8px] py-0.5 px-1.5 capitalize shrink-0">{listing.category}</span>
+          {!listing.is_verified && listing.status === 'in_review' && (
+            <span className="text-[8px] font-semibold text-amber-400 shrink-0">In Review</span>
+          )}
+        </div>
+        <h3 className="font-display text-xs font-semibold text-empire-ivory leading-tight line-clamp-1">{listing.name}</h3>
+        <div className="flex items-center gap-2">
+          {listing.price_display && <span className="text-[11px] font-semibold text-empire-gold shrink-0">{listing.price_display}</span>}
+          {listing.city_name && <span className="flex items-center gap-0.5 text-[10px] text-empire-text-muted line-clamp-1"><MapPin className="w-2.5 h-2.5 shrink-0" />{listing.city_state ? `${listing.city_name}, ${listing.city_state}` : listing.city_name}</span>}
+        </div>
       </div>
     </div>
   );
