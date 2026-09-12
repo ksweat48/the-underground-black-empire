@@ -73,14 +73,14 @@ export function ProfilePhotoUploader({ onPhotoReady, className }: ProfilePhotoUp
       ctx.clearRect(0, 0, CROP_SIZE, CROP_SIZE);
 
       const minDim = Math.min(img.width, img.height);
-      const scale = (CROP_SIZE * zoom) / minDim;
-      const srcW = img.width / scale;
-      const srcH = img.height / scale;
+      const srcSize = minDim / zoom;
+      const srcW = srcSize;
+      const srcH = srcSize;
       const srcX = (img.width - srcW) * position.x;
       const srcY = (img.height - srcH) * position.y;
 
       ctx.drawImage(img, srcX, srcY, srcW, srcH, 0, 0, CROP_SIZE, CROP_SIZE);
-      onPhotoReady(canvas.toDataURL('image/jpeg', 0.85));
+      onPhotoReady(canvas.toDataURL('image/jpeg', 0.9));
     };
     img.src = imageSrc;
   }, [imageSrc, position, zoom, onPhotoReady]);
