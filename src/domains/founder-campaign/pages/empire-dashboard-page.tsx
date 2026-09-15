@@ -395,13 +395,13 @@ export function EmpireDashboardPage() {
         {/* Share CTA — slim referral bar */}
         <button
           onClick={handleShare}
-          className="frame-utility w-full flex items-center justify-between gap-3 px-3 py-2 mb-2 shrink-0 transition-all duration-200 hover:border-empire-gold/25 active:scale-[0.99] animate-fade-up"
+          className="w-full flex items-center justify-between gap-3 px-3 py-2 mb-2 shrink-0 rounded-xl bg-emerald-500/10 border border-emerald-500/25 transition-all duration-200 hover:border-emerald-500/45 hover:bg-emerald-500/15 active:scale-[0.99] animate-fade-up"
         >
           <div className="flex items-center gap-2 min-w-0">
-            <Share2 className="w-4 h-4 text-empire-gold shrink-0" />
-            <span className="font-display text-xs font-medium text-empire-ivory truncate">Share the Empire to earn Influence</span>
+            <Share2 className="w-4 h-4 text-emerald-400 shrink-0" />
+            <span className="font-display text-xs font-medium text-emerald-200 truncate">Share the Empire to earn Influence</span>
           </div>
-          <span className="flex items-center gap-1 text-[10px] text-empire-text-muted shrink-0">
+          <span className="flex items-center gap-1 text-[10px] text-emerald-400/70 shrink-0">
             {shareCopied ? (
               <><Check className="w-3 h-3 text-emerald-400" /> Copied</>
             ) : (
@@ -787,12 +787,12 @@ function InviteContent({ referralCode }: { referralCode: string }) {
       <p className="text-sm text-sand mb-4">
         Share your referral link. Every verified referral earns you 25 Influence.
       </p>
-      <button onClick={handleShare} className="btn-secondary w-full flex items-center justify-center gap-2 text-sm">
-        {copied ? <Check className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
+      <button onClick={handleShare} className="w-full flex items-center justify-center gap-2 text-sm rounded-xl bg-emerald-500/15 border border-emerald-500/30 px-4 py-2.5 font-display font-medium text-emerald-200 transition-all duration-200 hover:bg-emerald-500/20 hover:border-emerald-500/50">
+        {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Share2 className="w-4 h-4 text-emerald-400" />}
         {copied ? 'Copied!' : 'Share Link'}
       </button>
-      <div className="flex items-center gap-2 mt-4 text-sm text-stone">
-        <Copy className="w-4 h-4" />
+      <div className="flex items-center gap-2 mt-4 text-sm text-emerald-400/60">
+        <Copy className="w-4 h-4 text-emerald-400/70" />
         <span className="font-mono text-xs break-all">{link}</span>
       </div>
     </div>

@@ -567,27 +567,27 @@ export function ProfilePage() {
           {/* Right column: Referrals + Listings */}
           <div className="space-y-4">
         {/* Referrals Card — compact two-row strip */}
-        <section className="glass-card px-3 py-2.5 animate-fade-up" style={{ animationDelay: '150ms' }}>
+        <section className="rounded-xl bg-emerald-500/10 border border-emerald-500/25 px-3 py-2.5 animate-fade-up" style={{ animationDelay: '150ms' }}>
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 min-w-0">
-              <Gift className="w-4 h-4 text-ink-400 shrink-0" />
-              <h2 className="font-display text-sm font-semibold text-ink-100 truncate">Referrals</h2>
-              <span className="text-[10px] text-ink-500 italic shrink-0">earn influence</span>
+              <Gift className="w-4 h-4 text-emerald-400 shrink-0" />
+              <h2 className="font-display text-sm font-semibold text-emerald-200 truncate">Referrals</h2>
+              <span className="text-[10px] text-emerald-400/60 italic shrink-0">earn influence</span>
             </div>
             <button
               onClick={handleShareReferral}
               aria-label={copied ? 'Referral link copied' : 'Share referral link'}
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-ink-300 transition-colors hover:bg-ink-200/10 hover:text-ink-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-300/60 shrink-0"
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-emerald-300 transition-colors hover:bg-emerald-500/15 hover:text-emerald-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/50 shrink-0"
             >
-              {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Share2 className="w-4 h-4" />}
+              {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Share2 className="w-4 h-4" />}
             </button>
           </div>
-          <div className="mt-1.5 flex items-center gap-2.5 text-xs text-ink-400 pl-6">
-            <span><strong className="tabular-nums text-ink-200">{referralStats.total}</strong> Total</span>
-            <span className="text-ink-600">·</span>
-            <span><strong className="tabular-nums text-ink-200">{referralStats.verified}</strong> Verified</span>
-            <span className="text-ink-600">·</span>
-            <span><strong className="tabular-nums text-ink-200">{referralStats.pending}</strong> Pending</span>
+          <div className="mt-1.5 flex items-center gap-2.5 text-xs text-emerald-400/70 pl-6">
+            <span><strong className="tabular-nums text-emerald-200">{referralStats.total}</strong> Total</span>
+            <span className="text-emerald-600">·</span>
+            <span><strong className="tabular-nums text-emerald-200">{referralStats.verified}</strong> Verified</span>
+            <span className="text-emerald-600">·</span>
+            <span><strong className="tabular-nums text-emerald-200">{referralStats.pending}</strong> Pending</span>
           </div>
         </section>
 
