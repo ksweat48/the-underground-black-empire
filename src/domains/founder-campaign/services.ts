@@ -427,6 +427,7 @@ export interface FeedEvent {
   metro_name: string | null;
   created_at: string;
   message: string;
+  avatar_url: string | null;
 }
 
 export async function fetchEmpireFeed(limit: number = 20): Promise<FeedEvent[]> {
@@ -456,6 +457,7 @@ export interface CouncilNewsEvent {
   created_at: string;
   message: string;
   title: string | null;
+  avatar_url: string | null;
 }
 
 export async function fetchEmpireCouncilNews(limit: number = 20): Promise<CouncilNewsEvent[]> {

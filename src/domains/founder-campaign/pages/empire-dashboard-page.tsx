@@ -23,6 +23,7 @@ import { SwipeableCardContainer } from '@/shared/components/swipeable-card-conta
 import { EmpireFrame } from '@/shared/components/empire-frame';
 import { EmpireEmblem } from '@/shared/components/empire-emblem';
 import { MemberProfileModal } from '@/shared/components/member-profile-modal';
+import { Avatar } from '@/shared/components/avatar';
 import { ErrorBanner } from '@/shared/components/error-banner';
 
 import { useAuth } from '@/domains/identity/auth-context';
@@ -66,6 +67,7 @@ type MergedFeedItem = {
   member_id: string | null;
   title: string | null;
   is_council_news: boolean;
+  avatar_url: string | null;
 };
 
 function mergeFeedWithNews(news: CouncilNewsEvent[], events: FeedEvent[]): MergedFeedItem[] {
@@ -81,6 +83,7 @@ function mergeFeedWithNews(news: CouncilNewsEvent[], events: FeedEvent[]): Merge
     member_id: n.member_id,
     title: n.title,
     is_council_news: true,
+    avatar_url: n.avatar_url,
   }));
   const activityItems: MergedFeedItem[] = events.map((e) => ({
     id: e.id,
@@ -94,6 +97,7 @@ function mergeFeedWithNews(news: CouncilNewsEvent[], events: FeedEvent[]): Merge
     member_id: e.member_id,
     title: null,
     is_council_news: false,
+    avatar_url: e.avatar_url,
   }));
   return [...newsItems, ...activityItems].sort((a, b) => {
     if (a.is_council_news !== b.is_council_news) {
@@ -556,6 +560,7 @@ export function EmpireDashboardPage() {
       <MemberProfileModal
         memberId={profileMemberId}
         onClose={() => setProfileMemberId(null)}
+        currentUserId={memberId}
       />
 
     </Layout>
@@ -705,23 +710,46 @@ function FeedList({ events, loading, onCardClick }: { events: MergedFeedItem[]; 
 
 // ==================== Intelligence Card ====================
 
+function getInitials(name: string): string {
+  const parts = name.split(/[\s@._-]/).filter(Boolean);
+  if (parts.length === 0) return '?';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[1][0]).toUpperCase();
+}
+
 function IntelligenceCard({ event, onCardClick }: { event: MergedFeedItem; onCardClick: (memberId: string) => void }) {
   const category = FEED_CATEGORIES[event.event_type] ?? DEFAULT_CATEGORY;
   const { icon: Icon, label, iconColor, ringColor, labelColor } = category;
   const clickable = event.member_id !== null;
+  const hasAvatar = event.member_id !== null && event.avatar_url;
+  const displayName = event.display_name ?? 'Someone';
 
   return (
     <div
       className={cn('frame-intel w-full text-left p-3 flex items-center gap-3 group transition-all duration-200', clickable ? 'cursor-pointer hover:border-antique-gold/30 hover:bg-ink-800/30 active:scale-[0.98]' : 'cursor-default')}
       onClick={clickable ? () => onCardClick(event.member_id!) : undefined}
     >
-      {/* Circular colored icon medallion */}
-      <div className={cn(
-        'flex items-center justify-center shrink-0 w-10 h-10 rounded-full border transition-all duration-200 group-hover:scale-105',
-        ringColor,
-      )}>
-        <Icon className={cn('w-4 h-4', iconColor)} />
-      </div>
+      {/* Avatar photo or category icon medallion */}
+      {hasAvatar ? (
+        <div className={cn(
+          'shrink-0 w-10 h-10 rounded-full overflow-hidden border transition-all duration-200 group-hover:scale-105',
+          ringColor,
+        )}>
+          <Avatar
+            src={event.avatar_url}
+            initials={getInitials(displayName)}
+            initialsClassName="text-xs"
+            initialsStyle={{ color: '#ffffff', textShadow: '0 1px 3px rgba(0,0,0,0.65)' }}
+          />
+        </div>
+      ) : (
+        <div className={cn(
+          'flex items-center justify-center shrink-0 w-10 h-10 rounded-full border transition-all duration-200 group-hover:scale-105',
+          ringColor,
+        )}>
+          <Icon className={cn('w-4 h-4', iconColor)} />
+        </div>
+      )}
 
       {/* Content */}
       <div className="flex-1 min-w-0">
