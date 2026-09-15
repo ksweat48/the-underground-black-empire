@@ -361,7 +361,17 @@ export function ProfilePage() {
       <div className="relative z-10 flex-1 min-h-0 overflow-y-auto scrollbar-none w-full max-w-[960px] mx-auto px-2 sm:px-3 pt-3 pb-24 space-y-4">
         {/* Referrals Card — solid green with matching card effects */}
         <section
-          className="rounded-[8px] bg-emerald-700 border border-emerald-500/60 p-4 animate-fade-up"
+          role="button"
+          tabIndex={0}
+          aria-label="Share your referral link"
+          onClick={handleShareReferral}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              handleShareReferral();
+            }
+          }}
+          className="rounded-[8px] bg-emerald-700 border border-emerald-500/60 p-4 animate-fade-up cursor-pointer transition-all duration-200 hover:bg-emerald-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
           style={{ animationDelay: '50ms', boxShadow: 'var(--shadow-card-sm), var(--shadow-inset-highlight), var(--shadow-inset-shadow)' }}
         >
           <div className="flex items-center justify-between gap-3">
@@ -369,13 +379,12 @@ export function ProfilePage() {
               <h2 className="font-display text-sm font-semibold text-white truncate">Referrals</h2>
               <span className="text-[10px] text-white/80 italic shrink-0">Share to earn influence</span>
             </div>
-            <button
-              onClick={handleShareReferral}
-              aria-label={copied ? 'Referral link copied' : 'Share referral link'}
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-white transition-colors hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 shrink-0"
+            <span
+              aria-hidden="true"
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-white shrink-0"
             >
               {copied ? <Check className="w-4 h-4 text-white" /> : <Share2 className="w-4 h-4" />}
-            </button>
+            </span>
           </div>
           <div className="mt-3 flex items-center gap-2.5 text-xs text-white/90 pl-6">
             <span><strong className="tabular-nums text-white">{referralStats.total}</strong> Total</span>
