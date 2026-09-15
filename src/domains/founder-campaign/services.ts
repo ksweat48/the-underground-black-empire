@@ -60,6 +60,7 @@ export interface LeaderboardEntry {
   member_number: number | null;
   influence: number;
   referral_count: number;
+  avatar_url: string | null;
 }
 
 export async function fetchCities(): Promise<CityWithProgress[]> {
@@ -308,7 +309,8 @@ export async function fetchLeaderboard(limit: number = 50, metroId?: string | nu
       email,
       founder_number,
       member_number,
-      city_id
+      city_id,
+      avatar_url
     `)
     .not('member_number', 'is', null)
     .order('created_at', { ascending: true })
@@ -386,6 +388,7 @@ export async function fetchLeaderboard(limit: number = 50, metroId?: string | nu
       member_number: (m as { member_number?: number | null }).member_number ?? null,
       influence: influenceMap.get(m.id) ?? 0,
       referral_count: refMap.get(m.id) ?? 0,
+      avatar_url: (m as { avatar_url?: string | null }).avatar_url ?? null,
     };
   }).sort((a, b) => b.influence - a.influence || b.referral_count - a.referral_count);
 }
@@ -586,6 +589,15 @@ export interface PublicMemberProfile {
   referral_count: number;
   verified_referral_count: number;
   joined_at: string | null;
+  avatar_url: string | null;
+  ethnic_identity: string | null;
+  ethnic_identity_detail: string | null;
+  gender: string | null;
+  gender_detail: string | null;
+  date_of_birth: string | null;
+  support_role: string | null;
+  support_role_detail: string | null;
+  leadership_opt_in: boolean | null;
 }
 
 export async function fetchPublicMemberProfile(memberId: string): Promise<PublicMemberProfile | null> {
@@ -598,7 +610,16 @@ export async function fetchPublicMemberProfile(memberId: string): Promise<Public
       founder_number,
       member_number,
       created_at,
-      city_id
+      city_id,
+      avatar_url,
+      ethnic_identity,
+      ethnic_identity_detail,
+      gender,
+      gender_detail,
+      date_of_birth,
+      support_role,
+      support_role_detail,
+      leadership_opt_in
     `)
     .eq('id', memberId)
     .maybeSingle();
@@ -646,5 +667,16 @@ export async function fetchPublicMemberProfile(memberId: string): Promise<Public
     referral_count: refList.length,
     verified_referral_count: refList.filter((r) => r.status === 'verified').length,
     joined_at: (member as { created_at?: string | null }).created_at ?? null,
+    avatar_url: (member as { avatar_url?: string | null }).avatar_url ?? null,
+    ethnic_identity: Array.isArray((member as { ethnic_identity?: unknown }).ethnic_identity)
+      ? ((member as { ethnic_identity: string[] }).ethnic_identity[0] ?? null)
+      : ((member as { ethnic_identity?: string | null }).ethnic_identity ?? null),
+    ethnic_identity_detail: (member as { ethnic_identity_detail?: string | null }).ethnic_identity_detail ?? null,
+    gender: (member as { gender?: string | null }).gender ?? null,
+    gender_detail: (member as { gender_detail?: string | null }).gender_detail ?? null,
+    date_of_birth: (member as { date_of_birth?: string | null }).date_of_birth ?? null,
+    support_role: (member as { support_role?: string | null }).support_role ?? null,
+    support_role_detail: (member as { support_role_detail?: string | null }).support_role_detail ?? null,
+    leadership_opt_in: (member as { leadership_opt_in?: boolean | null }).leadership_opt_in ?? null,
   };
 }

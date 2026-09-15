@@ -26,6 +26,7 @@ import { GlassModal } from '@/shared/components/glass-modal';
 import { Avatar } from '@/shared/components/avatar';
 import { EmpireEmblem } from '@/shared/components/empire-emblem';
 import { ProfilePhotoUploader } from '@/shared/components/profile-photo-uploader';
+import { MemberProfileModal } from '@/shared/components/member-profile-modal';
 import { useAuth } from '@/domains/identity/auth-context';
 import { supabase } from '@/shared/supabase-client';
 import {
@@ -122,6 +123,9 @@ export function ProfilePage() {
   const [leaderboardTab, setLeaderboardTab] = useState<LeaderboardTab>('local');
   const [leaderboardEntries, setLeaderboardEntries] = useState<LeaderboardEntry[]>([]);
   const [leaderboardLoading, setLeaderboardLoading] = useState(false);
+  const [leaderboardPreview, setLeaderboardPreview] = useState<LeaderboardEntry[]>([]);
+  const [leaderboardPreviewLoading, setLeaderboardPreviewLoading] = useState(false);
+  const [viewingMemberId, setViewingMemberId] = useState<string | null>(null);
 
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
@@ -282,6 +286,17 @@ export function ProfilePage() {
       .catch(() => setLeaderboardEntries([]))
       .finally(() => setLeaderboardLoading(false));
   }, [showLeaderboardModal, leaderboardTab, metroData?.metroId]);
+
+  // Fetch leaderboard preview on page load
+  useEffect(() => {
+    if (!memberId) return;
+    setLeaderboardPreviewLoading(true);
+    const metroId = metroData?.metroId ?? null;
+    fetchLeaderboard(12, metroId ?? null)
+      .then(setLeaderboardPreview)
+      .catch(() => setLeaderboardPreview([]))
+      .finally(() => setLeaderboardPreviewLoading(false));
+  }, [memberId, metroData?.metroId]);
 
   if (loading) {
     return (
@@ -499,15 +514,74 @@ export function ProfilePage() {
           )}
         </section>
 
-        {/* Leaderboard Bar — Royal Plum banner */}
-        <section className="card-plum p-4 animate-fade-in" style={{ animationDelay: '100ms' }}>
-          <button
-            onClick={() => { setLeaderboardTab(metroData?.metroId ? 'local' : 'empire'); setShowLeaderboardModal(true); }}
-            className="relative z-10 w-full flex items-center justify-center gap-2"
-          >
-            <Trophy className="w-4 h-4 text-white" />
-            <h2 className="font-display text-sm font-semibold text-white">Leaderboard</h2>
-          </button>
+        {/* Leaderboard Avatar Strip */}
+        <section className="glass-card p-4 animate-fade-up" style={{ animationDelay: '100ms' }}>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Trophy className="w-4 h-4 text-ink-400" />
+              <h2 className="font-display text-sm font-semibold text-ink-100">Leaderboard</h2>
+            </div>
+            <button
+              onClick={() => { setLeaderboardTab(metroData?.metroId ? 'local' : 'empire'); setShowLeaderboardModal(true); }}
+              className="text-xs text-ink-300 hover:text-ink-100 transition-colors"
+            >
+              View All
+            </button>
+          </div>
+          {leaderboardPreviewLoading ? (
+            <div className="flex items-center justify-center py-4">
+              <Loader2 className="w-4 h-4 text-ink-400 animate-spin" />
+            </div>
+          ) : leaderboardPreview.length === 0 ? (
+            <p className="text-xs text-ink-400 text-center py-4">No leaders yet</p>
+          ) : (
+            <div className="flex gap-3 overflow-x-auto scrollbar-none pb-1 -mx-1 px-1">
+              {leaderboardPreview.map((entry, idx) => {
+                const name = entry.display_name ?? entry.email.split('@')[0];
+                const initials = getInitials(name);
+                return (
+                  <button
+                    key={entry.member_id}
+                    onClick={() => setViewingMemberId(entry.member_id)}
+                    className="flex flex-col items-center gap-1 shrink-0 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-plum-400 rounded-lg p-1"
+                  >
+                    <div className="relative">
+                      <div
+                        className="w-12 h-12 rounded-full overflow-hidden border-2 border-ink-700/30 transition-transform group-hover:scale-105"
+                        style={{
+                          background: 'linear-gradient(160deg, #2A2A2A, #0A0A0A)',
+                          boxShadow: '0 0 0 2px rgba(255,255,255,0.04), inset 0 1px 0 rgba(255,255,255,0.06), 0 4px 12px rgba(0,0,0,0.40)',
+                        }}
+                      >
+                        <Avatar
+                          src={entry.avatar_url}
+                          initials={initials}
+                          initialsClassName="text-sm"
+                          initialsStyle={{ color: '#ffffff', textShadow: '0 1px 3px rgba(0,0,0,0.65)' }}
+                        />
+                      </div>
+                      <span
+                        className={`absolute -top-1 -left-1 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold border ${
+                          idx === 0
+                            ? 'bg-amber-400 text-amber-950 border-amber-300'
+                            : idx === 1
+                            ? 'bg-gray-300 text-gray-800 border-gray-200'
+                            : idx === 2
+                            ? 'bg-orange-400 text-orange-950 border-orange-300'
+                            : 'bg-ink-800 text-ink-200 border-ink-700/40'
+                        }`}
+                      >
+                        {idx + 1}
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-ink-300 max-w-[56px] truncate text-center">
+                      {name.split(' ')[0]}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </section>
 
         {/* Leadership Card */}
@@ -828,6 +902,13 @@ export function ProfilePage() {
           )}
         </div>
       </GlassModal>
+
+      {/* Member Profile Modal (for leaderboard avatar clicks) */}
+      <MemberProfileModal
+        memberId={viewingMemberId}
+        onClose={() => setViewingMemberId(null)}
+        currentUserId={memberId}
+      />
 
       {/* Profile Details Modal */}
       <GlassModal
