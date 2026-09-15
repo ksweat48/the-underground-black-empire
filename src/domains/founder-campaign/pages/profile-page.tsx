@@ -483,8 +483,32 @@ export function ProfilePage() {
           )}
         </section>
 
+        {/* Referrals Card — compact two-row strip */}
+        <section className="rounded-xl bg-emerald-500/10 border border-emerald-500/25 px-3 py-2.5 animate-fade-up" style={{ animationDelay: '100ms' }}>
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 min-w-0">
+              <h2 className="font-display text-sm font-semibold text-emerald-200 truncate">Referrals</h2>
+              <span className="text-[10px] text-emerald-400/60 italic shrink-0">Share to earn influence</span>
+            </div>
+            <button
+              onClick={handleShareReferral}
+              aria-label={copied ? 'Referral link copied' : 'Share referral link'}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-emerald-300 transition-colors hover:bg-emerald-500/15 hover:text-emerald-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/50 shrink-0"
+            >
+              {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Share2 className="w-4 h-4" />}
+            </button>
+          </div>
+          <div className="mt-1.5 flex items-center gap-2.5 text-xs text-emerald-400/70 pl-6">
+            <span><strong className="tabular-nums text-emerald-200">{referralStats.total}</strong> Total</span>
+            <span className="text-emerald-600">·</span>
+            <span><strong className="tabular-nums text-emerald-200">{referralStats.verified}</strong> Verified</span>
+            <span className="text-emerald-600">·</span>
+            <span><strong className="tabular-nums text-emerald-200">{referralStats.pending}</strong> Pending</span>
+          </div>
+        </section>
+
         {/* Leadership Card */}
-        <section className="glass-card p-4 animate-fade-up" style={{ animationDelay: '100ms' }}>
+        <section className="glass-card p-4 animate-fade-up" style={{ animationDelay: '150ms' }}>
           <div className="flex items-center gap-2 mb-3">
             <Scale className="w-4 h-4 text-ink-400" />
             <h2 className="font-display text-sm font-semibold text-ink-100">Leadership</h2>
@@ -564,32 +588,8 @@ export function ProfilePage() {
 
           </div>
 
-          {/* Right column: Referrals + Listings */}
+          {/* Right column: Listings */}
           <div className="space-y-4">
-        {/* Referrals Card — compact two-row strip */}
-        <section className="rounded-xl bg-emerald-500/10 border border-emerald-500/25 px-3 py-2.5 animate-fade-up" style={{ animationDelay: '150ms' }}>
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2 min-w-0">
-              <h2 className="font-display text-sm font-semibold text-emerald-200 truncate">Referrals</h2>
-              <span className="text-[10px] text-emerald-400/60 italic shrink-0">Share to earn influence</span>
-            </div>
-            <button
-              onClick={handleShareReferral}
-              aria-label={copied ? 'Referral link copied' : 'Share referral link'}
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-emerald-300 transition-colors hover:bg-emerald-500/15 hover:text-emerald-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/50 shrink-0"
-            >
-              {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Share2 className="w-4 h-4" />}
-            </button>
-          </div>
-          <div className="mt-1.5 flex items-center gap-2.5 text-xs text-emerald-400/70 pl-6">
-            <span><strong className="tabular-nums text-emerald-200">{referralStats.total}</strong> Total</span>
-            <span className="text-emerald-600">·</span>
-            <span><strong className="tabular-nums text-emerald-200">{referralStats.verified}</strong> Verified</span>
-            <span className="text-emerald-600">·</span>
-            <span><strong className="tabular-nums text-emerald-200">{referralStats.pending}</strong> Pending</span>
-          </div>
-        </section>
-
         {/* My Listings */}
         <section className="glass-card p-4 animate-fade-up" style={{ animationDelay: '250ms' }}>
           <div className="flex items-center gap-2 mb-3">
