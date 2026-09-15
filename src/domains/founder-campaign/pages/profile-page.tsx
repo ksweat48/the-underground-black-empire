@@ -16,7 +16,7 @@ import {
   Star,
   Share2,
   FileText,
-  Gift,
+
   Settings,
   TrendingUp,
   Camera,
@@ -570,9 +570,8 @@ export function ProfilePage() {
         <section className="rounded-xl bg-emerald-500/10 border border-emerald-500/25 px-3 py-2.5 animate-fade-up" style={{ animationDelay: '150ms' }}>
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 min-w-0">
-              <Gift className="w-4 h-4 text-emerald-400 shrink-0" />
               <h2 className="font-display text-sm font-semibold text-emerald-200 truncate">Referrals</h2>
-              <span className="text-[10px] text-emerald-400/60 italic shrink-0">earn influence</span>
+              <span className="text-[10px] text-emerald-400/60 italic shrink-0">Share to earn influence</span>
             </div>
             <button
               onClick={handleShareReferral}
