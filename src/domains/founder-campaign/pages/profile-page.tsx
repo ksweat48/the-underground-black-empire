@@ -322,10 +322,21 @@ export function ProfilePage() {
   const myRank = leaderboardEntries.findIndex((e) => e.member_id === memberId);
   const myEntry = myRank >= 0 ? leaderboardEntries[myRank] : null;
 
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText(referralLink);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const handleShareReferral = async () => {
+    const shareData = {
+      title: 'The Underground Black Empire',
+      text: 'Join the Empire and earn Influence. Every verified referral earns you 25 Influence.',
+      url: referralLink,
+    };
+    if (navigator.share) {
+      try { await navigator.share(shareData); } catch { /* user cancelled */ }
+    } else {
+      try {
+        await navigator.clipboard.writeText(referralLink);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } catch { /* clipboard unavailable */ }
+    }
   };
 
   return (
@@ -564,11 +575,11 @@ export function ProfilePage() {
               <span className="text-[10px] text-ink-500 italic shrink-0">earn influence</span>
             </div>
             <button
-              onClick={handleCopyLink}
-              aria-label={copied ? 'Referral link copied' : 'Copy referral link'}
+              onClick={handleShareReferral}
+              aria-label={copied ? 'Referral link copied' : 'Share referral link'}
               className="flex h-8 w-8 items-center justify-center rounded-lg text-ink-300 transition-colors hover:bg-ink-200/10 hover:text-ink-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-300/60 shrink-0"
             >
-              {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
+              {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Share2 className="w-4 h-4" />}
             </button>
           </div>
           <div className="mt-1.5 flex items-center gap-2.5 text-xs text-ink-400 pl-6">

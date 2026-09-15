@@ -180,6 +180,7 @@ export function EmpireDashboardPage() {
   const [empire, setEmpire] = useState<EmpireProgressData>({ tribe_city_count: 0, total_population: 0, total_cities: 0, total_states: 0 });
   const [assignedNumber] = useState<number | null>(null);
   const [showInviteModal, setShowInviteModal] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
   const [showCityDrawer, setShowCityDrawer] = useState(false);
   const [metroData, setMetroData] = useState<{ name: string; rank: number; populationCount: number; cityCount: number; metroId: string | null } | null>(null);
   const [activeTab, setActiveTab] = useState<FeedTab>('local');
@@ -224,6 +225,25 @@ export function EmpireDashboardPage() {
       setDesktopCompact(false);
     }
   }, []);
+
+  const handleShare = useCallback(async () => {
+    const code = data?.email ?? '';
+    const link = `${window.location.origin}/auth/sign-up?ref=${code}`;
+    const shareData = {
+      title: 'The Underground Black Empire',
+      text: 'Join the Empire and earn Influence. Every verified referral earns you 25 Influence.',
+      url: link,
+    };
+    if (navigator.share) {
+      try { await navigator.share(shareData); } catch { /* user cancelled */ }
+    } else {
+      try {
+        await navigator.clipboard.writeText(link);
+        setShareCopied(true);
+        setTimeout(() => setShareCopied(false), 2000);
+      } catch { /* clipboard unavailable */ }
+    }
+  }, [data?.email]);
 
   const loadDashboard = useCallback(() => {
     if (!memberId) { setLoading(false); return; }
@@ -371,6 +391,24 @@ export function EmpireDashboardPage() {
             </div>
           </div>
         )}
+
+        {/* Share CTA — slim referral bar */}
+        <button
+          onClick={handleShare}
+          className="frame-utility w-full flex items-center justify-between gap-3 px-3 py-2 mb-2 shrink-0 transition-all duration-200 hover:border-empire-gold/25 active:scale-[0.99] animate-fade-up"
+        >
+          <div className="flex items-center gap-2 min-w-0">
+            <Share2 className="w-4 h-4 text-empire-gold shrink-0" />
+            <span className="font-display text-xs font-medium text-empire-ivory truncate">Share the Empire to earn Influence</span>
+          </div>
+          <span className="flex items-center gap-1 text-[10px] text-empire-text-muted shrink-0">
+            {shareCopied ? (
+              <><Check className="w-3 h-3 text-emerald-400" /> Copied</>
+            ) : (
+              <><Share2 className="w-3 h-3" /> Share</>
+            )}
+          </span>
+        </button>
 
         {/* Dashboard columns: swipeable map/mission card on the left, feed on the right */}
         <div className={cn(
@@ -727,10 +765,21 @@ function InviteContent({ referralCode }: { referralCode: string }) {
   const [copied, setCopied] = useState(false);
   const link = `${window.location.origin}/auth/sign-up?ref=${referralCode}`;
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(link);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const handleShare = async () => {
+    const shareData = {
+      title: 'The Underground Black Empire',
+      text: 'Join the Empire and earn Influence. Every verified referral earns you 25 Influence.',
+      url: link,
+    };
+    if (navigator.share) {
+      try { await navigator.share(shareData); } catch { /* user cancelled */ }
+    } else {
+      try {
+        await navigator.clipboard.writeText(link);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } catch { /* clipboard unavailable */ }
+    }
   };
 
   return (
@@ -738,21 +787,13 @@ function InviteContent({ referralCode }: { referralCode: string }) {
       <p className="text-sm text-sand mb-4">
         Share your referral link. Every verified referral earns you 25 Influence.
       </p>
-      <div className="flex flex-col sm:flex-row gap-2">
-        <input
-          readOnly
-          value={link}
-          className="input-field flex-1 font-mono text-sm"
-          onClick={(e) => e.currentTarget.select()}
-        />
-        <button onClick={handleCopy} className="btn-secondary whitespace-nowrap text-sm">
-          {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-          {copied ? 'Copied!' : 'Copy Link'}
-        </button>
-      </div>
+      <button onClick={handleShare} className="btn-secondary w-full flex items-center justify-center gap-2 text-sm">
+        {copied ? <Check className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
+        {copied ? 'Copied!' : 'Share Link'}
+      </button>
       <div className="flex items-center gap-2 mt-4 text-sm text-stone">
-        <Share2 className="w-4 h-4" />
-        <span>Share this link to invite members to your city.</span>
+        <Copy className="w-4 h-4" />
+        <span className="font-mono text-xs break-all">{link}</span>
       </div>
     </div>
   );
