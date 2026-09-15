@@ -344,15 +344,31 @@ export function ProfilePage() {
       <div className="fixed inset-0 z-[1] pointer-events-none bg-radial-warm opacity-50" />
 
       <div className="relative z-10 flex-1 min-h-0 overflow-y-auto scrollbar-none w-full max-w-[960px] mx-auto px-2 sm:px-3 pt-3 pb-24 space-y-4">
-        {/* Leaderboard Bar — Royal Plum banner */}
-        <section className="card-plum p-4 animate-fade-in">
-          <button
-            onClick={() => { setLeaderboardTab(metroData?.metroId ? 'local' : 'empire'); setShowLeaderboardModal(true); }}
-            className="relative z-10 w-full flex items-center justify-center gap-2"
-          >
-            <Trophy className="w-4 h-4 text-white" />
-            <h2 className="font-display text-sm font-semibold text-white">Leaderboard</h2>
-          </button>
+        {/* Referrals Card — solid green with matching card effects */}
+        <section
+          className="rounded-[8px] bg-emerald-700 border border-emerald-500/60 p-4 animate-fade-up"
+          style={{ animationDelay: '50ms', boxShadow: 'var(--shadow-card-sm), var(--shadow-inset-highlight), var(--shadow-inset-shadow)' }}
+        >
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 min-w-0">
+              <h2 className="font-display text-sm font-semibold text-white truncate">Referrals</h2>
+              <span className="text-[10px] text-white/80 italic shrink-0">Share to earn influence</span>
+            </div>
+            <button
+              onClick={handleShareReferral}
+              aria-label={copied ? 'Referral link copied' : 'Share referral link'}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-white transition-colors hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 shrink-0"
+            >
+              {copied ? <Check className="w-4 h-4 text-white" /> : <Share2 className="w-4 h-4" />}
+            </button>
+          </div>
+          <div className="mt-3 flex items-center gap-2.5 text-xs text-white/90 pl-6">
+            <span><strong className="tabular-nums text-white">{referralStats.total}</strong> Total</span>
+            <span className="text-white/60">·</span>
+            <span><strong className="tabular-nums text-white">{referralStats.verified}</strong> Verified</span>
+            <span className="text-white/60">·</span>
+            <span><strong className="tabular-nums text-white">{referralStats.pending}</strong> Pending</span>
+          </div>
         </section>
 
         {/* Two-column grid on desktop, stacked on mobile */}
@@ -483,28 +499,15 @@ export function ProfilePage() {
           )}
         </section>
 
-        {/* Referrals Card */}
-        <section className="rounded-xl bg-emerald-700 border border-emerald-500/60 p-4 shadow-lg shadow-emerald-950/20 animate-fade-up" style={{ animationDelay: '100ms' }}>
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2 min-w-0">
-              <h2 className="font-display text-sm font-semibold text-white truncate">Referrals</h2>
-              <span className="text-[10px] text-white/80 italic shrink-0">Share to earn influence</span>
-            </div>
-            <button
-              onClick={handleShareReferral}
-              aria-label={copied ? 'Referral link copied' : 'Share referral link'}
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-white transition-colors hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 shrink-0"
-            >
-              {copied ? <Check className="w-4 h-4 text-white" /> : <Share2 className="w-4 h-4" />}
-            </button>
-          </div>
-          <div className="mt-3 flex items-center gap-2.5 text-xs text-white/90 pl-6">
-            <span><strong className="tabular-nums text-white">{referralStats.total}</strong> Total</span>
-            <span className="text-white/60">·</span>
-            <span><strong className="tabular-nums text-white">{referralStats.verified}</strong> Verified</span>
-            <span className="text-white/60">·</span>
-            <span><strong className="tabular-nums text-white">{referralStats.pending}</strong> Pending</span>
-          </div>
+        {/* Leaderboard Bar — Royal Plum banner */}
+        <section className="card-plum p-4 animate-fade-in" style={{ animationDelay: '100ms' }}>
+          <button
+            onClick={() => { setLeaderboardTab(metroData?.metroId ? 'local' : 'empire'); setShowLeaderboardModal(true); }}
+            className="relative z-10 w-full flex items-center justify-center gap-2"
+          >
+            <Trophy className="w-4 h-4 text-white" />
+            <h2 className="font-display text-sm font-semibold text-white">Leaderboard</h2>
+          </button>
         </section>
 
         {/* Leadership Card */}
