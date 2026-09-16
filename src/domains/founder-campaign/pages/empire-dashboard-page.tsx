@@ -379,7 +379,7 @@ export function EmpireDashboardPage() {
     <Layout fullWidth showTopBar>
       <div className={cn(
         'w-full min-w-0 px-2 sm:px-3 pb-4 lg:pb-10 flex flex-col h-full transition-[padding-top] duration-300 ease-out',
-        mobileCollapsed ? 'pt-0' : 'pt-4',
+        mobileCollapsed ? 'pt-3' : 'pt-4',
         desktopCompact && 'lg:pt-2',
       )}>
         <div className="w-full min-w-0 max-w-[960px] mx-auto flex flex-col h-full">
@@ -462,7 +462,7 @@ export function EmpireDashboardPage() {
           <div
             className={cn(
               'flex min-h-0 w-full flex-col animate-fade-up transition-[margin-top] duration-300 ease-out',
-              mobileCollapsed ? 'mt-0' : 'mt-5',
+              mobileCollapsed ? 'mt-3' : 'mt-5',
               desktopCompact && 'lg:mt-2',
             )}
             style={{
