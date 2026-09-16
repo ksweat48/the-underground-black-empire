@@ -1434,7 +1434,7 @@ interface Achievement {
 
 function getAchievements(member: MemberProfile, cityTier: CityTierName): Achievement[] {
   return [
-    { id: 'first_member', label: 'First Member', icon: Trophy, unlocked: !!member.founder_number, description: 'Joined the Empire' },
+    { id: 'first_member', label: 'Pioneer', icon: Trophy, unlocked: !!member.founder_number, description: 'One of the first 1,000 members' },
     { id: 'first_referral', label: 'First Referral', icon: Share2, unlocked: member.referral_count > 0, description: 'Invited your first member' },
     { id: 'verified_referral', label: 'Verified Recruiter', icon: CheckCircle2, unlocked: member.verified_referral_count > 0, description: 'Got a verified referral' },
     { id: 'inf_100', label: '100 Influence', icon: TrendingUp, unlocked: member.influence >= 100, description: 'Earned 100 Influence' },

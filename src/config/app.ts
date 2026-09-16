@@ -7,7 +7,7 @@ export const APP_CONFIG = {
   url: 'https://the-underground-black-empire.netlify.app',
   supportEmail: 'support@undergroundempire.app',
   version: '0.1.0',
-  phase: 'Founder Campaign',
+  phase: 'Pioneer Campaign',
 } as const;
 
 export type AppPhase = typeof APP_CONFIG.phase;

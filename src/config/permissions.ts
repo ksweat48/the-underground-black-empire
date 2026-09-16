@@ -61,8 +61,8 @@ export const ROLE_PERMISSIONS: Record<RoleKey, RoleDefinition> = {
   },
   founder: {
     key: 'founder',
-    label: 'Founder',
-    description: 'A founding member of a city in the Empire',
+    label: 'Pioneer',
+    description: 'A pioneer member of the Empire — one of the first 1,000 to join',
     permissions: [
       'view_landing',
       'view_cities',

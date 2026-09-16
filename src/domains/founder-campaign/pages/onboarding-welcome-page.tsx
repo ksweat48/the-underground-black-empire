@@ -62,7 +62,7 @@ export function OnboardingWelcomePage() {
         </div>
         <p className="text-sm text-ink-400 mb-1">You are</p>
         <h2 className="text-5xl font-display font-bold text-gradient-gold mb-2">
-          Member #{founderNumber}
+          Pioneer #{founderNumber}
         </h2>
         {cityLoading && (
           <div className="flex justify-center py-2">

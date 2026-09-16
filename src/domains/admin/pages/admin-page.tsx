@@ -317,7 +317,7 @@ export function AdminPage() {
           <Shield className="w-7 h-7 text-gold-400" />
           <h1 className="text-3xl font-display font-bold text-ink-100">Admin Console</h1>
         </div>
-        <p className="text-ink-400">Administrative controls and reporting for the Founder Campaign.</p>
+        <p className="text-ink-400">Administrative controls and reporting for the Pioneer Campaign.</p>
       </div>
 
       {/* Listing Review Queue */}

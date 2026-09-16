@@ -88,10 +88,10 @@ export function OnboardingConfirmPage() {
                 </div>
                 <div>
                   <p className="text-lg font-display font-semibold text-stone-900">
-                    Be the First Member
+                    Be the First Pioneer
                   </p>
                   <p className="text-xs text-stone-500 mt-0.5">
-                    You'll put {city.name} on the map and claim Member #1.
+                    You'll put {city.name} on the map and claim Pioneer #1.
                   </p>
                 </div>
               </div>
@@ -101,7 +101,7 @@ export function OnboardingConfirmPage() {
                 <span className="text-stone-900 font-medium">{tierLabel}</span>
               </div>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-stone-500">Your Member Number</span>
+                <span className="text-stone-500">Your Pioneer Number</span>
                 <span className="text-gold-300 font-semibold">#1</span>
               </div>
             </div>
@@ -122,7 +122,7 @@ export function OnboardingConfirmPage() {
               </div>
               <div className="h-px bg-stone-200" />
               <div className="flex items-center justify-between text-sm">
-                <span className="text-stone-500">Your Member Number</span>
+                <span className="text-stone-500">Your Pioneer Number</span>
                 <span className="text-gold-300 font-semibold">Next available</span>
               </div>
               <div>

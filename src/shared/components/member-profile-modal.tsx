@@ -72,7 +72,7 @@ interface Achievement {
 
 function getAchievements(profile: PublicMemberProfile, cityTier: string | null): Achievement[] {
   return [
-    { id: 'first_member', label: 'First Member', icon: Trophy, unlocked: !!profile.founder_number, description: 'Joined the Empire' },
+    { id: 'first_member', label: 'Pioneer', icon: Trophy, unlocked: !!profile.founder_number, description: 'One of the first 1,000 members' },
     { id: 'first_referral', label: 'First Referral', icon: Share2, unlocked: profile.referral_count > 0, description: 'Invited their first member' },
     { id: 'verified_referral', label: 'Verified Recruiter', icon: CheckCircle2, unlocked: profile.verified_referral_count > 0, description: 'Got a verified referral' },
     { id: 'inf_100', label: '100 Influence', icon: TrendingUp, unlocked: profile.influence >= 100, description: 'Earned 100 Influence' },
@@ -224,8 +224,8 @@ function ProfileContent({
             )}
             {isFounder && (
               <span className="inline-flex items-center gap-1.5 rounded-md bg-plum-50 px-2 py-0.5 text-[10px] font-semibold text-plum-700">
-                Founder
-                <span className="text-plum-400 font-normal">· First 1,000 users</span>
+                Pioneer
+                <span className="text-plum-400 font-normal">· First 1,000 members</span>
               </span>
             )}
           </div>
