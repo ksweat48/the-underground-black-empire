@@ -466,7 +466,7 @@ export function ProfilePage() {
           {/* Stats Row — Your Level, Influence, Voting Power */}
           <div className="relative z-10 grid grid-cols-[1fr_auto_1fr_auto_1fr] items-stretch gap-1.5 sm:gap-2">
             <StatButton
-              label="Your Level"
+              label="Level"
               value={String(founderLevel.level)}
               icon={Star}
               variant={profileCardConfig.statVariant}
@@ -1024,7 +1024,7 @@ export function ProfilePage() {
             </div>
           )}
 
-          {/* Location & Your Level */}
+          {/* Location & Level */}
           <div className="grid grid-cols-2 gap-3">
             <div className="p-3 rounded-xl bg-ink-800/30 border border-ink-700/20">
               <p className="text-[10px] text-ink-500 uppercase tracking-wider mb-1">Location</p>
@@ -1033,10 +1033,11 @@ export function ProfilePage() {
               </p>
             </div>
             <div className="p-3 rounded-xl bg-ink-800/30 border border-ink-700/20">
-              <p className="text-[10px] text-ink-500 uppercase tracking-wider mb-1">Your Level</p>
-              <p className="text-sm font-medium text-ink-100">
-                Your Level {founderLevel.level}{member.member_number ? ` · Member #${member.member_number}` : ''}
-              </p>
+              <p className="text-[10px] text-ink-500 uppercase tracking-wider mb-1">Level</p>
+              <div className="text-sm font-medium text-ink-100 space-y-0.5">
+                <p>Level {founderLevel.level}</p>
+                {member.member_number && <p>Member #{member.member_number}</p>}
+              </div>
             </div>
           </div>
 
