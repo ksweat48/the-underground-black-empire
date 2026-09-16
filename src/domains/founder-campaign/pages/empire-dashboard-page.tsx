@@ -397,22 +397,31 @@ export function EmpireDashboardPage() {
         )}
 
         {/* Share CTA — slim referral bar */}
-        <button
-          onClick={handleShare}
-          className="w-full flex items-center justify-between gap-3 px-3 py-2 mb-2 shrink-0 rounded-xl bg-emerald-500/10 border border-emerald-500/25 transition-all duration-200 hover:border-emerald-500/45 hover:bg-emerald-500/15 active:scale-[0.99] animate-fade-up"
+        <div
+          className={cn(
+            'overflow-hidden transition-all duration-300 ease-out lg:max-h-16 lg:translate-y-0 lg:opacity-100 lg:pointer-events-auto',
+            mobileCollapsed
+              ? 'max-h-0 -translate-y-2 opacity-0 pointer-events-none'
+              : 'max-h-16 translate-y-0 opacity-100',
+          )}
         >
-          <div className="flex items-center gap-2 min-w-0">
-            <Share2 className="w-4 h-4 text-emerald-400 shrink-0" />
-            <span className="font-display text-xs font-medium text-emerald-200 truncate">Share the Empire to earn Influence</span>
-          </div>
-          <span className="flex items-center gap-1 text-[10px] text-emerald-400/70 shrink-0">
-            {shareCopied ? (
-              <><Check className="w-3 h-3 text-emerald-400" /> Copied</>
-            ) : (
-              <><Share2 className="w-3 h-3" /> Share</>
-            )}
-          </span>
-        </button>
+          <button
+            onClick={handleShare}
+            className="w-full flex items-center justify-between gap-3 px-3 py-2 mb-2 shrink-0 rounded-xl bg-emerald-500/10 border border-emerald-500/25 transition-all duration-200 hover:border-emerald-500/45 hover:bg-emerald-500/15 active:scale-[0.99] animate-fade-up"
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              <Share2 className="w-4 h-4 text-emerald-400 shrink-0" />
+              <span className="font-display text-xs font-medium text-emerald-200 truncate">Share the Empire to earn Influence</span>
+            </div>
+            <span className="flex items-center gap-1 text-[10px] text-emerald-400/70 shrink-0">
+              {shareCopied ? (
+                <><Check className="w-3 h-3 text-emerald-400" /> Copied</>
+              ) : (
+                <><Share2 className="w-3 h-3" /> Share</>
+              )}
+            </span>
+          </button>
+        </div>
 
         {/* Dashboard columns: swipeable map/mission card on the left, feed on the right */}
         <div className={cn(
