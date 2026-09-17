@@ -348,7 +348,11 @@ export function MarketPage() {
               ) : (
                 <div className="space-y-2">
                   {displayFeed.map((item) => (
-                    <FeedItemRow key={item.id} item={item} />
+                    <FeedItemRow
+                      key={item.id}
+                      item={item}
+                      onClick={item.listing_id ? () => navigate(`/market/listing/${item.listing_id}`) : undefined}
+                    />
                   ))}
                 </div>
               )}
@@ -660,7 +664,7 @@ function ContactActions({ actions }: { actions: { website: string | null; phone:
 
 // ==================== Feed Item Row ====================
 
-function FeedItemRow({ item }: { item: CommunityFeedItem }) {
+function FeedItemRow({ item, onClick }: { item: CommunityFeedItem; onClick?: () => void }) {
   const updateTypeConfig: Record<string, { label: string; color: string; bg: string }> = {
     offer: { label: 'Offer', color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
     update: { label: 'Update', color: 'text-gold-400', bg: 'bg-gold-500/10 border-gold-500/20' },
@@ -673,9 +677,19 @@ function FeedItemRow({ item }: { item: CommunityFeedItem }) {
   const config = feedTypeConfig[item.feed_type];
   const Icon = config.icon;
   const typeBadge = item.feed_type === 'update' && item.update_type ? updateTypeConfig[item.update_type] ?? updateTypeConfig.update : null;
+  const interactive = !!onClick;
 
   return (
-    <div className="frame-intel w-full p-3 flex items-start gap-3">
+    <div
+      role={interactive ? 'button' : undefined}
+      tabIndex={interactive ? 0 : undefined}
+      onClick={onClick}
+      onKeyDown={interactive ? (e => { if (e.key === 'Enter' || e.key === ' ') onClick(); }) : undefined}
+      className={cn(
+        'frame-intel w-full p-3 flex items-start gap-3 transition-all duration-200',
+        interactive && 'hover:border-empire-gold/25 group active:scale-[0.98] cursor-pointer'
+      )}
+    >
       <div className="flex items-center justify-center shrink-0 w-9 h-9 rounded-full border border-empire-gold/10 bg-empire-gold/5">
         <Icon className={cn('w-4 h-4', config.color)} />
       </div>
