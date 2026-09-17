@@ -384,7 +384,7 @@ export async function createListingUpdate(input: CreateUpdateInput): Promise<Lis
       body: input.body,
       image_url: input.image_url,
       update_type: input.update_type ?? 'update',
-      status: 'pending',
+      status: 'approved',
     })
     .select()
     .single();

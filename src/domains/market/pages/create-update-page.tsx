@@ -243,7 +243,7 @@ export function CreateUpdatePage() {
             className="btn-primary w-full text-sm py-2.5 disabled:opacity-50"
           >
             {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-            Submit for Review
+            Post Update
           </button>
         </div>
       </div>
