@@ -34,15 +34,24 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
     }
     if (!userId) {
       setAdminLoading(false);
+      setIsAdmin(false);
       return;
     }
 
     setAdminLoading(true);
     setAdminError(null);
     let cancelled = false;
+    const timeout = setTimeout(() => {
+      if (!cancelled) {
+        setAdminError('Admin check timed out. Please try again.');
+        setIsAdmin(false);
+        setAdminLoading(false);
+      }
+    }, 10000);
     Promise.resolve(supabase.rpc('is_current_user_admin'))
       .then(({ data, error }) => {
         if (!cancelled) {
+          clearTimeout(timeout);
           if (error) {
             setAdminError(error.message);
             setIsAdmin(false);
@@ -54,6 +63,7 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
       })
       .catch((err: unknown) => {
         if (!cancelled) {
+          clearTimeout(timeout);
           setAdminError(err instanceof Error ? err.message : 'Unknown error');
           setAdminLoading(false);
         }
@@ -61,6 +71,7 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
 
     return () => {
       cancelled = true;
+      clearTimeout(timeout);
     };
   }, [requireAdmin, loading, userId]);
 

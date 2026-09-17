@@ -467,6 +467,7 @@ function LeadershipTab({ userId, sessionVersion }: { userId: string; sessionVers
   const [ballotSubmitting, setBallotSubmitting] = useState(false);
   const [ballotError, setBallotError] = useState<string | null>(null);
   const [ballotSuccess, setBallotSuccess] = useState(false);
+  const [loadError, setLoadError] = useState(false);
 
   const load = useCallback(async () => {
     if (!userId) { setLoading(false); return; }
@@ -581,7 +582,7 @@ function LeadershipTab({ userId, sessionVersion }: { userId: string; sessionVers
 
   if (loadError) {
     return (
-      <ErrorBanner message="Unable to load active votes. Please try again." onRetry={loadVotes} />
+      <ErrorBanner message="Unable to load leadership data. Please try again." onRetry={load} />
     );
   }
 
