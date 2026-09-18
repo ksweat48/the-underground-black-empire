@@ -53,7 +53,6 @@ export interface EmpireProgressData {
 export interface LeaderboardEntry {
   member_id: string;
   display_name: string | null;
-  email: string;
   city_name: string | null;
   city_slug: string | null;
   founder_number: number | null;
@@ -306,7 +305,6 @@ export async function fetchLeaderboard(limit: number = 50, metroId?: string | nu
     .select(`
       id,
       display_name,
-      email,
       founder_number,
       member_number,
       city_id,
@@ -381,7 +379,6 @@ export async function fetchLeaderboard(limit: number = 50, metroId?: string | nu
     return {
       member_id: m.id,
       display_name: m.display_name,
-      email: m.email,
       city_name: cityData?.name ?? null,
       city_slug: cityData?.slug ?? null,
       founder_number: m.founder_number,
@@ -404,7 +401,7 @@ export async function fetchInfluence(memberId: string): Promise<number> {
 }
 
 export interface MemberDashboardData {
-  email: string;
+  referral_code: string;
   display_name: string | null;
   city_name: string | null;
   city_slug: string | null;
@@ -481,7 +478,7 @@ export async function fetchMemberDashboard(memberId: string): Promise<MemberDash
     .from('members')
     .select(`
       id,
-      email,
+      referral_code,
       display_name,
       founder_number,
       member_number,
@@ -512,7 +509,7 @@ export async function fetchMemberDashboard(memberId: string): Promise<MemberDash
   const city = cityData as { name: string; slug: string; tier: string; population_count: number } | null;
 
   return {
-    email: member.email,
+    referral_code: (member as { referral_code?: string }).referral_code ?? '',
     display_name: member.display_name,
     city_name: city?.name ?? null,
     city_slug: city?.slug ?? null,
@@ -580,7 +577,6 @@ export async function fetchMapData(): Promise<Map<string, StateMapData>> {
 export interface PublicMemberProfile {
   id: string;
   display_name: string | null;
-  email: string;
   founder_number: number | null;
   member_number: number | null;
   city_name: string | null;
@@ -608,7 +604,6 @@ export async function fetchPublicMemberProfile(memberId: string): Promise<Public
     .from('members')
     .select(`
       id,
-      email,
       display_name,
       founder_number,
       member_number,
@@ -660,7 +655,6 @@ export async function fetchPublicMemberProfile(memberId: string): Promise<Public
   return {
     id: member.id,
     display_name: member.display_name,
-    email: member.email,
     founder_number: member.founder_number,
     member_number: (member as { member_number?: number | null }).member_number ?? null,
     city_name: city?.name ?? null,

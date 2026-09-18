@@ -26,7 +26,6 @@ export interface MemberMembership {
   membership_tier: MembershipTierId;
   membership_started_at: string | null;
   display_name: string | null;
-  email: string;
   created_at: string;
 }
 

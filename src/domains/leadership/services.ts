@@ -104,7 +104,7 @@ export async function fetchNominationCandidates(metroId: string | null, currentU
   // Fetch all members in the metro (no opt_in filter — eligibility is automatic)
   const { data: members, error } = await supabase
     .from('members')
-    .select('id, display_name, email, avatar_url, city_id, membership_tier')
+    .select('id, display_name, avatar_url, city_id, membership_tier')
     .in('city_id', cityIds)
     .neq('id', currentUserId);
 
@@ -164,7 +164,6 @@ export async function fetchNominationCandidates(metroId: string | null, currentU
     candidates.push({
       member_id: member.id,
       display_name: member.display_name,
-      email: member.email,
       avatar_url: member.avatar_url,
       influence: influenceValue,
       level,
@@ -256,7 +255,7 @@ export async function fetchFinalists(cycleId: string): Promise<LeadershipFinalis
     .from('leadership_candidates')
     .select(`
       id, member_id, service_statement, nomination_count, influence_at_nomination,
-      member:member_id ( display_name, email, avatar_url )
+      member:member_id ( display_name, avatar_url )
     `)
     .eq('cycle_id', cycleId)
     .order('nomination_count', { ascending: false });
@@ -265,14 +264,13 @@ export async function fetchFinalists(cycleId: string): Promise<LeadershipFinalis
   if (!candidates || candidates.length === 0) return [];
 
   return candidates.map((c) => {
-    const member = (Array.isArray(c.member) ? c.member[0] : c.member) as { display_name: string | null; email: string; avatar_url: string | null } | null;
+    const member = (Array.isArray(c.member) ? c.member[0] : c.member) as { display_name: string | null; avatar_url: string | null } | null;
     const influence = c.influence_at_nomination;
     const level = getLevelFromInfluence(influence).level;
     return {
       id: c.id,
       member_id: c.member_id,
       display_name: member?.display_name ?? null,
-      email: member?.email ?? 'Unknown',
       avatar_url: member?.avatar_url ?? null,
       influence,
       level,
@@ -313,7 +311,7 @@ export async function fetchMetroCouncil(metroId: string | null): Promise<MetroCo
     .from('metro_council')
     .select(`
       member_id, seat_number, vote_count, seated_at,
-      member:member_id ( display_name, email, avatar_url )
+      member:member_id ( display_name, avatar_url )
     `)
     .eq('metro_id', metroId)
     .order('seat_number', { ascending: true });
@@ -324,7 +322,7 @@ export async function fetchMetroCouncil(metroId: string | null): Promise<MetroCo
   const results: MetroCouncilMember[] = [];
 
   for (const c of council) {
-    const member = (Array.isArray(c.member) ? c.member[0] : c.member) as { display_name: string | null; email: string; avatar_url: string | null } | null;
+    const member = (Array.isArray(c.member) ? c.member[0] : c.member) as { display_name: string | null; avatar_url: string | null } | null;
     const { data: influence } = await supabase
       .rpc('get_member_influence', { p_member_id: c.member_id });
     const influenceValue = Number(influence ?? 0);
@@ -335,7 +333,6 @@ export async function fetchMetroCouncil(metroId: string | null): Promise<MetroCo
       seat_number: c.seat_number,
       vote_count: c.vote_count,
       display_name: member?.display_name ?? null,
-      email: member?.email ?? 'Unknown',
       avatar_url: member?.avatar_url ?? null,
       influence: influenceValue,
       level,

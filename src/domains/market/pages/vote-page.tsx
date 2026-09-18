@@ -900,13 +900,13 @@ function LeadershipTab({ userId, sessionVersion }: { userId: string; sessionVers
         ) : nomineeForNomination ? (
           <div className="space-y-4">
             <p className="text-sm text-empire-text-secondary">
-              Do you believe {nomineeForNomination.display_name ?? nomineeForNomination.email.split('@')[0]} would be a strong leader and supporter of the Empire?
+              Do you believe {nomineeForNomination.display_name ?? 'Member'} would be a strong leader and supporter of the Empire?
             </p>
             <div className="flex items-center gap-3 p-3 frame-utility">
               <Avatar member={nomineeForNomination} />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-empire-ivory truncate">
-                  {nomineeForNomination.display_name ?? nomineeForNomination.email.split('@')[0]}
+                  {nomineeForNomination.display_name ?? 'Member'}
                 </p>
                 <p className="text-xs text-empire-text-muted">
                   Level {nomineeForNomination.level} - {nomineeForNomination.influence.toLocaleString()} Influence
@@ -966,7 +966,7 @@ function NominationCard({
           <Avatar member={candidate} />
           <div className="flex-1 min-w-0">
             <h4 className="font-display text-sm font-semibold text-empire-ivory truncate">
-              {candidate.display_name ?? candidate.email.split('@')[0]}
+              {candidate.display_name ?? 'Member'}
             </h4>
             <p className="text-xs text-empire-text-muted">
               Level {candidate.level} - {candidate.influence.toLocaleString()} Influence
@@ -1044,7 +1044,7 @@ function FinalistCard({
               <Avatar member={finalist} />
               <div className="min-w-0">
                 <h4 className="font-display text-sm font-semibold text-empire-ivory truncate">
-                  {finalist.display_name ?? finalist.email.split('@')[0]}
+                  {finalist.display_name ?? 'Member'}
                 </h4>
                 <p className="text-xs text-empire-text-muted">
                   Level {finalist.level} - {finalist.influence.toLocaleString()} Influence - {finalist.nomination_count} nominations
@@ -1071,7 +1071,7 @@ function CouncilCard({ member }: { member: MetroCouncilMember }) {
       </div>
       <div className="flex-1 min-w-0">
         <h4 className="font-display text-sm font-semibold text-empire-ivory truncate">
-          {member.display_name ?? member.email.split('@')[0]}
+          {member.display_name ?? 'Member'}
         </h4>
         <p className="text-xs text-empire-text-muted">
           Level {member.level} - {member.influence.toLocaleString()} Influence
@@ -1087,8 +1087,8 @@ function CouncilCard({ member }: { member: MetroCouncilMember }) {
 
 // ==================== Shared ====================
 
-function Avatar({ member }: { member: { avatar_url: string | null; display_name: string | null; email: string } }) {
-  const name = member.display_name ?? member.email.split('@')[0];
+function Avatar({ member }: { member: { avatar_url: string | null; display_name: string | null } }) {
+  const name = member.display_name ?? 'Member';
   const initials = getInitials(name);
   const [imgError, setImgError] = useState(false);
   useEffect(() => { setImgError(false); }, [member.avatar_url]);

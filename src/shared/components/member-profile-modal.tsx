@@ -174,7 +174,7 @@ function ProfileContent({
   listingUpdates: Record<string, ListingUpdate[]>;
   currentUserId: string | null;
 }) {
-  const displayName = profile.display_name ?? profile.email.split('@')[0];
+  const displayName = profile.display_name ?? 'Member';
   const initials = getInitials(displayName);
   const founderLevel = getLevelFromInfluence(profile.influence);
   const cityTier = profile.city_population_count ? getCityTier(profile.city_population_count) : null;

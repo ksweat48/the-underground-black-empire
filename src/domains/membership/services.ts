@@ -31,7 +31,7 @@ export async function fetchMembershipTiers(): Promise<MembershipTier[]> {
 export async function fetchMyMembership(userId: string): Promise<MemberMembership | null> {
   const { data, error } = await supabase
     .from('members')
-    .select('membership_tier, membership_started_at, display_name, email, created_at')
+    .select('membership_tier, membership_started_at, display_name, created_at')
     .eq('id', userId)
     .maybeSingle();
   if (error) throw error;

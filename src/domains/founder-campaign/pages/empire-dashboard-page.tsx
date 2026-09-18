@@ -231,7 +231,7 @@ export function EmpireDashboardPage() {
   }, []);
 
   const handleShare = useCallback(async () => {
-    const code = data?.email ?? '';
+    const code = data?.referral_code ?? '';
     const link = `${window.location.origin}/auth/sign-up?ref=${code}`;
     const shareData = {
       title: 'The Underground Black Empire',
@@ -247,7 +247,7 @@ export function EmpireDashboardPage() {
         setTimeout(() => setShareCopied(false), 2000);
       } catch { /* clipboard unavailable */ }
     }
-  }, [data?.email]);
+  }, [data?.referral_code]);
 
   const loadDashboard = useCallback(() => {
     if (!memberId) { setLoading(false); return; }
@@ -562,7 +562,7 @@ export function EmpireDashboardPage() {
         onClose={() => setShowInviteModal(false)}
         title="Invite Members"
       >
-        <InviteContent referralCode={data?.email ?? ''} />
+        <InviteContent referralCode={data?.referral_code ?? ''} />
       </GlassModal>
 
       {/* Member Profile Popup (from feed card click) */}

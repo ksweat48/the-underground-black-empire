@@ -18,7 +18,6 @@ export interface LeadershipCycle {
 export interface NominationCandidate {
   member_id: string;
   display_name: string | null;
-  email: string;
   avatar_url: string | null;
   influence: number;
   level: number;
@@ -32,7 +31,6 @@ export interface LeadershipFinalist {
   id: string;
   member_id: string;
   display_name: string | null;
-  email: string;
   avatar_url: string | null;
   influence: number;
   level: number;
@@ -45,7 +43,6 @@ export interface MetroCouncilMember {
   seat_number: number;
   vote_count: number;
   display_name: string | null;
-  email: string;
   avatar_url: string | null;
   influence: number;
   level: number;

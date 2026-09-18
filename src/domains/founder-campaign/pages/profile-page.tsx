@@ -78,7 +78,6 @@ import {
 
 interface MemberProfile {
   display_name: string | null;
-  email: string;
   founder_number: number | null;
   member_number: number | null;
   city_name: string | null;
@@ -332,7 +331,7 @@ export function ProfilePage() {
 
   const cityTier: CityTierName = member.city_population_count ? getCityTier(member.city_population_count) : 'group';
   const founderLevel = getLevelFromInfluence(influence);
-  const initials = getInitials(member.display_name || member.email);
+  const initials = getInitials(member.display_name || 'Member');
   const referralLink = `${window.location.origin}/auth/sign-up?ref=${referralCode || 'PENDING'}`;
 
   const membershipTier: MembershipTierId = myMembership?.membership_tier ?? 'white';
@@ -555,7 +554,7 @@ export function ProfilePage() {
           ) : (
             <div className="flex gap-3 overflow-x-auto scrollbar-none pb-1 -mx-1 px-1">
               {leaderboardPreview.map((entry, idx) => {
-                const name = entry.display_name ?? entry.email.split('@')[0];
+                const name = entry.display_name ?? 'Member';
                 const initials = getInitials(name);
                 return (
                   <button
@@ -1006,7 +1005,7 @@ export function ProfilePage() {
             </button>
             <div className="min-w-0">
               <h3 className="font-display text-lg font-bold text-ink-100 truncate">{member.display_name || 'Member'}</h3>
-              <p className="text-xs text-ink-400 truncate">{member.email}</p>
+              <p className="text-xs text-ink-400 truncate">{session?.user.email ?? ''}</p>
             </div>
           </div>
 
@@ -1519,7 +1518,7 @@ function getInitials(name: string): string {
 async function fetchMemberProfile(memberId: string): Promise<MemberProfile | null> {
   const { data: member, error: memberError } = await supabase
     .from('members')
-    .select('id, email, display_name, founder_number, member_number, city_id, ethnic_identity, ethnic_identity_detail, gender, gender_detail, date_of_birth, support_role, support_role_detail, occupation, avatar_url')
+    .select('id, display_name, founder_number, member_number, city_id, ethnic_identity, ethnic_identity_detail, gender, gender_detail, date_of_birth, support_role, support_role_detail, occupation, avatar_url')
     .eq('id', memberId)
     .maybeSingle();
   if (memberError) throw memberError;
@@ -1542,7 +1541,6 @@ async function fetchMemberProfile(memberId: string): Promise<MemberProfile | nul
 
   return {
     display_name: member.display_name,
-    email: member.email,
     founder_number: member.founder_number,
     member_number: (member as { member_number?: number | null }).member_number ?? null,
     city_name: cityData?.name ?? null,
