@@ -55,7 +55,7 @@ Use separate types, configuration, calculations, database fields, and UI labels 
 
 | Level | Name | Population Required | Tribe Cities Required | Unlocks |
 |---|---|---|---|---|
-| LVL 1 | Outpost | 1,000 | 10 | Archetypes, Marketplace |
+| LVL 1 | Outpost | 1,000 | 10 | Organizations, Marketplace |
 | LVL 2 | Settlement | 5,000 | 20 | City Treasuries, Local Voting |
 | LVL 3 | Village | 25,000 | 30 | Family, City Leadership and Elections |
 | LVL 4 | Province | 50,000 | 40 | Legacy Program, Expanded Treasury Capacity |
@@ -78,7 +78,7 @@ Reach 1,000 members and form 10 Tribe Cities.
 We must gather our people and raise 10 Tribes.
 
 **Unlocks**
-- Archetypes
+- Organizations
 - Marketplace
 
 ---
@@ -195,7 +195,7 @@ This transition is calculated from authoritative backend data.
 
 ### Settlement Unlocks
 
-- Archetypes
+- Organizations
 - Marketplace
 
 ---
@@ -210,13 +210,13 @@ Members choose their primary role and immediately receive tools that allow them 
 
 ### New Features Unlocked
 
-#### Archetype System
+#### Organizations
 
-Members select their role or job within the Empire.
+Members can create and join organizations within the Empire.
 
 #### Marketplace and Contribution Tools
 
-The Marketplace opens at the same time as Archetypes so members can immediately use their roles.
+The Marketplace opens at the same time as Organizations so members can immediately contribute.
 
 ### Village Unlocks
 
@@ -439,7 +439,7 @@ The linear level rate (+0.05/level) keeps unlimited Level progression from creat
 | Civilization | Major Unlocks |
 |---|---|
 | Outpost | Founder Campaign |
-| Settlement | Archetypes and Marketplace |
+| Settlement | Organizations and Marketplace |
 | Village | City Treasury and Local Voting |
 | Province | Family and City Leadership/Elections |
 | Kingdom | Legacy Program and Expanded Treasury |

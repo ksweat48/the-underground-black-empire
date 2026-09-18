@@ -42,5 +42,5 @@ The Underground Black Empire is a modular monolith built on Vite + React + TypeS
 
 ## Future Extension Points
 
-- Post-launch domains (archetypes, market, voting, treasury, elections, merchant guild, legacy) are clean extension points — not built, not stubbed with fake behavior.
+- Post-launch domains (organizations, market, voting, treasury, elections, legacy) are clean extension points — not built, not stubbed with fake behavior.
 - Each new domain follows the same structure: types, services, queries, UI.

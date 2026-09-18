@@ -35,19 +35,12 @@ export type Permission =
   | 'admin_view_reports'
   | 'admin_manage_cities'
   | 'admin_manage_founders'
-  | 'admin_assign_xp'
   | 'admin_view_audit_log'
   | 'admin_manage_feature_flags'
-  | 'select_archetype'
   | 'access_market'
   | 'cast_vote'
-  | 'access_treasury'
-  | 'access_legacy'
   | 'run_election'
-  | 'access_merchant_guild'
-  | 'purchase_voting_credits'
   | 'verify_members'
-  | 'national_empire_actions'
   | 'publish_news'
   | 'admin_manage_correspondents';
 
@@ -135,7 +128,6 @@ export const ROLE_PERMISSIONS: Record<RoleKey, RoleDefinition> = {
       'admin_view_reports',
       'admin_manage_cities',
       'admin_manage_founders',
-      'admin_assign_xp',
       'admin_view_audit_log',
       'admin_manage_feature_flags',
     ],

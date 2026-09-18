@@ -235,7 +235,7 @@ export const whitePaperSections: WhitePaperSection[] = [
           'Business and service listings',
           'Community news',
           'Local events',
-          'Archetypes and Influence',
+          'Organizations and Influence',
           'City quests and Empire initiatives',
           'Qualified voting opportunities',
           'Treasury information',

@@ -30,7 +30,7 @@ export const GUIDE_MISSIONS: Record<EmpireCivilizationName, GuideMissionConfig> 
     mission: 'Reach 1,000 members and form 10 Tribe Cities.',
     missionDetail: 'A city becomes a Tribe when its population reaches 100 people.',
     missionShort: '1K members + 10 Tribe Cities',
-    reward: ['Archetypes', 'Marketplace'],
+    reward: ['Organizations', 'Marketplace'],
     closingLine: 'Gather our people. Raise the first 10 Tribes. Do not let the mission fail.',
     progressTarget: 1000,
     progressLabel: 'Members',

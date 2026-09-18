@@ -32,18 +32,17 @@ These domains are not yet built. They are clean extension points:
 - **Members** — member profiles and status
 - **Cities** (expanded) — full city management, metro regions
 - **Empire Progression** (expanded) — national empire actions
-- **Archetypes** — role selection
-- **XP & Influence** (expanded) — full XP ledger with edge function awards
+- **Organizations** — organization listings and community building
+- **Influence** (expanded) — influence ledger with referral and voting awards
 - **Content & Support** — support content system
 - **Market Listings** — buy/sell/trade
 - **Events & Programs** — events and community programs
-- **Voting** — local voting with paid voting credits
+- **Voting** — local voting with voting credits
 - **City Treasuries** — treasury fund management
 - **Empire Reserve** — empire-level reserve
 - **Legacy Program** — legacy benefits (NEVER described as guaranteed insurance)
 - **Governance & Elections** — city/metro leadership elections
 - **Quests & Challenges** — expanded mission system
-- **Merchant's Guild** — guild transactions
 - **Rankings** — expanded leaderboard system
 - **Notifications** — batched notification system
 - **Verification & Trust** — verified member status

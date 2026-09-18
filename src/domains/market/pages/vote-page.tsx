@@ -168,10 +168,6 @@ function InitiativesTab({ userId, sessionVersion }: { userId: string; sessionVer
     }
   }, []);
 
-  useEffect(() => { loadVotes(); }, [loadVotes, sessionVersion]);
-  useEffect(() => { loadVotingInfo(); }, [loadVotingInfo, sessionVersion]);
-  useEffect(() => { loadOrgCandidates(); }, [loadOrgCandidates, sessionVersion]);
-
   const loadVotingInfo = useCallback(async () => {
     if (!userId) return;
     try {
@@ -188,6 +184,7 @@ function InitiativesTab({ userId, sessionVersion }: { userId: string; sessionVer
 
   useEffect(() => { loadVotes(); }, [loadVotes, sessionVersion]);
   useEffect(() => { loadVotingInfo(); }, [loadVotingInfo, sessionVersion]);
+  useEffect(() => { loadOrgCandidates(); }, [loadOrgCandidates, sessionVersion]);
 
   const handleOpenVote = (vote: Vote) => {
     setSelectedVote(vote);

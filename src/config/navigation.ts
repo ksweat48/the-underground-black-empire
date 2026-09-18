@@ -16,7 +16,6 @@ export interface NavItem {
   requiresAuth: boolean;
   featureFlag?: string;
   adminOnly?: boolean;
-  locked?: boolean;
 }
 
 export interface NavSection {
@@ -65,19 +64,6 @@ export const NAV_SECTIONS: NavSection[] = [
       },
     ],
   },
-  {
-    title: 'Coming Soon',
-    items: [
-      {
-        label: 'Archetypes',
-        path: '/archetypes',
-        icon: Shield,
-        description: 'Choose your role (locked)',
-        requiresAuth: false,
-        locked: true,
-      },
-    ],
-  },
 ];
 
 export const ADMIN_NAV_ITEMS: NavItem[] = [
@@ -91,9 +77,3 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
   },
 ];
 
-export const FOOTER_LINKS = [
-  { label: 'About', path: '/about' },
-  { label: 'Support', path: '/support' },
-  { label: 'Terms', path: '/terms' },
-  { label: 'Privacy', path: '/privacy' },
-] as const;

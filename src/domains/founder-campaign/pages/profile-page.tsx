@@ -15,8 +15,6 @@ import {
   Users,
   Star,
   Share2,
-  FileText,
-
   Settings,
   TrendingUp,
   Camera,
@@ -42,7 +40,6 @@ import {
   type LeaderboardEntry,
 } from '@/domains/founder-campaign/services';
 import { fetchVotingPower } from '@/domains/market/services';
-import { FOOTER_LINKS } from '@/config/navigation';
 import { APP_CONFIG } from '@/config/app';
 import { Link, useNavigate } from 'react-router-dom';
 import { cn } from '@/shared/cn';
@@ -852,17 +849,6 @@ export function ProfilePage() {
           className="fixed w-56 rounded-xl border border-white/20 p-2 space-y-0.5 shadow-2xl shadow-black/60 z-[100]"
           style={{ top: menuPos.top, right: menuPos.right, backgroundColor: '#082916' }}
         >
-          {FOOTER_LINKS.map((link) => (
-            <Link
-              key={link.path}
-              to={link.path}
-              className="flex w-full items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-emerald-50 hover:text-white hover:bg-emerald-700/60 transition-colors"
-              onClick={() => setShowMenu(false)}
-            >
-              <FileText className="w-3.5 h-3.5 flex-shrink-0 text-white" />
-              {link.label}
-            </Link>
-          ))}
           <a
             href={`mailto:${APP_CONFIG.supportEmail}`}
             className="flex w-full items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-emerald-50 hover:text-white hover:bg-emerald-700/60 transition-colors"
