@@ -712,6 +712,19 @@ function FeedItemRow({ item, onClick }: { item: CommunityFeedItem; onClick?: () 
         <p className="text-sm text-empire-text-secondary line-clamp-2 leading-snug">
           {item.body}
         </p>
+        {item.image_url && (
+          <div className="relative w-full mt-2 rounded-lg overflow-hidden border border-empire-gold/10 bg-ink-900/30">
+            <img
+              src={item.image_url}
+              alt=""
+              className="w-full max-h-[280px] object-cover"
+              loading="lazy"
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).style.display = 'none';
+              }}
+            />
+          </div>
+        )}
         <div className="flex items-center gap-1 mt-1">
           <Clock className="w-2.5 h-2.5 text-empire-text-muted" />
           <span className="text-[10px] text-empire-text-muted">{formatTimeAgo(item.created_at)}</span>
