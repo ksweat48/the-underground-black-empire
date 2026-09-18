@@ -1107,6 +1107,16 @@ export function ProfilePage() {
                     className="input-field cursor-pointer"
                   />
                 </div>
+                <div>
+                  <label htmlFor="edit-occupation" className="label-field">
+                    Occupation <span className="text-ink-500">(optional)</span>
+                  </label>
+                  <ProfessionAutocomplete
+                    value={editOccupation}
+                    onChange={setEditOccupation}
+                    placeholder="Start typing your occupation"
+                  />
+                </div>
                 <SupportRoleSelector
                   selected={editSupportRole}
                   detail={editSupportRoleDetail}
@@ -1118,16 +1128,6 @@ export function ProfilePage() {
                   onDetailChange={setEditSupportRoleDetail}
                   error={null}
                 />
-                <div>
-                  <label htmlFor="edit-occupation" className="label-field">
-                    Occupation <span className="text-ink-500">(optional)</span>
-                  </label>
-                  <ProfessionAutocomplete
-                    value={editOccupation}
-                    onChange={setEditOccupation}
-                    placeholder="Start typing your occupation"
-                  />
-                </div>
                 {editIdentityError && (
                   <p className="text-sm text-crimson-300 px-1">{editIdentityError}</p>
                 )}
