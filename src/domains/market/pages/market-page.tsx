@@ -8,6 +8,7 @@ import {
   Wrench,
   CalendarDays,
   Heart,
+  HeartHandshake,
   MessageCircle,
   MapPin,
   BadgeCheck,
@@ -28,16 +29,20 @@ import {
   fetchEvents,
   fetchMemberCityInfo,
   fetchCityIdsInMetro,
+  fetchOrganizations,
   toggleListingSave,
+  toggleOrganizationSave,
   type MarketListing,
   type CommunityFeedItem,
   type MarketEvent,
   type ListingCategory,
+  type Organization,
 } from '@/domains/market/services';
+import { ORG_TYPE_LABELS } from '@/domains/market/types';
 import { PLACEHOLDER_LISTINGS, PLACEHOLDER_EVENTS, PLACEHOLDER_FEED } from '@/domains/market/placeholder-data';
 import { ErrorBanner } from '@/shared/components/error-banner';
 
-type CategoryFilter = 'feed' | 'market' | ListingCategory;
+type CategoryFilter = 'feed' | 'market' | ListingCategory | 'organizations';
 type ScopeFilter = 'local' | 'empire';
 
 const CATEGORY_CONFIG: Record<CategoryFilter, { label: string; icon: typeof Store }> = {
@@ -45,6 +50,7 @@ const CATEGORY_CONFIG: Record<CategoryFilter, { label: string; icon: typeof Stor
   market: { label: 'Market', icon: Store },
   products: { label: 'Products', icon: Package },
   services: { label: 'Services', icon: Wrench },
+  organizations: { label: 'Organizations', icon: HeartHandshake },
   events: { label: 'Events', icon: CalendarDays },
 };
 
@@ -67,12 +73,15 @@ export function MarketPage() {
   const [listings, setListings] = useState<MarketListing[]>([]);
   const [feed, setFeed] = useState<CommunityFeedItem[]>([]);
   const [events, setEvents] = useState<MarketEvent[]>([]);
+  const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [loading, setLoading] = useState(true);
   const [feedLoading, setFeedLoading] = useState(true);
   const [eventsLoading, setEventsLoading] = useState(true);
+  const [orgsLoading, setOrgsLoading] = useState(true);
   const [listingsError, setListingsError] = useState(false);
   const [feedError, setFeedError] = useState(false);
   const [eventsError, setEventsError] = useState(false);
+  const [orgsError, setOrgsError] = useState(false);
 
   useEffect(() => {
     if (!userId) return;
@@ -154,6 +163,33 @@ export function MarketPage() {
   useEffect(() => { loadFeed(); }, [loadFeed]);
   useEffect(() => { loadEvents(); }, [loadEvents]);
 
+  const loadOrganizations = useCallback(async () => {
+    if (!cityInfo.cityId) { setOrgsLoading(false); return; }
+    setOrgsLoading(true);
+    setOrgsError(false);
+    try {
+      let metroIds: string[] = [];
+      if (scope === 'local' && cityInfo.metroId) {
+        metroIds = await fetchCityIdsInMetro(cityInfo.metroId);
+      }
+      const data = await fetchOrganizations({
+        cityId: scope === 'local' ? cityInfo.cityId : undefined,
+        metroCityIds: scope === 'local' ? metroIds : undefined,
+        search,
+        limit: 50,
+        currentUserId: userId,
+      });
+      setOrganizations(data);
+    } catch {
+      setOrganizations([]);
+      setOrgsError(true);
+    } finally {
+      setOrgsLoading(false);
+    }
+  }, [cityInfo.cityId, cityInfo.metroId, scope, search, userId]);
+
+  useEffect(() => { loadOrganizations(); }, [loadOrganizations]);
+
   const handleSearch = () => {
     setSearch(searchInput.trim());
   };
@@ -202,7 +238,7 @@ export function MarketPage() {
   }, [feed]);
 
   const featuredListings = useMemo(() => {
-    if (category === 'feed' || category === 'events') return [];
+    if (category === 'feed' || category === 'events' || category === 'organizations') return [];
     const source = category === 'market'
       ? displayListings
       : displayListings.filter((l) => l.category === category);
@@ -210,7 +246,7 @@ export function MarketPage() {
   }, [displayListings, category]);
 
   const filteredListings = useMemo(() => {
-    if (category === 'feed' || category === 'events') return [];
+    if (category === 'feed' || category === 'events' || category === 'organizations') return [];
     if (category === 'market') return displayListings;
     return displayListings.filter((l) => l.category === category);
   }, [displayListings, category]);
@@ -360,6 +396,51 @@ export function MarketPage() {
           </>
         )}
 
+        {/* ==================== ORGANIZATIONS VIEW ==================== */}
+        {category === 'organizations' && (
+          <section className="animate-fade-up" style={{ animationDelay: '150ms' }}>
+            <div className="flex items-center gap-1.5 mb-2">
+              <HeartHandshake className="w-3.5 h-3.5 text-empire-gold" />
+              <h2 className="font-display text-[10px] font-semibold text-empire-ivory uppercase tracking-wider">Organizations</h2>
+            </div>
+            {orgsLoading ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="w-5 h-5 text-empire-text-muted animate-spin" />
+              </div>
+            ) : orgsError ? (
+              <ErrorBanner message="Unable to load organizations." onRetry={loadOrganizations} />
+            ) : organizations.length === 0 ? (
+              <EmptyState
+                icon={HeartHandshake}
+                title="No organizations yet"
+                description="Be the first to list a community organization or initiative."
+                actionLabel="List an Organization"
+                onAction={() => navigate('/market/create/organization')}
+              />
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {organizations.map((org) => (
+                  <OrganizationCard
+                    key={org.id}
+                    org={org}
+                    onClick={() => navigate(`/market/organization/${org.id}`)}
+                    onToggleSave={(orgId, currentlySaved) => {
+                      setOrganizations((prev) =>
+                        prev.map((o) =>
+                          o.id === orgId
+                            ? { ...o, is_saved: !currentlySaved, save_count: Math.max(0, o.save_count + (currentlySaved ? -1 : 1)) }
+                            : o
+                        )
+                      );
+                      if (userId) toggleOrganizationSave(orgId, userId, currentlySaved).catch(() => {});
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+        )}
+
         {/* ==================== EVENTS VIEW ==================== */}
         {category === 'events' && (
           <section className="animate-fade-up" style={{ animationDelay: '150ms' }}>
@@ -392,7 +473,7 @@ export function MarketPage() {
         )}
 
         {/* ==================== MARKET / PRODUCTS / SERVICES VIEWS ==================== */}
-        {category !== 'feed' && category !== 'events' && (
+        {category !== 'feed' && category !== 'events' && category !== 'organizations' && (
           <>
             {/* Featured horizontal scroll */}
             <section className="animate-fade-up" style={{ animationDelay: '150ms' }}>
@@ -774,6 +855,104 @@ function EmptyState({
           {actionLabel}
         </button>
       )}
+    </div>
+  );
+}
+
+// ==================== Organization Card ====================
+
+function OrganizationCard({ org, onClick, onToggleSave }: { org: Organization; onClick: () => void; onToggleSave?: (orgId: string, currentlySaved: boolean) => void }) {
+  const goalNum = org.funding_goal || 0;
+  const raisedNum = org.total_raised || 0;
+  const progressPct = goalNum > 0 ? Math.min(100, (raisedNum / goalNum) * 100) : 0;
+
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={onClick}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') onClick();
+      }}
+      className="frame-intel p-0 overflow-hidden text-left transition-all duration-200 hover:border-empire-gold/25 group active:scale-[0.99] cursor-pointer"
+    >
+      {/* Image or placeholder */}
+      <div className="relative h-32 overflow-hidden bg-ink-800/10">
+        {org.image_url ? (
+          <img src={org.image_url} alt={org.name} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+        ) : (
+          <div className="flex items-center justify-center w-full h-full">
+            <HeartHandshake className="w-8 h-8 text-empire-text-muted/30" />
+          </div>
+        )}
+        {org.is_verified && (
+          <div className="absolute top-2 right-2">
+            <BadgeCheck className="w-4 h-4 text-empire-success" />
+          </div>
+        )}
+        {!org.is_verified && org.status === 'in_review' && (
+          <div className="absolute top-2 right-2 flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-500/90 backdrop-blur-sm border border-amber-400/20">
+            <ShieldAlert className="w-3 h-3 text-amber-900" />
+            <span className="text-[8px] font-semibold text-amber-900">In Review</span>
+          </div>
+        )}
+        <div className="absolute bottom-2 left-2">
+          <span className="badge-gold text-[8px] py-0.5 px-1.5">{ORG_TYPE_LABELS[org.org_type]}</span>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="p-3 space-y-2">
+        <h3 className="font-display text-sm font-semibold text-empire-ivory leading-tight line-clamp-1">{org.name}</h3>
+        <p className="text-xs text-empire-text-muted line-clamp-2">{org.description}</p>
+
+        {/* Fundraising progress bar */}
+        <div className="space-y-1">
+          <div className="flex items-center justify-between text-[10px]">
+            <span className="font-semibold text-emerald-400">${raisedNum.toLocaleString()}</span>
+            <span className="text-empire-text-muted">of ${goalNum.toLocaleString()}</span>
+          </div>
+          <div className="h-1.5 rounded-full bg-ink-700/30 overflow-hidden">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-emerald-600 to-emerald-400 transition-all duration-500"
+              style={{ width: `${progressPct}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-between pt-1">
+          <div className="flex items-center gap-2 text-[10px] text-empire-text-muted">
+            {org.city_name && (
+              <span className="flex items-center gap-0.5">
+                <MapPin className="w-2.5 h-2.5" />
+                {org.city_state ? `${org.city_name}, ${org.city_state}` : org.city_name}
+              </span>
+            )}
+            <span className="flex items-center gap-0.5">
+              <Heart className="w-2.5 h-2.5" />
+              {org.like_count}
+            </span>
+          </div>
+          {onToggleSave && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleSave(org.id, org.is_saved ?? false);
+              }}
+              className={cn(
+                'flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium transition-all',
+                org.is_saved
+                  ? 'bg-empire-gold/10 text-empire-gold border border-empire-gold/20'
+                  : 'frame-utility text-empire-text-muted hover:text-empire-ivory'
+              )}
+            >
+              <HeartHandshake className="w-3 h-3" />
+              {org.is_saved ? 'Saved' : 'Save'}
+            </button>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

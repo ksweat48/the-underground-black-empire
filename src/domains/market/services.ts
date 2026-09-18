@@ -16,6 +16,11 @@ import type {
   ListingForReview,
   ReviewAction,
   UpdateType,
+  Organization,
+  OrganizationComment,
+  CreateOrganizationInput,
+  OrganizationVoteCandidate,
+  OrgType,
 } from './types';
 
 export type {
@@ -35,6 +40,11 @@ export type {
   ListingForReview,
   ReviewAction,
   UpdateType,
+  Organization,
+  OrganizationComment,
+  CreateOrganizationInput,
+  OrganizationVoteCandidate,
+  OrgType,
 };
 
 // ============================================================
@@ -814,4 +824,296 @@ export async function fetchMemberCityInfo(userId: string): Promise<{ cityId: str
     metroId: cityData?.metro_id ?? null,
     cityName: cityData?.name ?? null,
   };
+}
+
+// ============================================================
+// ORGANIZATIONS
+// ============================================================
+
+export async function fetchOrganizations(params: {
+  cityId?: string;
+  metroCityIds?: string[];
+  search?: string;
+  limit?: number;
+  currentUserId?: string;
+}): Promise<Organization[]> {
+  const { cityId, metroCityIds, search, limit = 50, currentUserId } = params;
+
+  let query = supabase
+    .from('organizations')
+    .select(`
+      *,
+      city:city_id ( name, state )
+    `)
+    .in('status', ['approved', 'in_review'])
+    .order('created_at', { ascending: false })
+    .limit(limit);
+
+  if (cityId && metroCityIds && metroCityIds.length > 0) {
+    query = query.in('city_id', [cityId, ...metroCityIds]);
+  } else if (cityId) {
+    query = query.eq('city_id', cityId);
+  }
+
+  if (search && search.trim()) {
+    query = query.or(`name.ilike.%${search.trim()}%,description.ilike.%${search.trim()}%`);
+  }
+
+  const { data, error } = await query;
+  if (error) throw error;
+
+  const orgIds = (data ?? []).map((r) => r.id);
+
+  const savedSet = new Set<string>();
+  const likedSet = new Set<string>();
+  if (currentUserId && orgIds.length > 0) {
+    const [savedRes, likedRes] = await Promise.all([
+      supabase.from('organization_saves').select('organization_id').eq('member_id', currentUserId).in('organization_id', orgIds),
+      supabase.from('organization_likes').select('organization_id').eq('member_id', currentUserId).in('organization_id', orgIds),
+    ]);
+    if (savedRes.data) for (const row of savedRes.data) savedSet.add(row.organization_id as string);
+    if (likedRes.data) for (const row of likedRes.data) likedSet.add(row.organization_id as string);
+  }
+
+  return (data ?? []).map((row) => {
+    const cityData = (Array.isArray(row.city) ? row.city[0] : row.city) as { name: string; state: string } | null;
+    return {
+      id: row.id,
+      owner_id: row.owner_id,
+      city_id: row.city_id,
+      name: row.name,
+      org_type: row.org_type,
+      description: row.description,
+      funding_goal: Number(row.funding_goal) ?? 0,
+      total_raised: Number(row.total_raised) ?? 0,
+      external_url: row.external_url,
+      contact_info: row.contact_info,
+      image_url: row.image_url,
+      status: row.status,
+      is_verified: row.is_verified,
+      like_count: row.like_count,
+      save_count: row.save_count ?? 0,
+      comment_count: row.comment_count,
+      vote_support_total: Number(row.vote_support_total) ?? 0,
+      created_at: row.created_at,
+      updated_at: row.updated_at,
+      city_name: cityData?.name ?? undefined,
+      city_state: cityData?.state ?? undefined,
+      is_saved: savedSet.has(row.id),
+      is_liked: likedSet.has(row.id),
+    } as Organization;
+  });
+}
+
+export async function fetchOrganizationById(id: string, currentUserId?: string): Promise<Organization | null> {
+  const { data, error } = await supabase
+    .from('organizations')
+    .select(`
+      *,
+      city:city_id ( name, state )
+    `)
+    .eq('id', id)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) return null;
+
+  const cityData = (Array.isArray(data.city) ? data.city[0] : data.city) as { name: string; state: string } | null;
+
+  let is_saved = false;
+  let is_liked = false;
+
+  if (currentUserId) {
+    const [saveRes, likeRes] = await Promise.all([
+      supabase.from('organization_saves').select('id').eq('organization_id', id).eq('member_id', currentUserId).maybeSingle(),
+      supabase.from('organization_likes').select('id').eq('organization_id', id).eq('member_id', currentUserId).maybeSingle(),
+    ]);
+    is_saved = !!saveRes.data;
+    is_liked = !!likeRes.data;
+  }
+
+  return {
+    id: data.id,
+    owner_id: data.owner_id,
+    city_id: data.city_id,
+    name: data.name,
+    org_type: data.org_type,
+    description: data.description,
+    funding_goal: Number(data.funding_goal) ?? 0,
+    total_raised: Number(data.total_raised) ?? 0,
+    external_url: data.external_url,
+    contact_info: data.contact_info,
+    image_url: data.image_url,
+    status: data.status,
+    is_verified: data.is_verified,
+    like_count: data.like_count,
+    save_count: data.save_count ?? 0,
+    comment_count: data.comment_count,
+    vote_support_total: Number(data.vote_support_total) ?? 0,
+    created_at: data.created_at,
+    updated_at: data.updated_at,
+    city_name: cityData?.name ?? undefined,
+    city_state: cityData?.state ?? undefined,
+    is_saved,
+    is_liked,
+  } as Organization;
+}
+
+export async function createOrganization(input: CreateOrganizationInput): Promise<Organization> {
+  const { data, error } = await supabase
+    .from('organizations')
+    .insert({
+      city_id: input.city_id,
+      name: input.name,
+      org_type: input.org_type,
+      description: input.description,
+      funding_goal: input.funding_goal,
+      external_url: input.external_url,
+      contact_info: input.contact_info,
+      image_url: input.image_url,
+      status: 'in_review',
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as Organization;
+}
+
+export async function toggleOrganizationLike(orgId: string, userId: string, currentlyLiked: boolean): Promise<boolean> {
+  if (currentlyLiked) {
+    const { error } = await supabase
+      .from('organization_likes')
+      .delete()
+      .eq('organization_id', orgId)
+      .eq('member_id', userId);
+    if (error) throw error;
+    return false;
+  } else {
+    const { error } = await supabase
+      .from('organization_likes')
+      .insert({ organization_id: orgId, member_id: userId });
+    if (error) throw error;
+    return true;
+  }
+}
+
+export async function toggleOrganizationSave(orgId: string, userId: string, currentlySaved: boolean): Promise<boolean> {
+  if (currentlySaved) {
+    const { error } = await supabase
+      .from('organization_saves')
+      .delete()
+      .eq('organization_id', orgId)
+      .eq('member_id', userId);
+    if (error) throw error;
+    return false;
+  } else {
+    const { error } = await supabase
+      .from('organization_saves')
+      .insert({ organization_id: orgId, member_id: userId });
+    if (error) throw error;
+    return true;
+  }
+}
+
+export async function fetchOrganizationComments(orgId: string): Promise<OrganizationComment[]> {
+  const { data, error } = await supabase
+    .from('organization_comments')
+    .select(`
+      *,
+      author:member_id ( display_name )
+    `)
+    .eq('organization_id', orgId)
+    .order('created_at', { ascending: true });
+
+  if (error) throw error;
+
+  return (data ?? []).map((row) => {
+    const authorData = (Array.isArray(row.author) ? row.author[0] : row.author) as { display_name: string } | null;
+    return {
+      id: row.id,
+      member_id: row.member_id,
+      organization_id: row.organization_id,
+      body: row.body,
+      created_at: row.created_at,
+      updated_at: row.updated_at,
+      author_name: authorData?.display_name ?? 'Member',
+    } as OrganizationComment;
+  });
+}
+
+export async function createOrganizationComment(orgId: string, body: string): Promise<void> {
+  const { error } = await supabase
+    .from('organization_comments')
+    .insert({ organization_id: orgId, body });
+  if (error) throw error;
+}
+
+export async function fetchTopOrganizationsForVoting(limit: number = 10): Promise<OrganizationVoteCandidate[]> {
+  const { data, error } = await supabase
+    .from('organization_ranking')
+    .select(`
+      id, name, org_type, funding_goal, total_raised, city_id, engagement_score
+    `)
+    .limit(limit);
+
+  if (error) throw error;
+
+  const rows = data ?? [];
+  if (rows.length === 0) return [];
+
+  const cityIds = [...new Set(rows.map((r) => r.city_id).filter(Boolean))] as string[];
+  const { data: cities } = await supabase
+    .from('cities')
+    .select('id, name, state')
+    .in('id', cityIds);
+
+  const cityMap = new Map<string, { name: string; state: string }>();
+  if (cities) {
+    for (const c of cities) {
+      cityMap.set(c.id as string, { name: c.name as string, state: c.state as string });
+    }
+  }
+
+  const orgIds = rows.map((r) => r.id as string);
+  const { data: orgImages } = await supabase
+    .from('organizations')
+    .select('id, image_url')
+    .in('id', orgIds);
+  const imageMap = new Map<string, string | null>();
+  if (orgImages) {
+    for (const o of orgImages) {
+      imageMap.set(o.id as string, (o.image_url as string | null) ?? null);
+    }
+  }
+
+  return rows.map((row) => {
+    const city = cityMap.get(row.city_id as string);
+    return {
+      id: row.id as string,
+      name: row.name as string,
+      org_type: row.org_type as OrgType,
+      funding_goal: Number(row.funding_goal) ?? 0,
+      total_raised: Number(row.total_raised) ?? 0,
+      city_name: city?.name,
+      city_state: city?.state,
+      engagement_score: Number(row.engagement_score) ?? 0,
+      image_url: imageMap.get(row.id as string) ?? null,
+    } as OrganizationVoteCandidate;
+  });
+}
+
+export async function recordOrgVoteSupport(
+  organizationId: string,
+  voteId: string,
+  effectiveWeight: number
+): Promise<number> {
+  const { data, error } = await supabase.rpc('record_organization_vote_support', {
+    p_organization_id: organizationId,
+    p_vote_id: voteId,
+    p_effective_weight: effectiveWeight,
+  });
+
+  if (error) throw error;
+  return Number(data) ?? 0;
 }

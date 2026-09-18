@@ -22,6 +22,8 @@ const CreateUpdatePage = lazy(() => import('@/domains/market/pages/create-update
 const EditListingPage = lazy(() => import('@/domains/market/pages/edit-listing-page'));
 const CreateNewsPage = lazy(() => import('@/domains/market/pages/create-news-page'));
 const CreateEventPage = lazy(() => import('@/domains/market/pages/create-event-page'));
+const CreateOrganizationPage = lazy(() => import('@/domains/market/pages/create-organization-page'));
+const OrganizationDetailPage = lazy(() => import('@/domains/market/pages/organization-detail-page'));
 const VotePage = lazy(() => import('@/domains/market/pages/vote-page'));
 const MembershipPage = lazy(() => import('@/domains/membership/pages/membership-page'));
 
@@ -109,6 +111,22 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <CreateEventPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/market/create/organization"
+                element={
+                  <ProtectedRoute>
+                    <CreateOrganizationPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/market/organization/:id"
+                element={
+                  <ProtectedRoute>
+                    <OrganizationDetailPage />
                   </ProtectedRoute>
                 }
               />

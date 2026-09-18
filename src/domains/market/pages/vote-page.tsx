@@ -13,6 +13,8 @@ import {
   Scale,
   Landmark,
   Crown,
+  HeartHandshake,
+  TrendingUp,
 } from 'lucide-react';
 import { Layout } from '@/shared/components/layout';
 import { GlassModal } from '@/shared/components/glass-modal';
@@ -26,8 +28,11 @@ import {
   fetchVotingCredits,
   fetchVotingPower,
   fetchMemberCityInfo,
+  fetchTopOrganizationsForVoting,
   type Vote,
+  type OrganizationVoteCandidate,
 } from '@/domains/market/services';
+import { ORG_TYPE_LABELS } from '@/domains/market/types';
 import { BALLOT_CREDIT_CAP } from '@/config/progression-rules';
 import {
   fetchActiveCycle,
@@ -121,6 +126,8 @@ function TabButton({
 
 function InitiativesTab({ userId, sessionVersion }: { userId: string; sessionVersion: number }) {
   const [votes, setVotes] = useState<Vote[]>([]);
+  const [orgCandidates, setOrgCandidates] = useState<OrganizationVoteCandidate[]>([]);
+  const [orgsLoading, setOrgsLoading] = useState(true);
   const [loading, setLoading] = useState(true);
   const [selectedVote, setSelectedVote] = useState<Vote | null>(null);
   const [selectedChoice, setSelectedChoice] = useState<string>('');
@@ -148,6 +155,22 @@ function InitiativesTab({ userId, sessionVersion }: { userId: string; sessionVer
       setLoading(false);
     }
   }, [userId]);
+
+  const loadOrgCandidates = useCallback(async () => {
+    setOrgsLoading(true);
+    try {
+      const data = await fetchTopOrganizationsForVoting(6);
+      setOrgCandidates(data);
+    } catch {
+      setOrgCandidates([]);
+    } finally {
+      setOrgsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { loadVotes(); }, [loadVotes, sessionVersion]);
+  useEffect(() => { loadVotingInfo(); }, [loadVotingInfo, sessionVersion]);
+  useEffect(() => { loadOrgCandidates(); }, [loadOrgCandidates, sessionVersion]);
 
   const loadVotingInfo = useCallback(async () => {
     if (!userId) return;
@@ -237,6 +260,88 @@ function InitiativesTab({ userId, sessionVersion }: { userId: string; sessionVer
           </div>
         </div>
       </div>
+
+      {/* Organization candidates for voting */}
+      <section className="animate-fade-up" style={{ animationDelay: '50ms' }}>
+        <div className="flex items-center gap-2 mb-3">
+          <HeartHandshake className="w-4 h-4 text-plum-400" />
+          <h2 className="font-display text-sm font-semibold text-empire-ivory uppercase tracking-wider">
+            Top Organizations
+          </h2>
+        </div>
+        {orgsLoading ? (
+          <div className="flex justify-center py-6">
+            <Loader2 className="w-5 h-5 text-empire-text-muted animate-spin" />
+          </div>
+        ) : orgCandidates.length === 0 ? (
+          <div className="frame-utility p-4 text-center">
+            <p className="text-xs text-empire-text-muted">
+              No organizations have been listed yet. Organizations with the most engagement will appear here as vote candidates.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {orgCandidates.map((org) => {
+              const goalNum = org.funding_goal || 0;
+              const raisedNum = org.total_raised || 0;
+              const progressPct = goalNum > 0 ? Math.min(100, (raisedNum / goalNum) * 100) : 0;
+              return (
+                <div
+                  key={org.id}
+                  className="frame-utility p-3"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="shrink-0 w-10 h-10 rounded-lg overflow-hidden bg-ink-800/10">
+                      {org.image_url ? (
+                        <img src={org.image_url} alt={org.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="flex items-center justify-center w-full h-full">
+                          <HeartHandshake className="w-5 h-5 text-empire-text-muted/30" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0 space-y-1.5">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <h3 className="font-display text-sm font-semibold text-empire-ivory line-clamp-1">{org.name}</h3>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <span className="badge-gold text-[8px] py-0.5 px-1.5">{ORG_TYPE_LABELS[org.org_type]}</span>
+                            {org.city_name && (
+                              <span className="text-[10px] text-empire-text-muted">{org.city_state ? `${org.city_name}, ${org.city_state}` : org.city_name}</span>
+                            )}
+                          </div>
+                        </div>
+                        <span className="flex items-center gap-1 text-[10px] text-empire-text-muted shrink-0">
+                          <TrendingUp className="w-3 h-3" />
+                          {org.engagement_score.toFixed(0)}
+                        </span>
+                      </div>
+                      {/* Fundraising progress */}
+                      <div className="space-y-0.5">
+                        <div className="flex items-center justify-between text-[10px]">
+                          <span className="font-semibold text-emerald-400">${raisedNum.toLocaleString()}</span>
+                          <span className="text-empire-text-muted">of ${goalNum.toLocaleString()}</span>
+                        </div>
+                        <div className="h-1.5 rounded-full bg-ink-700/30 overflow-hidden">
+                          <div
+                            className="h-full rounded-full bg-gradient-to-r from-emerald-600 to-emerald-400"
+                            style={{ width: `${progressPct}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+            {activeVotes.length === 0 && (
+              <p className="text-[10px] text-empire-text-muted text-center pt-1">
+                These organizations will be available for voting when a voting round opens. The most engaged organizations rise to the top.
+              </p>
+            )}
+          </div>
+        )}
+      </section>
 
       {/* Active votes */}
       <section className="animate-fade-up" style={{ animationDelay: '50ms' }}>

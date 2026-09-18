@@ -5,12 +5,13 @@ import {
   MessageSquarePlus,
   Newspaper,
   CalendarPlus,
+  HeartHandshake,
   X,
 } from 'lucide-react';
 import { useAuth } from '@/domains/identity/auth-context';
 import { supabase } from '@/shared/supabase-client';
 
-type CreateAction = 'listing' | 'update' | 'news' | 'event';
+type CreateAction = 'listing' | 'update' | 'news' | 'event' | 'organization';
 
 interface CreateSheetContextValue {
   openSheet: () => void;
@@ -54,6 +55,13 @@ const CREATE_GROUPS: CreateOption[][] = [
       description: 'Showcase your business, products, or services with external links for purchasing.',
       icon: Building2,
       path: '/market/create/listing',
+    },
+    {
+      key: 'organization',
+      label: 'List an Organization',
+      description: 'List a community organization or initiative for support, engagement, and voting.',
+      icon: HeartHandshake,
+      path: '/market/create/organization',
     },
     {
       key: 'event',

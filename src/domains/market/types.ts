@@ -197,3 +197,84 @@ export interface CreateEventInput {
   external_url: string;
   image_url: string | null;
 }
+
+// ============================================================
+// ORGANIZATIONS
+// ============================================================
+
+export type OrgType =
+  | 'nonprofit'
+  | 'community_organization'
+  | 'mission_based'
+  | 'initiative'
+  | 'foundation'
+  | 'other';
+
+export const ORG_TYPE_LABELS: Record<OrgType, string> = {
+  nonprofit: 'Nonprofit',
+  community_organization: 'Community Organization',
+  mission_based: 'Mission-Based Organization',
+  initiative: 'Initiative',
+  foundation: 'Foundation',
+  other: 'Other',
+};
+
+export interface Organization {
+  id: string;
+  owner_id: string;
+  city_id: string;
+  name: string;
+  org_type: OrgType;
+  description: string;
+  funding_goal: number;
+  total_raised: number;
+  external_url: string;
+  contact_info: string;
+  image_url: string | null;
+  status: ListingStatus;
+  is_verified: boolean;
+  like_count: number;
+  save_count: number;
+  comment_count: number;
+  vote_support_total: number;
+  created_at: string;
+  updated_at: string;
+  city_name?: string;
+  city_state?: string;
+  is_saved?: boolean;
+  is_liked?: boolean;
+  engagement_score?: number;
+}
+
+export interface OrganizationComment {
+  id: string;
+  member_id: string;
+  organization_id: string;
+  body: string;
+  created_at: string;
+  updated_at: string;
+  author_name?: string;
+}
+
+export interface CreateOrganizationInput {
+  city_id: string;
+  name: string;
+  org_type: OrgType;
+  description: string;
+  funding_goal: number;
+  external_url: string;
+  contact_info: string;
+  image_url: string | null;
+}
+
+export interface OrganizationVoteCandidate {
+  id: string;
+  name: string;
+  org_type: OrgType;
+  funding_goal: number;
+  total_raised: number;
+  city_name?: string;
+  city_state?: string;
+  engagement_score: number;
+  image_url: string | null;
+}
