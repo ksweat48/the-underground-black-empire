@@ -40,7 +40,7 @@ export const OCCUPATIONS: OccupationEntry[] = [
   { label: 'Military Personnel', subs: ['Army', 'Navy', 'Air Force', 'Marines', 'Coast Guard', 'National Guard'] },
   { label: 'Pilot', subs: ['Commercial Pilot', 'Private Pilot', 'Helicopter Pilot', 'Air Traffic Controller'] },
   { label: 'Barista', subs: ['Coffee Shop Barista', 'Shift Supervisor', 'Coffee Roaster'] },
-  { label: 'Hair Stylist', subs: ['Hair Stylist', 'Hair Braider', 'Colorist', 'Barber'] },
+  { label: 'Hair Stylist', subs: ['Hair Braider', 'Colorist', 'Barber'] },
   { label: 'Athlete', subs: ['Professional Athlete', 'College Athlete', 'Golf Pro', 'Tennis Pro', 'Ski Instructor', 'Swim Instructor'] },
   { label: 'Researcher / Scientist', subs: ['Biologist', 'Chemist', 'Physicist', 'Marine Biologist', 'Environmental Scientist', 'Forensic Scientist', 'Geologist', 'Research Scientist'] },
   { label: 'Government Official', subs: ['Mayor', 'City Planner', 'Diplomat', 'Legislative Aide', 'Public Health Worker'] },
@@ -272,6 +272,7 @@ export function ProfessionAutocomplete({
 }: ProfessionAutocompleteProps) {
   const [focused, setFocused] = useState(false);
   const [otherMode, setOtherMode] = useState(false);
+  const [showMainMenu, setShowMainMenu] = useState(false);
   const [expandedOccupation, setExpandedOccupation] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -279,11 +280,11 @@ export function ProfessionAutocomplete({
   const isCustom = value.trim().length > 0 && !PROFESSION_OPTIONS.some((p) => p.toLowerCase() === value.trim().toLowerCase());
 
   const suggestions = useMemo(() => {
+    if (showMainMenu || !value.trim()) return POPULAR_OCCUPATIONS;
     const query = value.trim().toLowerCase();
-    if (!query) return POPULAR_OCCUPATIONS;
     const filtered = PROFESSION_OPTIONS.filter((p) => p.toLowerCase().includes(query));
     return filtered.slice(0, 30);
-  }, [value]);
+  }, [showMainMenu, value]);
 
   const showDropdown = focused && !otherMode && (suggestions.length > 0 || value.trim().length > 0);
 
@@ -313,6 +314,7 @@ export function ProfessionAutocomplete({
   const handleSelect = (occupation: string) => {
     onChange(occupation);
     setFocused(false);
+    setShowMainMenu(false);
     setExpandedOccupation(null);
   };
 
@@ -358,9 +360,14 @@ export function ProfessionAutocomplete({
         value={value}
         onChange={(e) => {
           onChange(e.target.value);
+          setShowMainMenu(false);
           setExpandedOccupation(null);
         }}
-        onFocus={() => setFocused(true)}
+        onFocus={() => {
+          setFocused(true);
+          setShowMainMenu(true);
+          setExpandedOccupation(null);
+        }}
         placeholder={placeholder}
         className="input-field pr-10"
         maxLength={100}
@@ -369,16 +376,17 @@ export function ProfessionAutocomplete({
 
       {showDropdown && (
         <div className="absolute z-50 mt-1 w-full rounded-xl border border-ink-700 bg-ink-900 shadow-xl shadow-black/40 max-h-80 overflow-y-auto scrollbar-thin">
-          {!value.trim() && (
+          {showMainMenu && (
             <div className="px-4 py-2 text-[11px] text-ink-500 border-b border-ink-700/50 sticky top-0 bg-ink-900 z-10">
-              Popular occupations — type to search all {PROFESSION_OPTIONS.length}+
+              Main occupations — type to search all {PROFESSION_OPTIONS.length}+
             </div>
           )}
           {suggestions.map((suggestion) => {
-            const parentName = SUB_TO_PARENT[suggestion.toLowerCase()];
+            const directOccupation = OCCUPATION_MAP[suggestion.toLowerCase()];
+            const parentName = directOccupation ? undefined : SUB_TO_PARENT[suggestion.toLowerCase()];
             const isSubResult = Boolean(parentName);
             const occupationName = parentName ?? suggestion;
-            const occupationData = OCCUPATION_MAP[occupationName.toLowerCase()];
+            const occupationData = directOccupation ?? OCCUPATION_MAP[occupationName.toLowerCase()];
             const hasSubs = Boolean(occupationData?.subs?.length);
             const isExpanded = expandedOccupation === occupationName;
             const isSelected = value === suggestion;
@@ -393,15 +401,16 @@ export function ProfessionAutocomplete({
                 >
                   <button
                     type="button"
-                    onClick={() => handleSelect(suggestion)}
+                    onClick={() => {
+                      if (hasSubs && !isSubResult) {
+                        toggleExpand(occupationName);
+                      } else {
+                        handleSelect(suggestion);
+                      }
+                    }}
                     className="flex-1 min-w-0 px-4 py-2.5 text-left"
                   >
                     <span className="block truncate">{suggestion}</span>
-                    {isSubResult && (
-                      <span className="block text-[10px] text-ink-500 mt-0.5 truncate">
-                        under {parentName}
-                      </span>
-                    )}
                   </button>
                   {hasSubs && !isSubResult && (
                     <button
