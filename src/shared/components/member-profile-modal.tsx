@@ -86,7 +86,6 @@ function getAchievements(profile: PublicMemberProfile, cityTier: string | null):
 const SUPPORT_ROLE_ICONS: Record<string, typeof Briefcase> = {
   supporter: Heart,
   business_owner: Store,
-  professional: Briefcase,
   organization: Building2,
 };
 
@@ -274,7 +273,13 @@ function ProfileContent({
               )}
             </span>
           )}
-          {!profile.ethnic_identity && !profile.gender && !profile.date_of_birth && !profile.support_role && (
+          {profile.occupation && (
+            <span className="px-2 py-0.5 rounded-md bg-gray-100 border border-gray-200 text-xs text-gray-700">
+              <Briefcase className="w-3 h-3 inline mr-1 text-gray-400" />
+              Occupation · {profile.occupation}
+            </span>
+          )}
+          {!profile.ethnic_identity && !profile.gender && !profile.date_of_birth && !profile.support_role && !profile.occupation && (
             <span className="text-xs text-gray-400 italic">No identity details shared</span>
           )}
         </div>

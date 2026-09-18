@@ -599,6 +599,7 @@ export interface PublicMemberProfile {
   date_of_birth: string | null;
   support_role: string | null;
   support_role_detail: string | null;
+  occupation: string | null;
   leadership_opt_in: boolean | null;
 }
 
@@ -621,6 +622,7 @@ export async function fetchPublicMemberProfile(memberId: string): Promise<Public
       date_of_birth,
       support_role,
       support_role_detail,
+      occupation,
       leadership_opt_in
     `)
     .eq('id', memberId)
@@ -679,6 +681,7 @@ export async function fetchPublicMemberProfile(memberId: string): Promise<Public
     date_of_birth: (member as { date_of_birth?: string | null }).date_of_birth ?? null,
     support_role: (member as { support_role?: string | null }).support_role ?? null,
     support_role_detail: (member as { support_role_detail?: string | null }).support_role_detail ?? null,
+    occupation: (member as { occupation?: string | null }).occupation ?? null,
     leadership_opt_in: (member as { leadership_opt_in?: boolean | null }).leadership_opt_in ?? null,
   };
 }

@@ -95,6 +95,7 @@ interface MemberProfile {
   date_of_birth: string | null;
   support_role: SupportRole | null;
   support_role_detail: string | null;
+  occupation: string | null;
   avatar_url: string | null;
 }
 
@@ -145,6 +146,7 @@ export function ProfilePage() {
   const [editDob, setEditDob] = useState('');
   const [editSupportRole, setEditSupportRole] = useState<SupportRole | null>(null);
   const [editSupportRoleDetail, setEditSupportRoleDetail] = useState('');
+  const [editOccupation, setEditOccupation] = useState('');
   const [editIdentityError, setEditIdentityError] = useState<string | null>(null);
   const [editIdentitySaving, setEditIdentitySaving] = useState(false);
   const [photoDataUrl, setPhotoDataUrl] = useState<string | null>(null);
@@ -1005,6 +1007,7 @@ export function ProfilePage() {
                       p_support_role: member.support_role,
                       p_support_role_detail: member.support_role_detail,
                       p_avatar_url: avatarUrl,
+                      p_occupation: member.occupation,
                     });
                     if (profileError) throw profileError;
                     setMember((prev) => prev ? { ...prev, avatar_url: avatarUrl } : prev);
@@ -1057,6 +1060,7 @@ export function ProfilePage() {
                     setEditDob(member.date_of_birth ?? '');
                     setEditSupportRole(member.support_role ?? 'supporter');
                     setEditSupportRoleDetail(member.support_role_detail ?? '');
+                    setEditOccupation(member.occupation ?? '');
                     setEditIdentityError(null);
                     setShowIdentityEdit(true);
                   }
@@ -1114,18 +1118,16 @@ export function ProfilePage() {
                   onDetailChange={setEditSupportRoleDetail}
                   error={null}
                 />
-                {editSupportRole === 'professional' && (
-                  <div>
-                    <label htmlFor="edit-profession" className="label-field">
-                      Profession
-                    </label>
-                    <ProfessionAutocomplete
-                      value={editSupportRoleDetail}
-                      onChange={setEditSupportRoleDetail}
-                      placeholder="Start typing your profession"
-                    />
-                  </div>
-                )}
+                <div>
+                  <label htmlFor="edit-occupation" className="label-field">
+                    Occupation <span className="text-ink-500">(optional)</span>
+                  </label>
+                  <ProfessionAutocomplete
+                    value={editOccupation}
+                    onChange={setEditOccupation}
+                    placeholder="Start typing your occupation"
+                  />
+                </div>
                 {editIdentityError && (
                   <p className="text-sm text-crimson-300 px-1">{editIdentityError}</p>
                 )}
@@ -1187,6 +1189,7 @@ export function ProfilePage() {
                         p_support_role: editSupportRole,
                         p_support_role_detail: editSupportRole && editSupportRole !== 'supporter' ? editSupportRoleDetail.trim() : null,
                         p_avatar_url: avatarUrl,
+                        p_occupation: editOccupation.trim() || null,
                       });
                       if (profileError) throw profileError;
                       setMember((prev) => prev ? {
@@ -1198,6 +1201,7 @@ export function ProfilePage() {
                         date_of_birth: editDob || null,
                         support_role: editSupportRole,
                         support_role_detail: editSupportRole && editSupportRole !== 'supporter' ? editSupportRoleDetail.trim() : null,
+                        occupation: editOccupation.trim() || null,
                         avatar_url: avatarUrl,
                       } : prev);
                       setShowIdentityEdit(false);
@@ -1247,6 +1251,13 @@ export function ProfilePage() {
                     <span className="px-2 py-0.5 rounded-md bg-ink-700/40 border border-ink-600/30 text-xs text-ink-200">
                       {SUPPORT_ROLE_LABELS[member.support_role] ?? member.support_role}
                       {member.support_role_detail ? ` — ${member.support_role_detail}` : ''}
+                    </span>
+                  </div>
+                )}
+                {member.occupation && (
+                  <div className="flex flex-wrap gap-1.5">
+                    <span className="px-2 py-0.5 rounded-md bg-ink-700/40 border border-ink-600/30 text-xs text-ink-200">
+                      Occupation — {member.occupation}
                     </span>
                   </div>
                 )}
@@ -1458,7 +1469,7 @@ function getInitials(name: string): string {
 async function fetchMemberProfile(memberId: string): Promise<MemberProfile | null> {
   const { data: member, error: memberError } = await supabase
     .from('members')
-    .select('id, email, display_name, founder_number, member_number, city_id, ethnic_identity, ethnic_identity_detail, gender, gender_detail, date_of_birth, support_role, support_role_detail, avatar_url')
+    .select('id, email, display_name, founder_number, member_number, city_id, ethnic_identity, ethnic_identity_detail, gender, gender_detail, date_of_birth, support_role, support_role_detail, occupation, avatar_url')
     .eq('id', memberId)
     .maybeSingle();
   if (memberError) throw memberError;
@@ -1500,6 +1511,7 @@ async function fetchMemberProfile(memberId: string): Promise<MemberProfile | nul
     date_of_birth: (member as { date_of_birth?: string | null }).date_of_birth ?? null,
     support_role: (member as { support_role?: SupportRole | null }).support_role ?? null,
     support_role_detail: (member as { support_role_detail?: string | null }).support_role_detail ?? null,
+    occupation: (member as { occupation?: string | null }).occupation ?? null,
     avatar_url: (member as { avatar_url?: string | null }).avatar_url ?? null,
   };
 }

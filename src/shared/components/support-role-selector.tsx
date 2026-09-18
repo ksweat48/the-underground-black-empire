@@ -1,6 +1,6 @@
 import { ChevronDown } from 'lucide-react';
 
-export type SupportRole = 'supporter' | 'business_owner' | 'professional' | 'organization';
+export type SupportRole = 'supporter' | 'business_owner' | 'organization';
 
 export const SUPPORT_ROLE_OPTIONS: { value: SupportRole; label: string; description: string; detailLabel: string }[] = [
   {
@@ -13,12 +13,6 @@ export const SUPPORT_ROLE_OPTIONS: { value: SupportRole; label: string; descript
     value: 'business_owner',
     label: 'Business Owner',
     description: 'List your business in the Marketplace',
-    detailLabel: '',
-  },
-  {
-    value: 'professional',
-    label: 'Professional',
-    description: 'Add your profession and services',
     detailLabel: '',
   },
   {

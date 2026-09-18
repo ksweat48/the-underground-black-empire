@@ -8,7 +8,7 @@ function normalizeUrl(raw: string): string {
 }
 
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowRight, Loader2, Store, Briefcase, Building2 } from 'lucide-react';
+import { ArrowRight, Loader2, Store, Building2 } from 'lucide-react';
 import { OnboardingStep } from '@/shared/components/onboarding-step';
 import { ProfilePhotoUploader } from '@/shared/components/profile-photo-uploader';
 import { ListingImageUploader } from '@/shared/components/listing-image-uploader';
@@ -74,6 +74,7 @@ export function OnboardingIdentityPage() {
   const [genderDetail, setGenderDetail] = useState('');
   const [dateOfBirth, setDateOfBirth] = useState('');
   const [supportRole, setSupportRole] = useState<SupportRole | null>('supporter');
+  const [occupation, setOccupation] = useState('');
   const [avatarDataUrl, setAvatarDataUrl] = useState<string | null>(null);
   const [listingImageDataUrl, setListingImageDataUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -138,9 +139,7 @@ export function OnboardingIdentityPage() {
       if (!listingData.name.trim()) {
         const label = supportRole === 'business_owner'
           ? 'business name'
-          : supportRole === 'professional'
-            ? 'professional title'
-            : 'organization name';
+          : 'organization name';
         setError(`Please enter your ${label}.`);
         return;
       }
@@ -219,6 +218,7 @@ export function OnboardingIdentityPage() {
         p_support_role: supportRole,
         p_support_role_detail: supportRole !== 'supporter' ? listingData.name.trim() : null,
         p_avatar_url: avatarUrl,
+        p_occupation: occupation.trim() || null,
       });
       if (profileError) throw profileError;
 
@@ -307,6 +307,19 @@ export function OnboardingIdentityPage() {
             className="input-field cursor-pointer"
           />
           <p className="text-xs text-ink-500 mt-1 px-1">This stays private — used only for age demographics.</p>
+        </div>
+
+        {/* Occupation */}
+        <div>
+          <label htmlFor="occupation" className="label-field">
+            Occupation <span className="text-ink-500">(optional)</span>
+          </label>
+          <ProfessionAutocomplete
+            value={occupation}
+            onChange={setOccupation}
+            placeholder="Start typing your occupation"
+          />
+          <p className="text-xs text-ink-500 mt-1 px-1">Your occupation is separate from your role in the Empire.</p>
         </div>
 
         <SupportRoleSelector
@@ -415,100 +428,6 @@ export function OnboardingIdentityPage() {
 
             <div>
               <label className="label-field">Business Photo / Logo <span className="text-ink-500">(optional)</span></label>
-              <ListingImageUploader onImageReady={setListingImageDataUrl} />
-            </div>
-          </div>
-        )}
-
-        {/* =================== Professional Listing =================== */}
-        {supportRole === 'professional' && (
-          <div className="animate-fade-up space-y-4 pt-2 border-t border-ink-800/50">
-            <div className="flex items-center gap-2 pt-2">
-              <Briefcase className="w-4 h-4 text-gold-400" />
-              <h3 className="font-display text-sm font-semibold text-ink-100">
-                Your Professional Profile
-              </h3>
-            </div>
-            <p className="text-xs text-ink-400 -mt-2">
-              Your professional profile will appear in the Marketplace immediately with an "In Review" badge until an admin verifies it.
-            </p>
-
-            <div>
-              <label className="label-field">Profession <span className="text-crimson-400">*</span></label>
-              <ProfessionAutocomplete
-                value={listingData.name}
-                onChange={(val) => updateListingField('name', val)}
-                placeholder="Start typing your profession"
-              />
-            </div>
-
-            <div>
-              <label className="label-field">Services Offered</label>
-              <div className="flex gap-2">
-                {BUSINESS_CATEGORIES.map((cat) => (
-                  <button
-                    key={cat.key}
-                    type="button"
-                    onClick={() => updateListingField('category', cat.key)}
-                    className={`flex-1 px-3 py-2.5 rounded-lg text-sm font-medium border transition-all ${
-                      listingData.category === cat.key
-                        ? 'bg-gold-500/10 border-gold-500/25 text-gold-300'
-                        : 'bg-ink-900/50 border-ink-700/50 text-ink-400'
-                    }`}
-                  >
-                    {cat.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <label className="label-field">About Your Services</label>
-              <textarea
-                value={listingData.description}
-                onChange={(e) => updateListingField('description', e.target.value)}
-                rows={2}
-                className="input-field text-sm resize-none"
-                placeholder="e.g. Residential electrical repair, installations, inspections"
-              />
-            </div>
-
-            <div>
-              <label className="label-field">Typical Price Range <span className="text-ink-500">(optional)</span></label>
-              <input
-                type="text"
-                value={listingData.price_display}
-                onChange={(e) => updateListingField('price_display', e.target.value)}
-                className="input-field text-sm"
-                placeholder="e.g. $75 - $200/hr"
-              />
-            </div>
-
-            <div>
-              <label className="label-field">Website / Contact Link <span className="text-ink-500">(website or contact required)</span></label>
-              <input
-                type="text"
-                value={listingData.external_url}
-                onChange={(e) => updateListingField('external_url', e.target.value)}
-                className="input-field text-sm"
-                placeholder="www.your-portfolio.com"
-              />
-              <p className="text-[10px] text-ink-500 mt-1">https:// is added automatically.</p>
-            </div>
-
-            <div>
-              <label className="label-field">Contact Info <span className="text-ink-500">(website or contact required)</span></label>
-              <input
-                type="text"
-                value={listingData.contact_info}
-                onChange={(e) => updateListingField('contact_info', e.target.value)}
-                className="input-field text-sm"
-                placeholder="Phone, email, or social handle"
-              />
-            </div>
-
-            <div>
-              <label className="label-field">Professional Photo <span className="text-ink-500">(optional)</span></label>
               <ListingImageUploader onImageReady={setListingImageDataUrl} />
             </div>
           </div>
@@ -626,7 +545,6 @@ export function OnboardingIdentityPage() {
               {needsListing ? (
                 <>
                   {supportRole === 'business_owner' && 'Create My Business Listing'}
-                  {supportRole === 'professional' && 'Create My Professional Profile'}
                   {supportRole === 'organization' && 'Create Organization Listing'}
                   <ArrowRight className="w-4 h-4" />
                 </>
