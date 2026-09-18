@@ -16,6 +16,7 @@ import {
   CheckCircle2,
   AlertTriangle,
   XCircle,
+  Mail,
 } from 'lucide-react';
 import { Layout } from '@/shared/components/layout';
 import { ErrorBanner } from '@/shared/components/error-banner';
@@ -317,7 +318,16 @@ export function AdminPage() {
           <Shield className="w-7 h-7 text-gold-400" />
           <h1 className="text-3xl font-display font-bold text-ink-100">Admin Console</h1>
         </div>
-        <p className="text-ink-400">Administrative controls and reporting for the Pioneer Campaign.</p>
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <p className="text-ink-400">Administrative controls and reporting for the Pioneer Campaign.</p>
+          <a
+            href="/admin/emails"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-gold-500/15 border border-gold-500/30 text-gold-200 hover:bg-gold-500/25 transition-colors"
+          >
+            <Mail className="w-4 h-4" />
+            Email Preview
+          </a>
+        </div>
       </div>
 
       {/* Listing Review Queue */}

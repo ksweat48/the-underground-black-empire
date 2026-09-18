@@ -15,6 +15,7 @@ const OnboardingWelcomePage = lazy(() => import('@/domains/founder-campaign/page
 const EmpireDashboardPage = lazy(() => import('@/domains/founder-campaign/pages/empire-dashboard-page'));
 const ProfilePage = lazy(() => import('@/domains/founder-campaign/pages/profile-page'));
 const AdminPage = lazy(() => import('@/domains/admin/pages/admin-page'));
+const EmailPreviewPage = lazy(() => import('@/domains/admin/pages/email-preview-page'));
 const MarketPage = lazy(() => import('@/domains/market/pages/market-page'));
 const ListingDetailPage = lazy(() => import('@/domains/market/pages/listing-detail-page'));
 const CreateListingPage = lazy(() => import('@/domains/market/pages/create-listing-page'));
@@ -159,6 +160,14 @@ function App() {
                 element={
                   <ProtectedRoute requireAdmin>
                     <AdminPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/emails"
+                element={
+                  <ProtectedRoute requireAdmin>
+                    <EmailPreviewPage />
                   </ProtectedRoute>
                 }
               />
