@@ -1,0 +1,2 @@
+[functions.founder-onboarding]
+verify_jwt = true

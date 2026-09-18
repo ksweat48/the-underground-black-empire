@@ -1,10 +1,21 @@
 import { createClient } from "npm:@supabase/supabase-js@2.57.4";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
-};
+const ALLOWED_ORIGINS = [
+  "https://theundergroundblackempire.com",
+  "http://localhost:5173",
+  "http://localhost:4173",
+];
+
+function getCorsHeaders(req: Request): Record<string, string> {
+  const origin = req.headers.get("Origin") ?? "";
+  const allowed = ALLOWED_ORIGINS.includes(origin) ? origin : "";
+  return {
+    "Access-Control-Allow-Origin": allowed,
+    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
+    "Vary": "Origin",
+  };
+}
 
 interface OnboardingRequest {
   action: "create_member" | "select_city";
@@ -16,7 +27,7 @@ interface OnboardingRequest {
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { status: 200, headers: corsHeaders });
+    return new Response(null, { status: 200, headers: getCorsHeaders(req) });
   }
 
   try {
@@ -24,7 +35,7 @@ Deno.serve(async (req: Request) => {
     if (!authHeader) {
       return new Response(
         JSON.stringify({ error: "Missing authorization header" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        { status: 401, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } },
       );
     }
 
@@ -39,7 +50,7 @@ Deno.serve(async (req: Request) => {
     if (userError || !user) {
       return new Response(
         JSON.stringify({ error: "Invalid or expired session" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        { status: 401, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } },
       );
     }
 
@@ -56,13 +67,13 @@ Deno.serve(async (req: Request) => {
       if (error) {
         return new Response(
           JSON.stringify({ error: error.message }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          { status: 400, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } },
         );
       }
 
       return new Response(
         JSON.stringify({ member_id: data }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        { status: 200, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } },
       );
     }
 
@@ -70,7 +81,7 @@ Deno.serve(async (req: Request) => {
       if (!body.city_id) {
         return new Response(
           JSON.stringify({ error: "city_id is required" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          { status: 400, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } },
         );
       }
 
@@ -83,7 +94,7 @@ Deno.serve(async (req: Request) => {
       if (assignError) {
         return new Response(
           JSON.stringify({ error: assignError.message }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          { status: 400, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } },
         );
       }
 
@@ -92,18 +103,18 @@ Deno.serve(async (req: Request) => {
 
       return new Response(
         JSON.stringify({ founder_number: founderNumber }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        { status: 200, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } },
       );
     }
 
     return new Response(
       JSON.stringify({ error: "Invalid action. Use 'create_member' or 'select_city'." }),
-      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      { status: 400, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } },
     );
   } catch (err) {
     return new Response(
       JSON.stringify({ error: err.message || "Internal server error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      { status: 500, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } },
     );
   }
 });
