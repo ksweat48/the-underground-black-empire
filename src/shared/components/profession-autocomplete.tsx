@@ -392,6 +392,41 @@ export const PROFESSION_OPTIONS: string[] = [
   'Volunteer',
 ];
 
+// A balanced mix of common occupations shown when the field first opens,
+// so users immediately see variety instead of only the first category.
+const POPULAR_OCCUPATIONS: string[] = [
+  'Student',
+  'Retired',
+  'Business Owner',
+  'Teacher',
+  'Nurse',
+  'Developer / Software Engineer',
+  'Truck Driver',
+  'Construction Worker',
+  'Chef / Cook',
+  'Electrician',
+  'Real Estate Agent',
+  'Mechanic',
+  'Plumber',
+  'Hair Stylist',
+  'Police Officer',
+  'Accountant',
+  'Sales Representative',
+  'Caregiver',
+  'Photographer',
+  'Musician',
+  'Coach',
+  'Farmer',
+  'Barber',
+  'Artist',
+  'Writer',
+  'Entrepreneur',
+  'Homemaker',
+  'Currently Unemployed',
+  'Self-Employed',
+  'Freelancer',
+];
+
 interface ProfessionAutocompleteProps {
   value: string;
   onChange: (value: string) => void;
@@ -415,9 +450,9 @@ export function ProfessionAutocomplete({
 
   const suggestions = useMemo(() => {
     const query = value.trim().toLowerCase();
-    if (!query) return PROFESSION_OPTIONS.slice(0, 12);
+    if (!query) return POPULAR_OCCUPATIONS;
     const filtered = PROFESSION_OPTIONS.filter((p) => p.toLowerCase().includes(query));
-    return filtered.slice(0, 12);
+    return filtered.slice(0, 30);
   }, [value]);
 
   const showDropdown = focused && !otherMode && (suggestions.length > 0 || value.trim().length > 0);
@@ -493,7 +528,12 @@ export function ProfessionAutocomplete({
       <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-500 pointer-events-none" />
 
       {showDropdown && (
-        <div className="absolute z-50 mt-1 w-full rounded-xl border border-ink-700 bg-ink-900 shadow-xl shadow-black/40 max-h-64 overflow-y-auto scrollbar-thin">
+        <div className="absolute z-50 mt-1 w-full rounded-xl border border-ink-700 bg-ink-900 shadow-xl shadow-black/40 max-h-72 overflow-y-auto scrollbar-thin">
+          {!value.trim() && (
+            <div className="px-4 py-2 text-[11px] text-ink-500 border-b border-ink-700/50 sticky top-0 bg-ink-900">
+              Popular occupations — type to search all {PROFESSION_OPTIONS.length}+
+            </div>
+          )}
           {suggestions.map((suggestion) => (
             <button
               key={suggestion}
