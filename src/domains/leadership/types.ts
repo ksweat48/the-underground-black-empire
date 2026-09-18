@@ -1,5 +1,7 @@
 export type ElectionPhase = 'nomination' | 'election' | 'closed';
 
+export type NomineeAcceptanceStatus = 'pending' | 'accepted' | 'declined';
+
 export interface LeadershipCycle {
   id: string;
   metro_id: string;
@@ -23,6 +25,7 @@ export interface NominationCandidate {
   nomination_count: number;
   has_nominated: boolean;
   is_eligible: boolean;
+  acceptance_status: NomineeAcceptanceStatus | null;
 }
 
 export interface LeadershipFinalist {
@@ -51,11 +54,17 @@ export interface MetroCouncilMember {
 
 export interface LeadershipEligibility {
   eligible: boolean;
-  opt_in: boolean;
   influence: number;
   membership_tier: string | null;
   has_city: boolean;
   reasons: string[];
+}
+
+export interface MyNominationStatus {
+  cycle_id: string;
+  nomination_count: number;
+  acceptance_status: NomineeAcceptanceStatus | null;
+  nomination_closes_at: string;
 }
 
 export interface MyBallot {

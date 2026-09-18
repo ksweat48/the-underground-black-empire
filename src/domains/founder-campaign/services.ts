@@ -600,7 +600,7 @@ export interface PublicMemberProfile {
   support_role: string | null;
   support_role_detail: string | null;
   occupation: string | null;
-  leadership_opt_in: boolean | null;
+  membership_tier: string | null;
 }
 
 export async function fetchPublicMemberProfile(memberId: string): Promise<PublicMemberProfile | null> {
@@ -623,7 +623,7 @@ export async function fetchPublicMemberProfile(memberId: string): Promise<Public
       support_role,
       support_role_detail,
       occupation,
-      leadership_opt_in
+      membership_tier
     `)
     .eq('id', memberId)
     .maybeSingle();
@@ -682,6 +682,6 @@ export async function fetchPublicMemberProfile(memberId: string): Promise<Public
     support_role: (member as { support_role?: string | null }).support_role ?? null,
     support_role_detail: (member as { support_role_detail?: string | null }).support_role_detail ?? null,
     occupation: (member as { occupation?: string | null }).occupation ?? null,
-    leadership_opt_in: (member as { leadership_opt_in?: boolean | null }).leadership_opt_in ?? null,
+    membership_tier: (member as { membership_tier?: string | null }).membership_tier ?? null,
   };
 }

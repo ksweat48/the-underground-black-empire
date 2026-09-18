@@ -67,11 +67,14 @@ import {
 } from '@/shared/components/support-role-selector';
 import { ProfessionAutocomplete } from '@/shared/components/profession-autocomplete';
 import { parseSupabaseError } from '@/shared/errors';
-import { Scale, Lock as LockIcon } from 'lucide-react';
+import { Scale, Lock as LockIcon, CheckCircle2, XCircle, Clock } from 'lucide-react';
 import {
   fetchLeadershipEligibility,
-  toggleLeadershipOptIn,
+  fetchMyNominationStatus,
+  acceptLeadershipNomination,
+  declineLeadershipNomination,
   type LeadershipEligibility,
+  type MyNominationStatus,
 } from '@/domains/leadership/services';
 
 /* ---------- Types ---------- */
@@ -155,8 +158,9 @@ export function ProfilePage() {
   const [photoSaving, setPhotoSaving] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [leadershipEligibility, setLeadershipEligibility] = useState<LeadershipEligibility | null>(null);
-  const [leadershipToggling, setLeadershipToggling] = useState(false);
-  const [leadershipError, setLeadershipError] = useState<string | null>(null);
+  const [myNominationStatus, setMyNominationStatus] = useState<MyNominationStatus | null>(null);
+  const [acceptanceActionLoading, setAcceptanceActionLoading] = useState(false);
+  const [acceptanceError, setAcceptanceError] = useState<string | null>(null);
   const [profileError, setProfileError] = useState<string | null>(null);
   const navigate = useNavigate();
 
@@ -262,6 +266,12 @@ export function ProfilePage() {
     if (!memberId) return;
     fetchLeadershipEligibility(memberId).then(setLeadershipEligibility).catch(() => {});
   }, [memberId, sessionVersion]);
+
+  // Fetch my nomination status (am I nominated? have I accepted/declined?)
+  useEffect(() => {
+    if (!memberId || !metroData?.metroId) return;
+    fetchMyNominationStatus(memberId, metroData.metroId).then(setMyNominationStatus).catch(() => {});
+  }, [memberId, metroData?.metroId, sessionVersion]);
 
   // Close menu on outside click
   useEffect(() => {
@@ -627,48 +637,102 @@ export function ProfilePage() {
             </div>
           ) : (
             <div className="space-y-3">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-ink-100">Open to Leadership Nominations</p>
-                  <p className="text-xs text-ink-400 mt-0.5">
-                    Turn this on to let members in your Metro nominate you for leadership.
-                  </p>
-                </div>
-                <button
-                  onClick={async () => {
-                    setLeadershipToggling(true);
-                    setLeadershipError(null);
-                    try {
-                      const newState = !leadershipEligibility.opt_in;
-                      await toggleLeadershipOptIn(newState);
-                      setLeadershipEligibility({ ...leadershipEligibility, opt_in: newState });
-                    } catch (err) {
-                      const message = err instanceof Error ? err.message : 'Failed to toggle';
-                      setLeadershipError(message);
-                    } finally {
-                      setLeadershipToggling(false);
-                    }
-                  }}
-                  disabled={leadershipToggling}
-                  className={cn(
-                    'relative inline-flex h-7 w-12 items-center rounded-full transition-colors shrink-0',
-                    leadershipEligibility.opt_in ? 'bg-emerald-600' : 'bg-ink-700'
-                  )}
-                  aria-label="Toggle leadership nominations"
-                >
-                  <span
-                    className={cn(
-                      'inline-block h-5 w-5 transform rounded-full bg-white transition-transform',
-                      leadershipEligibility.opt_in ? 'translate-x-6' : 'translate-x-1'
-                    )}
-                  />
-                </button>
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                <p className="text-sm font-medium text-ink-100">Eligible for Leadership</p>
               </div>
-              <p className="text-[11px] text-ink-500 italic">
-                This does not automatically make you a candidate. It means you are willing to serve if your community chooses you.
+              <p className="text-xs text-ink-400">
+                Members in your Metro can nominate you for leadership. If nominated, you must accept the nomination before the nomination period closes to appear on the election ballot.
               </p>
-              {leadershipError && (
-                <p className="text-xs text-crimson-300">{leadershipError}</p>
+
+              {myNominationStatus && myNominationStatus.nomination_count > 0 && (
+                <div className="rounded-xl border border-ink-700/30 bg-ink-800/30 p-3 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Scale className="w-4 h-4 text-empire-gold" />
+                    <p className="text-sm font-medium text-ink-100">
+                      You have {myNominationStatus.nomination_count} nomination{myNominationStatus.nomination_count !== 1 ? 's' : ''}
+                    </p>
+                  </div>
+
+                  {myNominationStatus.acceptance_status === 'accepted' && (
+                    <div className="flex items-center gap-2 text-xs text-emerald-400">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      You have accepted. You will appear on the ballot if you make the finalists.
+                    </div>
+                  )}
+
+                  {myNominationStatus.acceptance_status === 'declined' && (
+                    <div className="flex items-center gap-2 text-xs text-crimson-400">
+                      <XCircle className="w-3.5 h-3.5" />
+                      You have declined. You will not appear on the election ballot.
+                    </div>
+                  )}
+
+                  {myNominationStatus.acceptance_status === null && (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-xs text-amber-400">
+                        <Clock className="w-3.5 h-3.5" />
+                        Accept by the nomination deadline to appear on the ballot.
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={async () => {
+                            setAcceptanceActionLoading(true);
+                            setAcceptanceError(null);
+                            try {
+                              await acceptLeadershipNomination(myNominationStatus.cycle_id);
+                              setMyNominationStatus({ ...myNominationStatus, acceptance_status: 'accepted' });
+                            } catch (err) {
+                              setAcceptanceError(err instanceof Error ? err.message : 'Failed to accept');
+                            } finally {
+                              setAcceptanceActionLoading(false);
+                            }
+                          }}
+                          disabled={acceptanceActionLoading}
+                          className="btn-primary flex-1 text-xs py-2 disabled:opacity-50"
+                        >
+                          {acceptanceActionLoading ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <>
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              Accept
+                            </>
+                          )}
+                        </button>
+                        <button
+                          onClick={async () => {
+                            setAcceptanceActionLoading(true);
+                            setAcceptanceError(null);
+                            try {
+                              await declineLeadershipNomination(myNominationStatus.cycle_id);
+                              setMyNominationStatus({ ...myNominationStatus, acceptance_status: 'declined' });
+                            } catch (err) {
+                              setAcceptanceError(err instanceof Error ? err.message : 'Failed to decline');
+                            } finally {
+                              setAcceptanceActionLoading(false);
+                            }
+                          }}
+                          disabled={acceptanceActionLoading}
+                          className="btn-secondary flex-1 text-xs py-2 disabled:opacity-50"
+                        >
+                          {acceptanceActionLoading ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <>
+                              <XCircle className="w-3.5 h-3.5" />
+                              Decline
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {acceptanceError && (
+                    <p className="text-xs text-crimson-300">{acceptanceError}</p>
+                  )}
+                </div>
               )}
             </div>
           )}

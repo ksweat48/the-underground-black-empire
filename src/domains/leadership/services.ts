@@ -7,6 +7,8 @@ import type {
   MetroCouncilMember,
   LeadershipEligibility,
   MyBallot,
+  MyNominationStatus,
+  NomineeAcceptanceStatus,
 } from './types';
 
 export type {
@@ -16,6 +18,8 @@ export type {
   MetroCouncilMember,
   LeadershipEligibility,
   MyBallot,
+  MyNominationStatus,
+  NomineeAcceptanceStatus,
 };
 
 // ============================================================
@@ -25,14 +29,13 @@ export type {
 export async function fetchLeadershipEligibility(memberId: string): Promise<LeadershipEligibility> {
   const { data: member, error } = await supabase
     .from('members')
-    .select('leadership_opt_in, city_id, membership_tier')
+    .select('city_id, membership_tier')
     .eq('id', memberId)
     .maybeSingle();
 
   if (error || !member) {
     return {
       eligible: false,
-      opt_in: false,
       influence: 0,
       membership_tier: null,
       has_city: false,
@@ -56,17 +59,11 @@ export async function fetchLeadershipEligibility(memberId: string): Promise<Lead
 
   return {
     eligible: hasCity && hasInfluence && hasValidTier,
-    opt_in: member.leadership_opt_in ?? false,
     influence,
     membership_tier: tier,
     has_city: hasCity,
     reasons,
   };
-}
-
-export async function toggleLeadershipOptIn(enabled: boolean): Promise<void> {
-  const { error } = await supabase.rpc('toggle_leadership_opt_in', { p_enabled: enabled });
-  if (error) throw error;
 }
 
 // ============================================================
@@ -104,15 +101,39 @@ export async function fetchNominationCandidates(metroId: string | null, currentU
 
   const cityIds = metroCityIds.data.map((c) => c.id);
 
+  // Fetch all members in the metro (no opt_in filter — eligibility is automatic)
   const { data: members, error } = await supabase
     .from('members')
-    .select('id, display_name, email, avatar_url, city_id')
+    .select('id, display_name, email, avatar_url, city_id, membership_tier')
     .in('city_id', cityIds)
-    .eq('leadership_opt_in', true)
     .neq('id', currentUserId);
 
   if (error) throw error;
   if (!members || members.length === 0) return [];
+
+  // Get active cycle for acceptance status lookup
+  const { data: activeCycle } = await supabase
+    .from('leadership_election_cycles')
+    .select('id')
+    .eq('metro_id', metroId)
+    .eq('phase', 'nomination')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  // Fetch acceptance statuses for this cycle
+  let acceptanceMap: Record<string, NomineeAcceptanceStatus> = {};
+  if (activeCycle) {
+    const { data: acceptances } = await supabase
+      .from('leadership_nominee_acceptances')
+      .select('member_id, status')
+      .eq('cycle_id', activeCycle.id);
+    if (acceptances) {
+      for (const a of acceptances) {
+        acceptanceMap[a.member_id] = a.status as NomineeAcceptanceStatus;
+      }
+    }
+  }
 
   const candidates: NominationCandidate[] = [];
 
@@ -122,6 +143,11 @@ export async function fetchNominationCandidates(metroId: string | null, currentU
 
     const influenceValue = Number(influence ?? 0);
     const level = getLevelFromInfluence(influenceValue).level;
+
+    // Check eligibility directly
+    const tier = member.membership_tier as string | null;
+    const hasValidTier = tier !== null && ['black', 'black_plus', 'emerald', 'plum'].includes(tier);
+    const isEligible = hasValidTier && influenceValue >= 250;
 
     const { count: nomCount } = await supabase
       .from('leadership_nominations')
@@ -144,11 +170,16 @@ export async function fetchNominationCandidates(metroId: string | null, currentU
       level,
       nomination_count: nomCount ?? 0,
       has_nominated: !!myNom,
-      is_eligible: true,
+      is_eligible: isEligible,
+      acceptance_status: acceptanceMap[member.id] ?? null,
     });
   }
 
-  candidates.sort((a, b) => b.nomination_count - a.nomination_count || b.influence - a.influence);
+  // Sort: eligible first, then by nomination count, then by influence
+  candidates.sort((a, b) => {
+    if (a.is_eligible !== b.is_eligible) return a.is_eligible ? -1 : 1;
+    return b.nomination_count - a.nomination_count || b.influence - a.influence;
+  });
 
   return candidates;
 }
@@ -166,6 +197,54 @@ export async function fetchMyNominationCount(currentUserId: string): Promise<num
 
   if (error) return 0;
   return count ?? 0;
+}
+
+// ============================================================
+// NOMINEE ACCEPTANCE / DECLINE
+// ============================================================
+
+export async function acceptLeadershipNomination(cycleId: string): Promise<void> {
+  const { error } = await supabase.rpc('accept_leadership_nomination', { p_cycle_id: cycleId });
+  if (error) throw error;
+}
+
+export async function declineLeadershipNomination(cycleId: string): Promise<void> {
+  const { error } = await supabase.rpc('decline_leadership_nomination', { p_cycle_id: cycleId });
+  if (error) throw error;
+}
+
+export async function fetchMyNominationStatus(currentUserId: string, metroId: string | null): Promise<MyNominationStatus | null> {
+  if (!metroId) return null;
+
+  const { data: cycle, error } = await supabase
+    .from('leadership_election_cycles')
+    .select('id, nomination_closes_at')
+    .eq('metro_id', metroId)
+    .eq('phase', 'nomination')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error || !cycle) return null;
+
+  const { count: nomCount } = await supabase
+    .from('leadership_nominations')
+    .select('id', { count: 'exact', head: true })
+    .eq('candidate_id', currentUserId);
+
+  const { data: acceptance } = await supabase
+    .from('leadership_nominee_acceptances')
+    .select('status')
+    .eq('cycle_id', cycle.id)
+    .eq('member_id', currentUserId)
+    .maybeSingle();
+
+  return {
+    cycle_id: cycle.id,
+    nomination_count: nomCount ?? 0,
+    acceptance_status: (acceptance?.status as NomineeAcceptanceStatus) ?? null,
+    nomination_closes_at: cycle.nomination_closes_at,
+  };
 }
 
 // ============================================================

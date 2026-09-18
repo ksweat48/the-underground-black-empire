@@ -186,7 +186,10 @@ function ProfileContent({
 
   const showNominate =
     !isOwnProfile &&
-    profile.leadership_opt_in === true &&
+    profile.membership_tier !== null &&
+    ['black', 'black_plus', 'emerald', 'plum'].includes(profile.membership_tier) &&
+    profile.influence >= 250 &&
+    profile.city_name !== null &&
     currentUserId !== null;
 
   const roleIcon = profile.support_role ? SUPPORT_ROLE_ICONS[profile.support_role] ?? Briefcase : null;
