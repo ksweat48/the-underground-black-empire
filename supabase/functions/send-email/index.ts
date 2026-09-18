@@ -247,11 +247,11 @@ const SUBJECTS: Record<string, (p: EmailParams) => string> = {
 const BUILDERS: Record<string, (p: EmailParams) => EmailParams> = {
   welcome: (p) => ({
     firstName: p.firstName,
-    emailTitle: "Welcome, Founder",
+    emailTitle: "Welcome to the Empire",
     message:
       "Your account has been created and you are now part of the movement.\n\n" +
-      "As a Founder, you will build your city, grow your empire, and leave a legacy for generations to come.\n\n" +
-      "Your next step is to select your city and claim your Founder Number.",
+      "As a member, you will build your city, grow your empire, and leave a legacy for generations to come.\n\n" +
+      "Your next step is to select your city and claim your member number.",
     buttonText: "Choose Your City",
     buttonUrl: "https://theundergroundblackempire.com/onboarding/city",
     secondaryText:
@@ -353,7 +353,7 @@ const BUILDERS: Record<string, (p: EmailParams) => EmailParams> = {
     emailTitle: "Empire Civilization Upgrade",
     message:
       "The Underground Black Empire has reached a new civilization level!\n\n" +
-      "This is a collective achievement made possible by every Founder who has built, contributed, and voted.\n\n" +
+      "This is a collective achievement made possible by every member who has built, contributed, and voted.\n\n" +
       "New features and capabilities are now unlocked for all members.",
     buttonText: "View Empire Dashboard",
     buttonUrl: "https://theundergroundblackempire.com/empire",
@@ -460,7 +460,7 @@ Deno.serve(async (req: Request) => {
     }
 
     const baseParams: EmailParams = {
-      firstName: params?.firstName ?? "Founder",
+      firstName: params?.firstName ?? "Member",
       emailTitle: params?.emailTitle ?? "",
       message: params?.message ?? "",
       buttonText: params?.buttonText,

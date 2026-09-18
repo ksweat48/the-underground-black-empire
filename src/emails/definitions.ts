@@ -5,14 +5,14 @@ export const EMAIL_DEFINITIONS: Record<EmailType, EmailDefinition> = {
     type: 'welcome',
     label: 'Welcome / Account Created',
     subject: () => 'Welcome to The Underground Black Empire',
-    previewText: () => 'Your journey as a Founder begins now. Here is what to do next.',
+    previewText: () => 'Your journey with the Empire begins now. Here is what to do next.',
     build: (p) => ({
       firstName: p.firstName,
-      emailTitle: 'Welcome, Founder',
+      emailTitle: 'Welcome to the Empire',
       message:
         `Your account has been created and you are now part of the movement.\n\n` +
-        `As a Founder, you will build your city, grow your empire, and leave a legacy for generations to come.\n\n` +
-        `Your next step is to select your city and claim your Founder Number.`,
+        `As a member, you will build your city, grow your empire, and leave a legacy for generations to come.\n\n` +
+        `Your next step is to select your city and claim your member number.`,
       buttonText: 'Choose Your City',
       buttonUrl: 'https://theundergroundblackempire.com/onboarding/city',
       secondaryText:
@@ -184,7 +184,7 @@ export const EMAIL_DEFINITIONS: Record<EmailType, EmailDefinition> = {
       emailTitle: 'Empire Civilization Upgrade',
       message:
         `The Underground Black Empire has reached a new civilization level!\n\n` +
-        `This is a collective achievement made possible by every Founder who has built, contributed, and voted.\n\n` +
+        `This is a collective achievement made possible by every member who has built, contributed, and voted.\n\n` +
         `New features and capabilities are now unlocked for all members.`,
       buttonText: 'View Empire Dashboard',
       buttonUrl: 'https://theundergroundblackempire.com/empire',
@@ -291,7 +291,7 @@ export function buildEmail(type: EmailType, params: Partial<EmailParams>): {
 } {
   const def = EMAIL_DEFINITIONS[type];
   const baseParams: EmailParams = {
-    firstName: params.firstName ?? 'Founder',
+    firstName: params.firstName ?? 'Member',
     emailTitle: params.emailTitle ?? '',
     message: params.message ?? '',
     buttonText: params.buttonText,
@@ -318,9 +318,9 @@ export const SAMPLE_PARAMS: Record<EmailType, Partial<EmailParams>> = {
   vote_confirmation: { firstName: 'Marcus' },
   city_upgrade: { firstName: 'Marcus' },
   empire_upgrade: { firstName: 'Marcus' },
-  quest_notification: { firstName: 'Marcus', secondaryText: 'Quest: Recruit 3 new Founders. Reward: 50 Influence. Deadline: 7 days.' },
+  quest_notification: { firstName: 'Marcus', secondaryText: 'Quest: Recruit 3 new members. Reward: 50 Influence. Deadline: 7 days.' },
   leadership_nomination: { firstName: 'Marcus' },
   leadership_election: { firstName: 'Marcus' },
   treasury_funding_vote: { firstName: 'Marcus' },
-  general_announcement: { firstName: 'Marcus', emailTitle: 'Empire Town Hall Scheduled', message: 'A town hall meeting has been scheduled for all Founders.\n\nJoin us to discuss the future direction of the Empire and share your ideas.\n\nThe meeting will be held virtually and recorded for those who cannot attend live.', buttonText: 'View Details', buttonUrl: 'https://theundergroundblackempire.com/empire' },
+  general_announcement: { firstName: 'Marcus', emailTitle: 'Empire Town Hall Scheduled', message: 'A town hall meeting has been scheduled for all members.\n\nJoin us to discuss the future direction of the Empire and share your ideas.\n\nThe meeting will be held virtually and recorded for those who cannot attend live.', buttonText: 'View Details', buttonUrl: 'https://theundergroundblackempire.com/empire' },
 };
