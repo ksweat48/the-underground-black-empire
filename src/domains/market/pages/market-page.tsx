@@ -693,49 +693,54 @@ function FeedItemRow({ item, onClick }: { item: CommunityFeedItem; onClick?: () 
       <div className="flex items-center justify-center shrink-0 w-9 h-9 rounded-full border border-empire-gold/10 bg-empire-gold/5">
         <Icon className={cn('w-4 h-4', config.color)} />
       </div>
+      {item.image_url && (
+        <div className="relative hidden sm:block shrink-0 w-[120px] h-[120px] rounded-lg overflow-hidden border border-empire-gold/10 bg-ink-900/30">
+          <img
+            src={item.image_url}
+            alt=""
+            className="w-full h-full object-cover"
+            loading="lazy"
+            onError={(e) => {
+              (e.currentTarget as HTMLImageElement).style.display = 'none';
+            }}
+          />
+        </div>
+      )}
       <div className="flex-1 min-w-0">
-        {/* Desktop: image beside text; Mobile: image below text */}
-        <div className={cn(
-          'flex gap-3',
-          item.image_url ? 'flex-col sm:flex-row' : 'flex-col'
-        )}>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-0.5">
-              {typeBadge && (
-                <span className={cn('text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md border', typeBadge.bg, typeBadge.color)}>
-                  {typeBadge.label}
-                </span>
-              )}
-              {!typeBadge && (
-                <span className={cn('text-[9px] font-bold uppercase tracking-wider', config.color)}>
-                  {config.label}
-                </span>
-              )}
-              {item.listing_name && (
-                <span className="text-xs font-medium text-empire-ivory line-clamp-1">{item.listing_name}</span>
-              )}
-            </div>
-            <p className="text-sm text-empire-text-secondary line-clamp-2 leading-snug">
-              {item.body}
-            </p>
-            <div className="flex items-center gap-1 mt-1">
-              <Clock className="w-2.5 h-2.5 text-empire-text-muted" />
-              <span className="text-[10px] text-empire-text-muted">{formatTimeAgo(item.created_at)}</span>
-            </div>
-          </div>
-          {item.image_url && (
-            <div className="relative shrink-0 w-full sm:w-[120px] sm:h-[120px] h-[200px] rounded-lg overflow-hidden border border-empire-gold/10 bg-ink-900/30">
-              <img
-                src={item.image_url}
-                alt=""
-                className="w-full h-full object-cover"
-                loading="lazy"
-                onError={(e) => {
-                  (e.currentTarget as HTMLImageElement).style.display = 'none';
-                }}
-              />
-            </div>
+        <div className="flex items-center gap-2 mb-0.5">
+          {typeBadge && (
+            <span className={cn('text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md border', typeBadge.bg, typeBadge.color)}>
+              {typeBadge.label}
+            </span>
           )}
+          {!typeBadge && (
+            <span className={cn('text-[9px] font-bold uppercase tracking-wider', config.color)}>
+              {config.label}
+            </span>
+          )}
+          {item.listing_name && (
+            <span className="text-xs font-medium text-empire-ivory line-clamp-1">{item.listing_name}</span>
+          )}
+        </div>
+        <p className="text-sm text-empire-text-secondary line-clamp-2 leading-snug">
+          {item.body}
+        </p>
+        {item.image_url && (
+          <div className="relative sm:hidden w-full h-[200px] mt-2 rounded-lg overflow-hidden border border-empire-gold/10 bg-ink-900/30">
+            <img
+              src={item.image_url}
+              alt=""
+              className="w-full h-full object-cover"
+              loading="lazy"
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).style.display = 'none';
+              }}
+            />
+          </div>
+        )}
+        <div className="flex items-center gap-1 mt-1">
+          <Clock className="w-2.5 h-2.5 text-empire-text-muted" />
+          <span className="text-[10px] text-empire-text-muted">{formatTimeAgo(item.created_at)}</span>
         </div>
       </div>
     </div>
