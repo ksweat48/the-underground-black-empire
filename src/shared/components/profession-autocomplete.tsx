@@ -263,16 +263,12 @@ export function ProfessionAutocomplete({
 }: ProfessionAutocompleteProps) {
   const [focused, setFocused] = useState(false);
   const [otherMode, setOtherMode] = useState(false);
-  // When a category with subs is selected, show the sub-dropdown
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // If the current value is not in the preset list, treat it as a custom entry
   const isCustom = value.trim().length > 0 && !PROFESSION_OPTIONS.some((p) => p.toLowerCase() === value.trim().toLowerCase());
-
-  // Determine if current value is a sub-occupation, and which category it belongs to
-  const valueCategory = value.trim() ? SUB_TO_CATEGORY[value.trim().toLowerCase()] ?? null : null;
 
   const suggestions = useMemo(() => {
     const query = value.trim().toLowerCase();
@@ -301,49 +297,28 @@ export function ProfessionAutocomplete({
     }
   }, [otherMode]);
 
-  // If value gets cleared externally, exit other mode and sub-dropdown
+  // If value gets cleared externally, exit custom mode and collapse categories
   useEffect(() => {
     if (value === '') {
       setOtherMode(false);
-      setSelectedCategory(null);
+      setExpandedCategories(new Set());
     }
   }, [value]);
-
-  // Sync selectedCategory when value changes externally (e.g. editing profile)
-  useEffect(() => {
-    if (valueCategory) {
-      setSelectedCategory(valueCategory);
-    } else if (!value || !CATEGORIES_WITH_SUBS.has(value)) {
-      setSelectedCategory(null);
-    }
-  }, [valueCategory, value]);
 
   const handleSelectOccupation = (occupation: string) => {
     onChange(occupation);
     setFocused(false);
-    setSelectedCategory(null);
+    setExpandedCategories(new Set());
   };
 
-  const handleSelectCategory = (category: string) => {
-    if (CATEGORIES_WITH_SUBS.has(category)) {
-      // Show sub-occupation dropdown
-      setSelectedCategory(category);
-      onChange(category);
-    } else {
-      // Standalone occupation — save directly
-      handleSelectOccupation(category);
-    }
+  const toggleCategory = (category: string) => {
+    setExpandedCategories((current) => {
+      const next = new Set(current);
+      if (next.has(category)) next.delete(category);
+      else next.add(category);
+      return next;
+    });
   };
-
-  const handleSelectSub = (sub: string) => {
-    onChange(sub);
-    setFocused(false);
-    setSelectedCategory(null);
-  };
-
-  const currentCategoryData = selectedCategory
-    ? OCCUPATION_CATEGORIES.find((c) => c.label === selectedCategory)
-    : null;
 
   if (otherMode) {
     return (
@@ -383,7 +358,7 @@ export function ProfessionAutocomplete({
         value={value}
         onChange={(e) => {
           onChange(e.target.value);
-          setSelectedCategory(null);
+          setExpandedCategories(new Set());
         }}
         onFocus={() => setFocused(true)}
         placeholder={placeholder}
@@ -400,25 +375,72 @@ export function ProfessionAutocomplete({
             </div>
           )}
           {suggestions.map((suggestion) => {
-            const hasSubs = CATEGORIES_WITH_SUBS.has(suggestion);
+            const isCategory = CATEGORIES_WITH_SUBS.has(suggestion);
+            const parentCategory = isCategory ? suggestion : SUB_TO_CATEGORY[suggestion.toLowerCase()];
+            const hasCategoryMenu = Boolean(parentCategory && CATEGORIES_WITH_SUBS.has(parentCategory));
+            const isExpanded = Boolean(parentCategory && expandedCategories.has(parentCategory));
             const isSelected = value === suggestion;
+            const categoryData = parentCategory
+              ? OCCUPATION_CATEGORIES.find((category) => category.label === parentCategory)
+              : undefined;
+
             return (
-              <button
-                key={suggestion}
-                type="button"
-                onClick={() => handleSelectCategory(suggestion)}
-                className={cn(
-                  'w-full px-4 py-2.5 text-left text-sm transition-colors flex items-center justify-between',
-                  isSelected
-                    ? 'bg-gold-950/40 text-gold-300'
-                    : 'text-ink-200 hover:bg-ink-800',
+              <div key={suggestion}>
+                <div className={cn(
+                  'w-full text-left text-sm transition-colors flex items-center',
+                  isSelected ? 'bg-gold-950/40 text-gold-300' : 'text-ink-200 hover:bg-ink-800',
+                )}>
+                  <button
+                    type="button"
+                    onClick={() => handleSelectOccupation(suggestion)}
+                    className="flex-1 min-w-0 px-4 py-2.5 text-left"
+                  >
+                    <span className="block truncate">{suggestion}</span>
+                    {hasCategoryMenu && !isCategory && (
+                      <span className="block text-[10px] text-ink-500 mt-0.5 truncate">
+                        {parentCategory}
+                      </span>
+                    )}
+                    {isCategory && (
+                      <span className="block text-[10px] text-ink-500 mt-0.5">
+                        {categoryData?.subs?.length ?? 0} specific roles
+                      </span>
+                    )}
+                  </button>
+                  {hasCategoryMenu && (
+                    <button
+                      type="button"
+                      onClick={() => toggleCategory(parentCategory)}
+                      className="p-3 text-ink-500 hover:text-gold-300 transition-colors"
+                      aria-label={`${isExpanded ? 'Collapse' : 'Expand'} ${parentCategory}`}
+                    >
+                      <ChevronRight className={cn(
+                        'w-4 h-4 transition-transform',
+                        isExpanded && 'rotate-90',
+                      )} />
+                    </button>
+                  )}
+                </div>
+                {isExpanded && categoryData?.subs && (
+                  <div className="border-t border-ink-800/70 bg-ink-950/40">
+                    {categoryData.subs.map((sub) => (
+                      <button
+                        key={`${suggestion}-${sub}`}
+                        type="button"
+                        onClick={() => handleSelectOccupation(sub)}
+                        className={cn(
+                          'w-full pl-8 pr-4 py-2 text-left text-xs transition-colors',
+                          value === sub
+                            ? 'text-gold-300 bg-gold-950/30'
+                            : 'text-ink-300 hover:bg-ink-800 hover:text-ink-100',
+                        )}
+                      >
+                        {sub}
+                      </button>
+                    ))}
+                  </div>
                 )}
-              >
-                <span>{suggestion}</span>
-                {hasSubs && (
-                  <ChevronRight className="w-3.5 h-3.5 text-ink-500 shrink-0 ml-2" />
-                )}
-              </button>
+              </div>
             );
           })}
           {value.trim().length > 0 && !PROFESSION_OPTIONS.some((p) => p.toLowerCase() === value.trim().toLowerCase()) && (
@@ -441,42 +463,6 @@ export function ProfessionAutocomplete({
             )}
           >
             Other — type your own
-          </button>
-        </div>
-      )}
-
-      {/* Sub-occupation dropdown — appears when a category with subs is selected */}
-      {currentCategoryData && currentCategoryData.subs && (
-        <div className="mt-2 animate-fade-up">
-          <label className="label-field text-xs">
-            Choose a specific role in {currentCategoryData.label}
-          </label>
-          <div className="relative">
-            <select
-              value={value !== currentCategoryData.label ? value : ''}
-              onChange={(e) => {
-                if (e.target.value) {
-                  handleSelectSub(e.target.value);
-                }
-              }}
-              className="input-field appearance-none pr-10 cursor-pointer text-sm"
-            >
-              <option value="" disabled>Select a specific role...</option>
-              {currentCategoryData.subs.map((sub) => (
-                <option key={sub} value={sub}>{sub}</option>
-              ))}
-            </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-500 pointer-events-none" />
-          </div>
-          <button
-            type="button"
-            onClick={() => {
-              onChange(currentCategoryData.label);
-              setSelectedCategory(null);
-            }}
-            className="text-[11px] text-ink-500 hover:text-ink-300 mt-1.5 px-1 transition-colors"
-          >
-            Keep "{currentCategoryData.label}" as your occupation
           </button>
         </div>
       )}
