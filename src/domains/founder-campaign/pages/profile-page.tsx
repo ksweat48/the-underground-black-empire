@@ -67,7 +67,7 @@ import {
 } from '@/shared/components/support-role-selector';
 import { ProfessionAutocomplete } from '@/shared/components/profession-autocomplete';
 import { parseSupabaseError } from '@/shared/errors';
-import { Scale, Lock as LockIcon, CheckCircle2, XCircle, Clock } from 'lucide-react';
+import { Scale, Lock as LockIcon, XCircle, Clock } from 'lucide-react';
 import {
   fetchLeadershipEligibility,
   fetchMyNominationStatus,
