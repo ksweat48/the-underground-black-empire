@@ -2,201 +2,216 @@ import { useState, useMemo, useRef, useEffect } from 'react';
 import { ChevronDown, X, ChevronRight } from 'lucide-react';
 import { cn } from '@/shared/cn';
 
-// Structured occupation data: categories with optional sub-occupations.
-// Categories with sub-occupations show a second dropdown when selected.
-// Categories without sub-occupations are saved directly.
-export interface OccupationCategory {
+export interface OccupationEntry {
   label: string;
   subs?: string[];
 }
 
-export const OCCUPATION_CATEGORIES: OccupationCategory[] = [
-  {
-    label: 'Healthcare & Wellness',
-    subs: [
-      'Acupuncturist', 'Athletic Trainer', 'Audiologist', 'Caregiver',
-      'Certified Nursing Assistant', 'Chiropractor', 'Dental Assistant',
-      'Dental Hygienist', 'Dentist', 'Dietitian', 'Doctor / Physician',
-      'EMT / Paramedic', 'Healthcare Administrator', 'Home Health Aide',
-      'Massage Therapist', 'Medical Assistant', 'Medical Technologist',
-      'Mental Health Counselor', 'Midwife', 'Nurse', 'Nurse Practitioner',
-      'Nutritionist', 'Occupational Therapist', 'Optometrist', 'Pharmacist',
-      'Pharmacy Technician', 'Physical Therapist', 'Physician Assistant',
-      'Psychiatrist', 'Psychologist', 'Radiologic Technologist',
-      'Registered Nurse', 'Respiratory Therapist', 'Speech Therapist',
-      'Surgeon', 'Therapist', 'Veterinarian', 'Wellness Coach',
-    ],
-  },
-  {
-    label: 'Education & Childcare',
-    subs: [
-      'After-School Program Coordinator', 'Childcare Worker', 'College Advisor',
-      'Counselor', 'Curriculum Developer', 'Daycare Provider',
-      'Education Administrator', 'Elementary School Teacher', 'High School Teacher',
-      'Librarian', 'Middle School Teacher', 'Montessori Teacher',
-      'Paraprofessional', 'Preschool Teacher', 'Principal', 'Professor',
-      'School Counselor', 'School Social Worker', 'Special Education Teacher',
-      'Substitute Teacher', 'Tutor', 'University Lecturer', 'Youth Worker',
-    ],
-  },
-  {
-    label: 'Skilled Trades & Construction',
-    subs: [
-      'Blacksmith', 'Builder / Contractor', 'Carpenter', 'Construction Worker',
-      'Drywall Installer', 'Electrician', 'Flooring Installer', 'Glazier',
-      'HVAC Technician', 'Heavy Equipment Operator', 'Home Inspector',
-      'Insulation Worker', 'Ironworker', 'Landscaper', 'Locksmith', 'Mason',
-      'Painter', 'Pipefitter', 'Plasterer', 'Plumber', 'Roofer',
-      'Sheet Metal Worker', 'Solar Panel Installer', 'Tile Setter', 'Welder',
-      'Window Installer',
-    ],
-  },
-  {
-    label: 'Business, Finance & Administration',
-    subs: [
-      'Accountant', 'Accounts Payable Specialist', 'Administrative Assistant',
-      'Auditor', 'Banker', 'Bookkeeper', 'Business Analyst',
-      'Business Consultant', 'Business Owner', 'Chief Financial Officer',
-      'Compliance Officer', 'Controller', 'Customer Service Representative',
-      'Data Entry Clerk', 'Economist', 'Entrepreneur', 'Executive Assistant',
-      'Financial Advisor', 'Financial Analyst', 'Human Resources Manager',
-      'Insurance Agent', 'Investment Banker', 'Loan Officer', 'Office Manager',
-      'Operations Manager', 'Payroll Specialist', 'Project Manager',
-      'Purchasing Agent', 'Quality Assurance Specialist', 'Real Estate Agent',
-      'Real Estate Appraiser', 'Receptionist', 'Recruiter', 'Risk Manager',
-      'Sales Representative', 'Stockbroker', 'Tax Preparer', 'Underwriter',
-    ],
-  },
-  {
-    label: 'Technology & Engineering',
-    subs: [
-      'AI / ML Engineer', 'Aerospace Engineer', 'Biomedical Engineer',
-      'Chemical Engineer', 'Civil Engineer', 'Cloud Architect',
-      'Computer Hardware Engineer', 'Content Creator', 'Cybersecurity Analyst',
-      'Data Analyst', 'Data Engineer', 'Data Scientist', 'Database Administrator',
-      'Developer / Software Engineer', 'DevOps Engineer', 'Draftsperson',
-      'Electrical Engineer', 'Environmental Engineer', 'Game Developer',
-      'Industrial Engineer', 'IT Support Specialist', 'IT Technician',
-      'Mechanical Engineer', 'Mobile App Developer', 'Network Administrator',
-      'Network Engineer', 'Programmer', 'QA Tester', 'Robotics Engineer',
-      'Security Engineer', 'Systems Administrator', 'Technical Writer',
-      'UI/UX Designer', 'Web Developer',
-    ],
-  },
-  {
-    label: 'Creative, Media & Arts',
-    subs: [
-      'Actor', 'Animator', 'Architect', 'Art Director', 'Artist',
-      'Author / Writer', 'Blogger', 'Broadcast Technician', 'Camera Operator',
-      'Cartoonist', 'Cinematographer', 'Comedian', 'Composer',
-      'Content Strategist', 'Copywriter', 'Dancer', 'DJ', 'Editor',
-      'Fashion Designer', 'Film Director', 'Film Producer', 'Florist',
-      'Graphic Designer', 'Illustrator', 'Interior Designer', 'Jewelry Designer',
-      'Journalist', 'Makeup Artist', 'Music Producer', 'Musician',
-      'Painter (Fine Art)', 'Photographer', 'Podcaster', 'Poet', 'Producer',
-      'Radio Host', 'Screenwriter', 'Sculptor', 'Set Designer', 'Singer',
-      'Social Media Manager', 'Sound Engineer', 'Stylist', 'Tattoo Artist',
-      'TV Host', 'Video Editor', 'Videographer', 'Voice Actor', 'Writer',
-    ],
-  },
-  {
-    label: 'Transportation & Logistics',
-    subs: [
-      'Air Traffic Controller', 'Ambulance Driver', 'Bike Courier', 'Bus Driver',
-      'Delivery Driver', 'Dispatcher', 'Dock Worker', 'Forklift Operator',
-      'Logistics Coordinator', 'Marine Pilot', 'Package Handler', 'Pilot',
-      'Ship Captain', 'Sailor', 'Taxi Driver', 'Train Conductor', 'Truck Driver',
-      'Uber / Lyft Driver', 'Warehouse Manager', 'Warehouse Worker',
-    ],
-  },
-  {
-    label: 'Public Service, Government & Community',
-    subs: [
-      'Activist', 'City Planner', 'Community Organizer', 'Correctional Officer',
-      'Diplomat', 'Election Worker', 'Emergency Management Director',
-      'Firefighter', 'Government Official', 'Grant Writer', 'Judge',
-      'Law Enforcement Officer', 'Legislative Aide', 'Mayor',
-      'Military Personnel', 'Nonprofit Director', 'Park Ranger',
-      'Parole Officer', 'Police Officer', 'Politician', 'Probation Officer',
-      'Public Health Worker', 'Public Relations Specialist', 'Social Worker',
-      'Translator / Interpreter', 'Urban Planner', 'Volunteer Coordinator',
-    ],
-  },
-  {
-    label: 'Retail, Food Service & Hospitality',
-    subs: [
-      'Baker', 'Bartender', 'Barista', 'Butcher', 'Caterer', 'Chef / Cook',
-      'Concierge', 'Event Planner', 'Fast Food Worker', 'Food Service Worker',
-      'Grocery Clerk', 'Hair Stylist', 'Host / Hostess', 'Hotel Manager',
-      'Line Cook', 'Manicurist', 'Nail Technician', 'Pastry Chef',
-      'Restaurant Manager', 'Restauranteur', 'Retail Manager', 'Retail Worker',
-      'Sommelier', 'Spa Manager', 'Tour Guide', 'Travel Agent',
-      'Waiter / Waitress',
-    ],
-  },
-  {
-    label: 'Science, Law & Professional Services',
-    subs: [
-      'Attorney / Lawyer', 'Biologist', 'Chemist', 'Dental Lab Technician',
-      'Environmental Scientist', 'Forensic Scientist', 'Geologist',
-      'Hydrologist', 'Laboratory Technician', 'Landscape Architect',
-      'Legal Assistant', 'Legal Secretary', 'Marine Biologist',
-      'Mathematician', 'Meteorologist', 'Notary Public', 'Paralegal',
-      'Patent Attorney', 'Physicist', 'Research Scientist', 'Researcher',
-      'Sociologist', 'Statistician', 'Surveyor',
-    ],
-  },
-  {
-    label: 'Fitness, Sports & Recreation',
-    subs: [
-      'Athlete', 'Coach', 'Fitness Trainer', 'Golf Pro', 'Gym Owner',
-      'Personal Trainer', 'Physical Education Teacher', 'Pilates Instructor',
-      'Referee', 'Ski Instructor', 'Sports Agent', 'Sports Analyst',
-      'Sports Coach', 'Swim Instructor', 'Tennis Pro', 'Yoga Instructor',
-    ],
-  },
-  {
-    label: 'Agriculture, Environment & Animal Care',
-    subs: [
-      'Agricultural Technician', 'Animal Trainer', 'Beekeeper', 'Dog Groomer',
-      'Dog Walker', 'Farmer', 'Fisherman', 'Gardener', 'Landscape Designer',
-      'Landscaper', 'Nursery Worker', 'Pet Sitter', 'Rancher',
-      'Veterinary Assistant', 'Wildlife Biologist',
-    ],
-  },
-  {
-    label: 'Personal Care & Domestic',
-    subs: [
-      'Cleaning Service Worker', 'Custodian', 'Elder Care Provider',
-      'Esthetician', 'Family Caregiver', 'Hair Braider', 'Homemaker',
-      'House Cleaner', 'Housekeeper', 'Laundry Worker', 'Nanny',
-      'Pet Groomer', 'Residential Cleaner',
-    ],
-  },
-  // Standalone options — no sub-occupations, saved directly
-  { label: 'Barber' },
-  { label: 'Mechanic' },
-  { label: 'Student' },
-  { label: 'Retired' },
+export const OCCUPATIONS: OccupationEntry[] = [
+  { label: 'Nurse', subs: ['Registered Nurse', 'Nurse Practitioner', 'Certified Nursing Assistant', 'Licensed Practical Nurse', 'Travel Nurse', 'School Nurse'] },
+  { label: 'Doctor / Physician', subs: ['Surgeon', 'Pediatrician', 'Psychiatrist', 'Cardiologist', 'Dermatologist', 'Obstetrician', 'Anesthesiologist', 'Family Medicine Doctor', 'Radiologist', 'Neurologist', 'Oncologist', 'ER Doctor'] },
+  { label: 'Therapist', subs: ['Physical Therapist', 'Occupational Therapist', 'Speech Therapist', 'Mental Health Counselor', 'Respiratory Therapist', 'Massage Therapist'] },
+  { label: 'Pharmacist', subs: ['Retail Pharmacist', 'Clinical Pharmacist', 'Pharmacy Technician'] },
+  { label: 'Dentist', subs: ['Orthodontist', 'Oral Surgeon', 'Dental Hygienist', 'Dental Assistant'] },
+  { label: 'Teacher', subs: ['Elementary School Teacher', 'High School Teacher', 'Middle School Teacher', 'Special Education Teacher', 'Preschool Teacher', 'Substitute Teacher', 'Montessori Teacher', 'Professor', 'University Lecturer', 'School Counselor', 'Paraprofessional'] },
+  { label: 'Developer / Software Engineer', subs: ['Web Developer', 'Mobile App Developer', 'Game Developer', 'AI / ML Engineer', 'DevOps Engineer', 'Cloud Architect', 'Data Scientist', 'Data Engineer', 'Cybersecurity Analyst', 'QA Tester', 'Programmer'] },
+  { label: 'Engineer', subs: ['Civil Engineer', 'Mechanical Engineer', 'Electrical Engineer', 'Chemical Engineer', 'Aerospace Engineer', 'Biomedical Engineer', 'Industrial Engineer', 'Environmental Engineer', 'Robotics Engineer'] },
+  { label: 'Chef / Cook', subs: ['Executive Chef', 'Sous Chef', 'Pastry Chef', 'Line Cook', 'Prep Cook', 'Private Chef', 'Baker'] },
+  { label: 'Attorney / Lawyer', subs: ['Corporate Lawyer', 'Criminal Defense Lawyer', 'Family Lawyer', 'Patent Attorney', 'Personal Injury Lawyer', 'Paralegal', 'Legal Assistant'] },
+  { label: 'Law Enforcement Officer', subs: ['Police Officer', 'Detective', 'Sheriff Deputy', 'State Trooper', 'Federal Agent', 'Correctional Officer', 'Probation Officer', 'Parole Officer'] },
+  { label: 'Business Owner', subs: ['Restaurant Owner', 'Retail Store Owner', 'Online Business Owner', 'Franchise Owner', 'Consulting Firm Owner'] },
+  { label: 'Coach', subs: ['Sports Coach', 'Fitness Trainer', 'Personal Trainer', 'Life Coach', 'Youth Coach', 'Referee'] },
+  { label: 'Construction Worker', subs: ['Carpenter', 'Mason', 'Roofer', 'Drywall Installer', 'Flooring Installer', 'Insulation Worker', 'Sheet Metal Worker', 'Ironworker', 'Glazier'] },
+  { label: 'Electrician', subs: ['Residential Electrician', 'Commercial Electrician', 'Industrial Electrician', 'Low Voltage Electrician'] },
+  { label: 'Truck Driver', subs: ['Long Haul Truck Driver', 'Local Delivery Driver', 'Dump Truck Driver', 'Tow Truck Driver'] },
+  { label: 'Photographer', subs: ['Wedding Photographer', 'Portrait Photographer', 'Commercial Photographer', 'Event Photographer', 'Fashion Photographer'] },
+  { label: 'Musician', subs: ['Singer', 'Guitarist', 'Pianist', 'Drummer', 'Music Producer', 'DJ'] },
+  { label: 'Artist', subs: ['Painter (Fine Art)', 'Sculptor', 'Illustrator', 'Tattoo Artist'] },
+  { label: 'Writer / Author', subs: ['Novelist', 'Copywriter', 'Blogger', 'Screenwriter', 'Technical Writer', 'Journalist', 'Poet'] },
+  { label: 'Designer', subs: ['Graphic Designer', 'Interior Designer', 'Fashion Designer', 'UI/UX Designer', 'Web Designer', 'Jewelry Designer', 'Florist'] },
+  { label: 'Manager', subs: ['Office Manager', 'Operations Manager', 'Retail Manager', 'Restaurant Manager', 'Hotel Manager', 'Warehouse Manager', 'Project Manager'] },
+  { label: 'Farmer', subs: ['Crop Farmer', 'Livestock Farmer', 'Dairy Farmer', 'Organic Farmer', 'Rancher'] },
+  { label: 'Real Estate Agent', subs: ['Residential Agent', 'Commercial Agent', 'Property Manager', 'Real Estate Appraiser'] },
+  { label: 'Accountant', subs: ['CPA', 'Bookkeeper', 'Tax Preparer', 'Auditor', 'Payroll Specialist'] },
+  { label: 'Social Worker', subs: ['School Social Worker', 'Child Welfare Worker', 'Clinical Social Worker', 'Community Organizer'] },
+  { label: 'Actor', subs: ['Film Actor', 'TV Actor', 'Theater Actor', 'Voice Actor', 'Comedian'] },
+  { label: 'Builder / Contractor', subs: ['General Contractor', 'Home Builder', 'Remodeling Contractor', 'Home Inspector'] },
+  { label: 'Firefighter', subs: ['City Firefighter', 'Wildland Firefighter', 'Fire Inspector', 'EMT / Paramedic'] },
+  { label: 'Military Personnel', subs: ['Army', 'Navy', 'Air Force', 'Marines', 'Coast Guard', 'National Guard'] },
+  { label: 'Pilot', subs: ['Commercial Pilot', 'Private Pilot', 'Helicopter Pilot', 'Air Traffic Controller'] },
+  { label: 'Barista', subs: ['Coffee Shop Barista', 'Shift Supervisor', 'Coffee Roaster'] },
+  { label: 'Hair Stylist', subs: ['Hair Stylist', 'Hair Braider', 'Colorist', 'Barber'] },
+  { label: 'Athlete', subs: ['Professional Athlete', 'College Athlete', 'Golf Pro', 'Tennis Pro', 'Ski Instructor', 'Swim Instructor'] },
+  { label: 'Researcher / Scientist', subs: ['Biologist', 'Chemist', 'Physicist', 'Marine Biologist', 'Environmental Scientist', 'Forensic Scientist', 'Geologist', 'Research Scientist'] },
+  { label: 'Government Official', subs: ['Mayor', 'City Planner', 'Diplomat', 'Legislative Aide', 'Public Health Worker'] },
+  // Standalone occupations — no sub-specializations
+  { label: 'Acupuncturist' },
+  { label: 'Athletic Trainer' },
+  { label: 'Audiologist' },
+  { label: 'Bartender' },
+  { label: 'Bike Courier' },
+  { label: 'Blacksmith' },
+  { label: 'Blogger' },
+  { label: 'Broadcast Technician' },
+  { label: 'Bus Driver' },
+  { label: 'Butcher' },
+  { label: 'Camera Operator' },
+  { label: 'Cartoonist' },
+  { label: 'Caterer' },
+  { label: 'Chiropractor' },
+  { label: 'Cinematographer' },
+  { label: 'Cleaner / Custodian' },
+  { label: 'Compliance Officer' },
+  { label: 'Computer Hardware Engineer' },
+  { label: 'Content Creator' },
+  { label: 'Content Strategist' },
+  { label: 'Copywriter' },
+  { label: 'Customer Service Representative' },
+  { label: 'Dancer' },
+  { label: 'Data Analyst' },
+  { label: 'Data Entry Clerk' },
+  { label: 'Database Administrator' },
+  { label: 'Daycare Provider' },
+  { label: 'Delivery Driver' },
+  { label: 'Dietitian' },
+  { label: 'Dispatcher' },
+  { label: 'Dock Worker' },
+  { label: 'Dog Groomer' },
+  { label: 'Dog Walker' },
+  { label: 'Draftsperson' },
+  { label: 'Editor' },
+  { label: 'Elder Care Provider' },
+  { label: 'Entrepreneur' },
+  { label: 'Esthetician' },
+  { label: 'Event Planner' },
+  { label: 'Executive Assistant' },
+  { label: 'Family Caregiver' },
+  { label: 'Film Director' },
+  { label: 'Film Producer' },
+  { label: 'Financial Advisor' },
+  { label: 'Financial Analyst' },
+  { label: 'Forklift Operator' },
+  { label: 'Freelancer' },
+  { label: 'Gardener' },
+  { label: 'Grant Writer' },
+  { label: 'Gym Owner' },
+  { label: 'Home Health Aide' },
   { label: 'Homemaker' },
+  { label: 'Human Resources Manager' },
+  { label: 'Illustrator' },
+  { label: 'Insurance Agent' },
+  { label: 'Investment Banker' },
+  { label: 'IT Support Specialist' },
+  { label: 'IT Technician' },
+  { label: 'Journalist' },
+  { label: 'Landscaper' },
+  { label: 'Librarian' },
+  { label: 'Loan Officer' },
+  { label: 'Locksmith' },
+  { label: 'Makeup Artist' },
+  { label: 'Manicurist' },
+  { label: 'Marine Pilot' },
+  { label: 'Mechanic' },
+  { label: 'Medical Assistant' },
+  { label: 'Medical Technologist' },
+  { label: 'Midwife' },
+  { label: 'Nail Technician' },
+  { label: 'Network Administrator' },
+  { label: 'Network Engineer' },
+  { label: 'Nonprofit Director' },
+  { label: 'Notary Public' },
+  { label: 'Nanny' },
+  { label: 'Nutritionist' },
+  { label: 'Occupational Therapist' },
+  { label: 'Office Manager' },
+  { label: 'Optometrist' },
+  { label: 'Package Handler' },
+  { label: 'Painter' },
+  { label: 'Park Ranger' },
+  { label: 'Pet Sitter' },
+  { label: 'Physician Assistant' },
+  { label: 'Pilates Instructor' },
+  { label: 'Plumber' },
+  { label: 'Podcaster' },
+  { label: 'Political Scientist' },
+  { label: 'Politician' },
+  { label: 'Producer' },
+  { label: 'Professor' },
+  { label: 'Psychologist' },
+  { label: 'Public Relations Specialist' },
+  { label: 'Purchasing Agent' },
+  { label: 'Quality Assurance Specialist' },
+  { label: 'Radio Host' },
+  { label: 'Receptionist' },
+  { label: 'Recruiter' },
+  { label: 'Respiratory Therapist' },
+  { label: 'Restauranteur' },
+  { label: 'Retail Worker' },
+  { label: 'Risk Manager' },
+  { label: 'Sailor' },
+  { label: 'Sales Representative' },
+  { label: 'School Counselor' },
+  { label: 'Sculptor' },
+  { label: 'Set Designer' },
+  { label: 'Ship Captain' },
+  { label: 'Sociologist' },
+  { label: 'Social Media Manager' },
+  { label: 'Solar Panel Installer' },
+  { label: 'Sommelier' },
+  { label: 'Sound Engineer' },
+  { label: 'Spa Manager' },
+  { label: 'Statistician' },
+  { label: 'Stockbroker' },
+  { label: 'Student' },
+  { label: 'Stylist' },
+  { label: 'Surveyor' },
+  { label: 'Systems Administrator' },
+  { label: 'Taxi Driver' },
+  { label: 'Technical Writer' },
+  { label: 'Tile Setter' },
+  { label: 'Tour Guide' },
+  { label: 'Train Conductor' },
+  { label: 'Translator / Interpreter' },
+  { label: 'Travel Agent' },
+  { label: 'Tutor' },
+  { label: 'TV Host' },
+  { label: 'Uber / Lyft Driver' },
+  { label: 'Underwriter' },
+  { label: 'Urban Planner' },
+  { label: 'Veterinarian' },
+  { label: 'Veterinary Assistant' },
+  { label: 'Video Editor' },
+  { label: 'Videographer' },
+  { label: 'Volunteer' },
+  { label: 'Volunteer Coordinator' },
+  { label: 'Waiter / Waitress' },
+  { label: 'Warehouse Worker' },
+  { label: 'Welder' },
+  { label: 'Wellness Coach' },
+  { label: 'Window Installer' },
+  { label: 'Youth Worker' },
   { label: 'Currently Unemployed' },
   { label: 'Self-Employed' },
-  { label: 'Freelancer' },
-  { label: 'Entrepreneur' },
-  { label: 'Volunteer' },
+  { label: 'Retired' },
 ];
 
-// Flat list of all occupation names (categories + all subs) for search and backward compat
+const OCCUPATION_MAP: Record<string, OccupationEntry> = (() => {
+  const map: Record<string, OccupationEntry> = {};
+  for (const occ of OCCUPATIONS) {
+    map[occ.label.toLowerCase()] = occ;
+  }
+  return map;
+})();
+
 export const PROFESSION_OPTIONS: string[] = (() => {
   const list: string[] = [];
-  for (const cat of OCCUPATION_CATEGORIES) {
-    list.push(cat.label);
-    if (cat.subs) list.push(...cat.subs);
+  for (const occ of OCCUPATIONS) {
+    list.push(occ.label);
+    if (occ.subs) list.push(...occ.subs);
   }
   return list;
 })();
 
-// Popular occupations shown when the field first opens — a balanced mix
 const POPULAR_OCCUPATIONS: string[] = [
   'Student',
   'Retired',
@@ -222,7 +237,7 @@ const POPULAR_OCCUPATIONS: string[] = [
   'Farmer',
   'Barber',
   'Artist',
-  'Writer',
+  'Writer / Author',
   'Entrepreneur',
   'Homemaker',
   'Currently Unemployed',
@@ -230,23 +245,17 @@ const POPULAR_OCCUPATIONS: string[] = [
   'Freelancer',
 ];
 
-// Map each sub-occupation back to its parent category for lookups
-const SUB_TO_CATEGORY: Record<string, string> = (() => {
+const SUB_TO_PARENT: Record<string, string> = (() => {
   const map: Record<string, string> = {};
-  for (const cat of OCCUPATION_CATEGORIES) {
-    if (cat.subs) {
-      for (const sub of cat.subs) {
-        map[sub.toLowerCase()] = cat.label;
+  for (const occ of OCCUPATIONS) {
+    if (occ.subs) {
+      for (const sub of occ.subs) {
+        map[sub.toLowerCase()] = occ.label;
       }
     }
   }
   return map;
 })();
-
-// All categories that have sub-occupations (for quick lookup)
-const CATEGORIES_WITH_SUBS = new Set(
-  OCCUPATION_CATEGORIES.filter((c) => c.subs).map((c) => c.label),
-);
 
 interface ProfessionAutocompleteProps {
   value: string;
@@ -263,17 +272,15 @@ export function ProfessionAutocomplete({
 }: ProfessionAutocompleteProps) {
   const [focused, setFocused] = useState(false);
   const [otherMode, setOtherMode] = useState(false);
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+  const [expandedOccupation, setExpandedOccupation] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // If the current value is not in the preset list, treat it as a custom entry
   const isCustom = value.trim().length > 0 && !PROFESSION_OPTIONS.some((p) => p.toLowerCase() === value.trim().toLowerCase());
 
   const suggestions = useMemo(() => {
     const query = value.trim().toLowerCase();
     if (!query) return POPULAR_OCCUPATIONS;
-    // Search across all occupation names (categories + subs)
     const filtered = PROFESSION_OPTIONS.filter((p) => p.toLowerCase().includes(query));
     return filtered.slice(0, 30);
   }, [value]);
@@ -290,34 +297,27 @@ export function ProfessionAutocomplete({
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  // Auto-focus input when entering other mode
   useEffect(() => {
     if (otherMode && inputRef.current) {
       inputRef.current.focus();
     }
   }, [otherMode]);
 
-  // If value gets cleared externally, exit custom mode and collapse categories
   useEffect(() => {
     if (value === '') {
       setOtherMode(false);
-      setExpandedCategories(new Set());
+      setExpandedOccupation(null);
     }
   }, [value]);
 
-  const handleSelectOccupation = (occupation: string) => {
+  const handleSelect = (occupation: string) => {
     onChange(occupation);
     setFocused(false);
-    setExpandedCategories(new Set());
+    setExpandedOccupation(null);
   };
 
-  const toggleCategory = (category: string) => {
-    setExpandedCategories((current) => {
-      const next = new Set(current);
-      if (next.has(category)) next.delete(category);
-      else next.add(category);
-      return next;
-    });
+  const toggleExpand = (occupation: string) => {
+    setExpandedOccupation((current) => (current === occupation ? null : occupation));
   };
 
   if (otherMode) {
@@ -358,7 +358,7 @@ export function ProfessionAutocomplete({
         value={value}
         onChange={(e) => {
           onChange(e.target.value);
-          setExpandedCategories(new Set());
+          setExpandedOccupation(null);
         }}
         onFocus={() => setFocused(true)}
         placeholder={placeholder}
@@ -368,66 +368,67 @@ export function ProfessionAutocomplete({
       <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-500 pointer-events-none" />
 
       {showDropdown && (
-        <div className="absolute z-50 mt-1 w-full rounded-xl border border-ink-700 bg-ink-900 shadow-xl shadow-black/40 max-h-72 overflow-y-auto scrollbar-thin">
+        <div className="absolute z-50 mt-1 w-full rounded-xl border border-ink-700 bg-ink-900 shadow-xl shadow-black/40 max-h-80 overflow-y-auto scrollbar-thin">
           {!value.trim() && (
-            <div className="px-4 py-2 text-[11px] text-ink-500 border-b border-ink-700/50 sticky top-0 bg-ink-900">
+            <div className="px-4 py-2 text-[11px] text-ink-500 border-b border-ink-700/50 sticky top-0 bg-ink-900 z-10">
               Popular occupations — type to search all {PROFESSION_OPTIONS.length}+
             </div>
           )}
           {suggestions.map((suggestion) => {
-            const isCategory = CATEGORIES_WITH_SUBS.has(suggestion);
-            const parentCategory = isCategory ? suggestion : SUB_TO_CATEGORY[suggestion.toLowerCase()];
-            const hasCategoryMenu = Boolean(parentCategory && CATEGORIES_WITH_SUBS.has(parentCategory));
-            const isExpanded = Boolean(parentCategory && expandedCategories.has(parentCategory));
+            const parentName = SUB_TO_PARENT[suggestion.toLowerCase()];
+            const isSubResult = Boolean(parentName);
+            const occupationName = parentName ?? suggestion;
+            const occupationData = OCCUPATION_MAP[occupationName.toLowerCase()];
+            const hasSubs = Boolean(occupationData?.subs?.length);
+            const isExpanded = expandedOccupation === occupationName;
             const isSelected = value === suggestion;
-            const categoryData = parentCategory
-              ? OCCUPATION_CATEGORIES.find((category) => category.label === parentCategory)
-              : undefined;
 
             return (
               <div key={suggestion}>
-                <div className={cn(
-                  'w-full text-left text-sm transition-colors flex items-center',
-                  isSelected ? 'bg-gold-950/40 text-gold-300' : 'text-ink-200 hover:bg-ink-800',
-                )}>
+                <div
+                  className={cn(
+                    'w-full text-left text-sm transition-colors flex items-center',
+                    isSelected ? 'bg-gold-950/40 text-gold-300' : 'text-ink-200 hover:bg-ink-800',
+                  )}
+                >
                   <button
                     type="button"
-                    onClick={() => handleSelectOccupation(suggestion)}
+                    onClick={() => handleSelect(suggestion)}
                     className="flex-1 min-w-0 px-4 py-2.5 text-left"
                   >
                     <span className="block truncate">{suggestion}</span>
-                    {hasCategoryMenu && !isCategory && (
+                    {isSubResult && (
                       <span className="block text-[10px] text-ink-500 mt-0.5 truncate">
-                        {parentCategory}
-                      </span>
-                    )}
-                    {isCategory && (
-                      <span className="block text-[10px] text-ink-500 mt-0.5">
-                        {categoryData?.subs?.length ?? 0} specific roles
+                        under {parentName}
                       </span>
                     )}
                   </button>
-                  {hasCategoryMenu && (
+                  {hasSubs && !isSubResult && (
                     <button
                       type="button"
-                      onClick={() => toggleCategory(parentCategory)}
-                      className="p-3 text-ink-500 hover:text-gold-300 transition-colors"
-                      aria-label={`${isExpanded ? 'Collapse' : 'Expand'} ${parentCategory}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleExpand(occupationName);
+                      }}
+                      className="p-3 text-ink-500 hover:text-gold-300 transition-colors shrink-0"
+                      aria-label={`${isExpanded ? 'Collapse' : 'Expand'} ${occupationName} specializations`}
                     >
-                      <ChevronRight className={cn(
-                        'w-4 h-4 transition-transform',
-                        isExpanded && 'rotate-90',
-                      )} />
+                      <ChevronRight
+                        className={cn(
+                          'w-4 h-4 transition-transform',
+                          isExpanded && 'rotate-90',
+                        )}
+                      />
                     </button>
                   )}
                 </div>
-                {isExpanded && categoryData?.subs && (
+                {isExpanded && occupationData?.subs && (
                   <div className="border-t border-ink-800/70 bg-ink-950/40">
-                    {categoryData.subs.map((sub) => (
+                    {occupationData.subs.map((sub) => (
                       <button
-                        key={`${suggestion}-${sub}`}
+                        key={`${occupationName}-${sub}`}
                         type="button"
-                        onClick={() => handleSelectOccupation(sub)}
+                        onClick={() => handleSelect(sub)}
                         className={cn(
                           'w-full pl-8 pr-4 py-2 text-left text-xs transition-colors',
                           value === sub
