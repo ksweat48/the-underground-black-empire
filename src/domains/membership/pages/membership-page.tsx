@@ -16,6 +16,7 @@ import {
   fetchMembershipTiers,
   fetchMyMembership,
   updateMembershipTier,
+  startStripeCheckout,
   TIER_DETAILS,
 } from '@/domains/membership/services';
 import type { MembershipTier, MembershipTierId, MemberMembership, CardColor, TierDetails } from '@/domains/membership/types';
@@ -110,13 +111,22 @@ export function MembershipPage() {
 
   useEffect(() => { loadData(); }, [loadData, sessionVersion]);
 
-  const chooseTier = async (tierId: MembershipTierId) => {
-    if (!userId || !myMembership || myMembership.membership_tier === tierId) return;
-    setSelecting(tierId);
+  const chooseTier = async (tier: MembershipTier) => {
+    if (!userId || !myMembership || myMembership.membership_tier === tier.id) return;
+    setSelecting(tier.id);
     setSelectError(null);
     try {
-      await updateMembershipTier(userId, tierId);
-      await loadData();
+      if (tier.price_monthly === 0) {
+        await updateMembershipTier(userId, tier.id);
+        await loadData();
+      } else {
+        const checkoutUrl = await startStripeCheckout(tier.id);
+        if (checkoutUrl) {
+          window.location.href = checkoutUrl;
+        } else {
+          setSelectError('Unable to start checkout. Please try again.');
+        }
+      }
     } catch {
       setSelectError('Unable to update your membership tier. Please try again.');
     } finally {
@@ -202,7 +212,7 @@ export function MembershipPage() {
                       <TierDetails
                         details={details}
                         isCurrent={myMembership?.membership_tier === tier.id}
-                        onSelect={() => chooseTier(tier.id)}
+                        onSelect={() => chooseTier(tier)}
                         selecting={selecting === tier.id}
                         disabled={!!selecting}
                         onLearnMore={() => setLearnMoreTier(tier.id)}

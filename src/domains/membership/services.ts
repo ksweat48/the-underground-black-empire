@@ -59,6 +59,19 @@ export async function updateMembershipTier(userId: string, tier: MembershipTierI
   if (error) throw error;
 }
 
+export async function startStripeCheckout(tierId: MembershipTierId): Promise<string | null> {
+  const { data, error } = await supabase.functions.invoke('stripe-checkout', {
+    body: { tierId },
+  });
+
+  if (error || data?.error) {
+    console.error('Stripe checkout failed:', error ?? data?.error);
+    return null;
+  }
+
+  return data?.url ?? null;
+}
+
 export async function fetchVotingCredits(userId: string): Promise<VotingCredits | null> {
   const { data, error } = await supabase
     .from('voting_credits')
