@@ -19,7 +19,7 @@ function getCorsHeaders(req: Request): Record<string, string> {
 
 const SENDER_NAME = "The Underground Black Empire";
 const SENDER_EMAIL = "noreply@mail.theundergroundblackempire.com";
-const REPLY_TO = "support@mail.theundergroundblackempire.com";
+const REPLY_TO = "theundergroundblackempire@gmail.com";
 const WEBSITE_URL = "https://theundergroundblackempire.com";
 
 const FONT_DISPLAY = "'Outfit', 'Helvetica Neue', Arial, sans-serif";
@@ -314,7 +314,7 @@ const BUILDERS: Record<string, (p: EmailParams) => EmailParams> = {
       "Your marketplace listing has been removed because it did not meet our community guidelines.\n\n" +
       "If you believe this was an error, or if you would like to submit a new listing, please contact support.",
     buttonText: "Contact Support",
-    buttonUrl: "mailto:support@mail.theundergroundblackempire.com",
+    buttonUrl: "mailto:theundergroundblackempire@gmail.com",
     secondaryText: p.secondaryText ?? "Please review our listing guidelines before submitting again.",
   }),
   voting_window_opened: () => ({

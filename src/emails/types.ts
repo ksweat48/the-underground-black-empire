@@ -35,5 +35,5 @@ export interface EmailDefinition {
 
 export const SENDER_NAME = 'The Underground Black Empire';
 export const SENDER_EMAIL = 'noreply@mail.theundergroundblackempire.com';
-export const REPLY_TO = 'support@mail.theundergroundblackempire.com';
+export const REPLY_TO = 'theundergroundblackempire@gmail.com';
 export const WEBSITE_URL = 'https://theundergroundblackempire.com';

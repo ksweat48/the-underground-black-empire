@@ -117,7 +117,7 @@ export const EMAIL_DEFINITIONS: Record<EmailType, EmailDefinition> = {
         `Your marketplace listing has been removed because it did not meet our community guidelines.\n\n` +
         `If you believe this was an error, or if you would like to submit a new listing, please contact support.`,
       buttonText: 'Contact Support',
-      buttonUrl: 'mailto:support@mail.theundergroundblackempire.com',
+      buttonUrl: 'mailto:theundergroundblackempire@gmail.com',
       secondaryText: p.secondaryText ?? 'Please review our listing guidelines before submitting again.',
     }),
   },
