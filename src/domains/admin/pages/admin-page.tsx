@@ -17,6 +17,8 @@ import {
   AlertTriangle,
   XCircle,
   Mail,
+  Megaphone,
+  Send,
 } from 'lucide-react';
 import { Layout } from '@/shared/components/layout';
 import { ErrorBanner } from '@/shared/components/error-banner';
@@ -160,6 +162,35 @@ export function AdminPage() {
   const [reviewError, setReviewError] = useState(false);
   const [participationError, setParticipationError] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [broadcastTitle, setBroadcastTitle] = useState('');
+  const [broadcastBody, setBroadcastBody] = useState('');
+  const [broadcastLink, setBroadcastLink] = useState('');
+  const [broadcastSending, setBroadcastSending] = useState(false);
+  const [broadcastResult, setBroadcastResult] = useState<{ ok: boolean; count: number } | null>(null);
+
+  const handleBroadcast = async () => {
+    if (!broadcastTitle.trim()) return;
+    setBroadcastSending(true);
+    setBroadcastResult(null);
+    try {
+      const { data, error } = await supabase.rpc('broadcast_notification', {
+        p_type: 'general_announcement',
+        p_title: broadcastTitle.trim(),
+        p_body: broadcastBody.trim() || null,
+        p_link_url: broadcastLink.trim() || null,
+      });
+      if (error) throw error;
+      setBroadcastResult({ ok: true, count: Number(data ?? 0) });
+      setBroadcastTitle('');
+      setBroadcastBody('');
+      setBroadcastLink('');
+    } catch (err) {
+      console.error('Broadcast failed:', err);
+      setBroadcastResult({ ok: false, count: 0 });
+    } finally {
+      setBroadcastSending(false);
+    }
+  };
 
   useEffect(() => {
     Promise.all([
@@ -342,6 +373,63 @@ export function AdminPage() {
         onReasonChange={setReviewReason}
         onAction={handleReviewAction}
       />
+
+      {/* Broadcast Announcement */}
+      <div className="card p-6 mb-8">
+        <div className="flex items-center gap-3 mb-4">
+          <Megaphone className="w-5 h-5 text-gold-400" />
+          <h2 className="font-display text-lg font-semibold text-ink-100">Broadcast Announcement</h2>
+        </div>
+        <p className="text-sm text-ink-400 mb-4">Send an in-app notification to every member with an assigned member number.</p>
+        {broadcastResult && (
+          <div className={`flex items-center gap-2 p-3 rounded-lg mb-4 animate-fade-up ${broadcastResult.ok ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-red-500/10 border border-red-500/20'}`}>
+            {broadcastResult.ok ? (
+              <>
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                <p className="text-xs text-emerald-400">Notification sent to {broadcastResult.count} members.</p>
+              </>
+            ) : (
+              <>
+                <XCircle className="w-4 h-4 text-red-400 shrink-0" />
+                <p className="text-xs text-red-400">Failed to send broadcast. Please try again.</p>
+              </>
+            )}
+          </div>
+        )}
+        <div className="space-y-3">
+          <input
+            type="text"
+            value={broadcastTitle}
+            onChange={(e) => setBroadcastTitle(e.target.value)}
+            placeholder="Notification title (e.g. Empire Town Hall Scheduled)"
+            className="input-field text-sm"
+            maxLength={120}
+          />
+          <textarea
+            value={broadcastBody}
+            onChange={(e) => setBroadcastBody(e.target.value)}
+            placeholder="Message body (optional)"
+            className="input-field text-sm min-h-[80px] resize-y"
+            maxLength={500}
+          />
+          <input
+            type="text"
+            value={broadcastLink}
+            onChange={(e) => setBroadcastLink(e.target.value)}
+            placeholder="Link URL (optional, e.g. /empire)"
+            className="input-field text-sm"
+            maxLength={200}
+          />
+          <button
+            onClick={handleBroadcast}
+            disabled={!broadcastTitle.trim() || broadcastSending}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-gold-500/15 border border-gold-500/30 text-gold-200 hover:bg-gold-500/25 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {broadcastSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+            Send to All Members
+          </button>
+        </div>
+      </div>
 
       {/* Participation Analytics */}
       <ParticipationAnalytics
