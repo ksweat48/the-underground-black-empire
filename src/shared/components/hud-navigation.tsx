@@ -3,7 +3,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import {
   User,
   Users,
-  Bell,
   Lock,
   CreditCard,
   Store,
@@ -16,6 +15,7 @@ import { GlassModal } from '@/shared/components/glass-modal';
 import { EmpireFrame } from '@/shared/components/empire-frame';
 import { EmpireEmblem } from '@/shared/components/empire-emblem';
 import { EmpireEmblemIcon } from '@/shared/components/empire-emblem-icon';
+import { NotificationBell } from '@/shared/components/notification-bell';
 import type { EmpireProgressData } from '@/domains/founder-campaign/services';
 import type { EmpireCivilizationName } from '@/config/progression-rules';
 import { PROGRESSION_RULES } from '@/config/progression-rules';
@@ -82,17 +82,7 @@ export function HudTopBar({ empire, civLevel }: HudNavigationProps) {
 
               {/* Right: Notifications */}
               <div className="flex items-center gap-0.5 shrink-0 relative z-30 ml-auto">
-                <button
-                  className="command-bar-slot group relative shrink-0"
-                  aria-label="Notifications"
-                >
-                  <div className="icon-circle-sm">
-                    <div className="icon-circle-inner">
-                      <Bell className="w-5 h-5 text-empire-text-muted group-hover:text-empire-gold transition-colors" />
-                    </div>
-                  </div>
-                  <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-empire-accent z-20" style={{ boxShadow: '0 0 4px rgba(255,90,22,0.6)' }} />
-                </button>
+                <NotificationBell />
               </div>
             </div>
 
