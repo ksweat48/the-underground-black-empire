@@ -14,6 +14,7 @@ import {
   Shield,
   Trash2,
   AlertCircle,
+  Sparkles,
 } from 'lucide-react';
 import { cn } from '@/shared/cn';
 import { GlassDrawer } from '@/shared/components/glass-drawer';
@@ -39,6 +40,7 @@ const NOTIF_ICONS: Record<string, typeof Bell> = {
   empire_upgrade: TrendingUp,
   quest_notification: Megaphone,
   general_announcement: Megaphone,
+  influence_earned: Sparkles,
   leadership_election: VoteIcon,
   treasury_funding_vote: VoteIcon,
 };
@@ -54,6 +56,7 @@ const NOTIF_COLORS: Record<string, string> = {
   city_upgrade: 'text-empire-gold',
   empire_upgrade: 'text-empire-gold',
   general_announcement: 'text-empire-gold',
+  influence_earned: 'text-emerald-400',
 };
 
 function formatTimeAgo(dateStr: string): string {

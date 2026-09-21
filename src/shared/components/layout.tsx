@@ -2,6 +2,7 @@ import { type ReactNode, useEffect, useState } from 'react';
 import { Header } from './header';
 import { EmpireBackground } from './empire-background';
 import { HudTopBar, HudBottomBar } from './hud-navigation';
+import { InfluenceCelebrationPopup } from './influence-celebration-popup';
 import { useAuth } from '@/domains/identity/auth-context';
 import {
   fetchEmpireProgress,
@@ -69,6 +70,7 @@ function EmpireLayout({
         {children}
       </main>
       <HudBottomBar />
+      <InfluenceCelebrationPopup />
     </div>
   );
 }
