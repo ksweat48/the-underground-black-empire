@@ -204,6 +204,9 @@ export function EmpireDashboardPage() {
   const [mapData, setMapData] = useState<Map<string, StateMapData> | null>(null);
   const [mapLoading, setMapLoading] = useState(true);
   const [profileMemberId, setProfileMemberId] = useState<string | null>(null);
+  const [refreshToken, setRefreshToken] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const pullStartY = useRef(0);
 
   const memberId = session?.user.id ?? null;
 
@@ -233,7 +236,7 @@ export function EmpireDashboardPage() {
       .then(setData)
       .catch(() => { setData(null); setDashboardError(true); })
       .finally(() => setLoading(false));
-  }, [memberId, sessionVersion]);
+  }, [memberId, sessionVersion, refreshToken]);
 
   useEffect(() => { loadDashboard(); }, [loadDashboard]);
 
@@ -243,14 +246,14 @@ export function EmpireDashboardPage() {
         setEmpire(progress);
       })
       .catch(() => {});
-  }, [sessionVersion]);
+  }, [sessionVersion, refreshToken]);
 
   useEffect(() => {
     fetchMapData()
       .then(setMapData)
       .catch(() => setMapData(null))
       .finally(() => setMapLoading(false));
-  }, [sessionVersion]);
+  }, [sessionVersion, refreshToken]);
 
   // Fetch metro data for the member's city
   useEffect(() => {
@@ -283,7 +286,7 @@ export function EmpireDashboardPage() {
             });
         });
     }
-  }, [data?.city_name, memberId, sessionVersion]);
+  }, [data?.city_name, memberId, sessionVersion, refreshToken]);
 
   // Fetch both feeds whenever metro data is available
   useEffect(() => {
@@ -314,7 +317,36 @@ export function EmpireDashboardPage() {
         setFeedLoading(false);
       }
     })();
-  }, [metroData?.metroId, sessionVersion]);
+  }, [metroData?.metroId, sessionVersion, refreshToken]);
+
+  const handlePullRefresh = useCallback(() => {
+    if (isRefreshing) return;
+    setIsRefreshing(true);
+    setRefreshToken((token) => token + 1);
+    window.setTimeout(() => setIsRefreshing(false), 900);
+  }, [isRefreshing]);
+
+  const handleDashboardTouchStart = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
+    pullStartY.current = e.touches[0].clientY;
+  }, []);
+
+  const handleDashboardTouchEnd = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
+    const deltaX = e.changedTouches[0].clientX - (e.touches[0]?.clientX ?? 0);
+    const deltaY = e.changedTouches[0].clientY - pullStartY.current;
+    const scrollContainer = e.currentTarget.parentElement;
+    if (scrollContainer?.scrollTop === 0 && deltaY > 70 && Math.abs(deltaY) > Math.abs(deltaX)) {
+      handlePullRefresh();
+      return;
+    }
+
+    if (Math.abs(deltaX) < 50 || Math.abs(deltaX) <= Math.abs(deltaY)) return;
+    const tabs: DashboardTab[] = ['hq', 'local', 'empire'];
+    const currentIdx = tabs.indexOf(activeTab);
+    const nextIdx = deltaX < 0 ? currentIdx + 1 : currentIdx - 1;
+    if (nextIdx < 0 || nextIdx >= tabs.length) return;
+    const nextTab = tabs[nextIdx];
+    if (nextTab !== 'local' || hasLocalFeed) setActiveTab(nextTab);
+  }, [activeTab, handlePullRefresh, hasLocalFeed]);
 
   // If no metro, default to empire tab when user tries local
   useEffect(() => {
@@ -354,7 +386,17 @@ export function EmpireDashboardPage() {
 
   return (
     <Layout fullWidth showTopBar>
-      <div className="w-full min-w-0 px-2 sm:px-3 pb-6 lg:pb-10 flex flex-col">
+      <div
+        className="w-full min-w-0 px-2 sm:px-3 pb-6 lg:pb-10 flex flex-col"
+        onTouchStart={handleDashboardTouchStart}
+        onTouchEnd={handleDashboardTouchEnd}
+      >
+        {isRefreshing && (
+          <div className="flex items-center justify-center gap-2 py-1 text-[10px] uppercase tracking-[0.18em] text-empire-gold">
+            <span className="w-3 h-3 rounded-full border border-empire-gold/30 border-t-empire-gold animate-spin" />
+            Refreshing
+          </div>
+        )}
         <div className="w-full min-w-0 max-w-[960px] mx-auto flex flex-col gap-3">
 
           {/* ===== Dashboard Tabs ===== */}
@@ -391,6 +433,7 @@ export function EmpireDashboardPage() {
                       ),
                     },
                   ]}
+                  swipeable={false}
                   className="shrink-0"
                 />
                 {/* Member overlay — top right of map */}
@@ -441,7 +484,17 @@ export function EmpireDashboardPage() {
                   )}
                 </span>
               </button>
+
+              <LocationIntelligenceCards
+                metro={metroData}
+                cityName={data?.city_name}
+                cityPopulation={data?.city_population_count ?? 0}
+                cityTier={cityTier}
+                cityTierLevel={cityTierLevel}
+                onOpen={() => setShowCityDrawer(true)}
+              />
             </>
+
           )}
 
           {/* ===== Local Tab: City card + Local feed ===== */}
@@ -565,29 +618,6 @@ function DashboardTabs({
   onTabChange: (tab: DashboardTab) => void;
   hasLocalFeed: boolean;
 }) {
-  const touchStartX = useRef(0);
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    touchStartX.current = e.touches[0].clientX;
-  };
-
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    const deltaX = e.changedTouches[0].clientX - touchStartX.current;
-    const threshold = 50;
-    const tabs: DashboardTab[] = ['hq', 'local', 'empire'];
-
-    if (Math.abs(deltaX) > threshold) {
-      const currentIdx = tabs.indexOf(activeTab);
-      if (deltaX > 0 && currentIdx > 0) {
-        const prev = tabs[currentIdx - 1];
-        if (prev !== 'local' || hasLocalFeed) onTabChange(prev);
-      } else if (deltaX < 0 && currentIdx < tabs.length - 1) {
-        const next = tabs[currentIdx + 1];
-        if (next !== 'local' || hasLocalFeed) onTabChange(next);
-      }
-    }
-  };
-
   const tabs: { key: DashboardTab; label: string; disabled?: boolean }[] = [
     { key: 'hq', label: 'HQ' },
     { key: 'local', label: 'Local', disabled: !hasLocalFeed },
@@ -595,11 +625,7 @@ function DashboardTabs({
   ];
 
   return (
-    <div
-className="seg-control seg-control-wide"
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-    >
+    <div className="seg-control seg-control-wide">
       {tabs.map((tab) => {
         const isActive = activeTab === tab.key;
         return (
@@ -617,6 +643,86 @@ className="seg-control seg-control-wide"
           </button>
         );
       })}
+    </div>
+  );
+}
+
+// ==================== Location Intelligence Cards ====================
+
+function LocationIntelligenceCards({
+  metro,
+  cityName,
+  cityPopulation,
+  cityTier,
+  cityTierLevel,
+  onOpen,
+}: {
+  metro: { name: string; rank: number; populationCount: number; cityCount: number; metroId: string | null } | null;
+  cityName: string | null;
+  cityPopulation: number;
+  cityTier: CityTierName;
+  cityTierLevel: number;
+  onOpen: () => void;
+}) {
+  return (
+    <div className="flex flex-col gap-2">
+      {metro && metro.metroId && (
+        <button
+          onClick={onOpen}
+          className="frame-utility w-full p-3 flex items-center justify-between text-left transition-all duration-200 hover:border-empire-gold/30 active:scale-[0.98]"
+        >
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-9 h-9 rounded-lg bg-empire-gold/8 border border-empire-gold/20 flex items-center justify-center shrink-0">
+              <Landmark className="w-4 h-4 text-empire-gold" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[9px] font-semibold text-empire-gold uppercase tracking-wider">Metro Area</p>
+              <p className="text-sm font-display font-bold text-empire-white truncate">{metro.name}</p>
+              <p className="text-[10px] text-empire-text-muted mt-0.5">
+                {metro.cityCount} cities · Rank #{metro.rank}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="text-right">
+              <p className="text-base font-display font-bold text-empire-gold tabular-nums leading-tight">
+                {formatCompact(metro.populationCount)}
+              </p>
+              <p className="text-[9px] text-empire-text-muted uppercase tracking-wider">population</p>
+            </div>
+            <ChevronRight className="w-4 h-4 text-empire-text-muted" />
+          </div>
+        </button>
+      )}
+
+      {cityName && (
+        <button
+          onClick={onOpen}
+          className="frame-utility w-full p-3 flex items-center justify-between text-left transition-all duration-200 hover:border-empire-gold/30 active:scale-[0.98]"
+        >
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-9 h-9 rounded-lg bg-empire-gold/8 border border-empire-gold/20 flex items-center justify-center shrink-0">
+              <Building2 className="w-4 h-4 text-empire-gold" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[9px] font-semibold text-empire-gold uppercase tracking-wider">Your City</p>
+              <p className="text-sm font-display font-bold text-empire-white truncate">{cityName}</p>
+              <p className="text-[10px] text-empire-text-muted mt-0.5">
+                {PROGRESSION_RULES.city[cityTier].label} · Level {cityTierLevel}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="text-right">
+              <p className="text-base font-display font-bold text-empire-gold tabular-nums leading-tight">
+                {cityPopulation}
+              </p>
+              <p className="text-[9px] text-empire-text-muted uppercase tracking-wider">population</p>
+            </div>
+            <ChevronRight className="w-4 h-4 text-empire-text-muted" />
+          </div>
+        </button>
+      )}
     </div>
   );
 }

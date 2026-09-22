@@ -8,12 +8,14 @@ interface SwipeableCardContainerProps {
     node: ReactNode;
   }[];
   collapsed?: boolean;
+  swipeable?: boolean;
   className?: string;
 }
 
 export function SwipeableCardContainer({
   cards,
   collapsed = false,
+  swipeable = true,
   className,
 }: SwipeableCardContainerProps) {
   const [activeIndex, setActiveIndex] = useState(0);
@@ -69,6 +71,7 @@ export function SwipeableCardContainer({
       className={cn(
         'card-swipe-slot flex w-full min-w-0 flex-col overflow-hidden transition-all duration-300 ease-out',
         collapsed && 'hidden lg:flex',
+        !swipeable && 'touch-none',
         className,
       )}
     >
@@ -76,10 +79,10 @@ export function SwipeableCardContainer({
       <div
         ref={containerRef}
         className="card-swipe-viewport overflow-hidden select-none flex-1"
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-        style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
+        onTouchStart={swipeable ? handleTouchStart : (e) => e.stopPropagation()}
+        onTouchMove={swipeable ? handleTouchMove : (e) => e.stopPropagation()}
+        onTouchEnd={swipeable ? handleTouchEnd : (e) => e.stopPropagation()}
+        style={{ cursor: swipeable ? (isDragging ? 'grabbing' : 'grab') : 'default' }}
       >
         <div
           className="flex transition-transform h-full"
