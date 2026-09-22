@@ -412,7 +412,6 @@ export interface MemberDashboardData {
   influence: number;
   referral_count: number;
   verified_referral_count: number;
-  avatar_url: string | null;
 }
 
 export interface FeedEvent {
@@ -483,8 +482,7 @@ export async function fetchMemberDashboard(memberId: string): Promise<MemberDash
       display_name,
       founder_number,
       member_number,
-      city_id,
-      avatar_url
+      city_id
     `)
     .eq('id', memberId)
     .maybeSingle();
@@ -522,7 +520,6 @@ export async function fetchMemberDashboard(memberId: string): Promise<MemberDash
     influence: totalInfluence,
     referral_count: referralCount,
     verified_referral_count: verifiedReferralCount,
-    avatar_url: (member as { avatar_url?: string | null }).avatar_url ?? null,
   };
 }
 
