@@ -319,6 +319,8 @@ export function EmpireDashboardPage() {
     })();
   }, [metroData?.metroId, sessionVersion, refreshToken]);
 
+  const hasLocalFeed = metroData?.metroId != null;
+
   const handlePullRefresh = useCallback(() => {
     if (isRefreshing) return;
     setIsRefreshing(true);
@@ -382,7 +384,6 @@ export function EmpireDashboardPage() {
   const currentFeed = activeTab === 'local'
     ? mergeFeedWithNews(localCouncilNews, localFeed)
     : mergeFeedWithNews(empireCouncilNews, empireFeed);
-  const hasLocalFeed = metroData?.metroId != null;
 
   return (
     <Layout fullWidth showTopBar>
