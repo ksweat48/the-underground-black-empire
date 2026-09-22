@@ -355,7 +355,7 @@ export function EmpireDashboardPage() {
   return (
     <Layout fullWidth showTopBar>
       <div className="w-full min-w-0 px-2 sm:px-3 pb-6 lg:pb-10 flex flex-col">
-        <div className="w-full min-w-0 max-w-[960px] mx-auto flex flex-col gap-4">
+        <div className="w-full min-w-0 max-w-[960px] mx-auto flex flex-col gap-3">
 
           {/* ===== Dashboard Tabs ===== */}
           <DashboardTabs
@@ -596,7 +596,7 @@ function DashboardTabs({
 
   return (
     <div
-      className="seg-control seg-control-wide mb-1"
+className="seg-control seg-control-wide"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >

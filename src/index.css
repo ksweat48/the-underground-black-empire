@@ -510,12 +510,12 @@
   }
 
   .empire-layout-main {
-    padding-top: calc(96px + env(safe-area-inset-top));
+    padding-top: calc(72px + env(safe-area-inset-top));
   padding-bottom: calc(96px + env(safe-area-inset-bottom));
   }
   @media (min-width: 1024px) {
     .empire-layout-main {
-      padding-top: calc(128px + env(safe-area-inset-top));
+      padding-top: calc(80px + env(safe-area-inset-top));
     }
   }
 
@@ -734,7 +734,7 @@
   .seg-control-wide {
     @apply w-full max-w-none mx-0;
     border-radius: var(--radius-card-sm);
-    padding: 4px;
+    padding: 3px;
   }
 
   .seg-btn {
@@ -744,8 +744,10 @@
   }
 
   .seg-control-wide .seg-btn {
-    @apply flex-1 px-2;
+    @apply flex-1 px-2 py-1.5;
     border-radius: var(--radius-card-sm);
+    font-size: 11px;
+    letter-spacing: 0.08em;
   }
 
   .seg-btn-active {

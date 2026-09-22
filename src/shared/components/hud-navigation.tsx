@@ -39,7 +39,7 @@ export function HudTopBar({ civLevel }: HudNavigationProps) {
       {/* ===== Command Bar — smooth black panel ===== */}
       <div className="px-2 sm:px-3 pt-2">
         <div className="command-bar relative max-w-empire mx-auto">
-          <div className="relative z-10 flex flex-col px-2 pt-2 pb-1.5 gap-1.5">
+          <div className="relative z-10 flex flex-col px-2 pt-2 pb-1 gap-1">
             <div className="relative flex items-center justify-between min-h-10">
               {/* Left: Civilization levels */}
               <button
