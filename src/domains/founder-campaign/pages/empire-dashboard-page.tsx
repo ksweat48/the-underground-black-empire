@@ -10,7 +10,6 @@ import {
   Megaphone,
   ChevronRight,
   Newspaper,
-  CreditCard,
   Lock,
   Map as MapIcon,
   Landmark,
@@ -207,6 +206,7 @@ export function EmpireDashboardPage() {
   const [refreshToken, setRefreshToken] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const pullStartY = useRef(0);
+  const pullStartX = useRef(0);
 
   const memberId = session?.user.id ?? null;
 
@@ -330,13 +330,27 @@ export function EmpireDashboardPage() {
 
   const handleDashboardTouchStart = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
     pullStartY.current = e.touches[0].clientY;
+    pullStartX.current = e.touches[0].clientX;
   }, []);
 
   const handleDashboardTouchEnd = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
-    const deltaX = e.changedTouches[0].clientX - (e.touches[0]?.clientX ?? 0);
-    const deltaY = e.changedTouches[0].clientY - pullStartY.current;
-    const scrollContainer = e.currentTarget.parentElement;
-    if (scrollContainer?.scrollTop === 0 && deltaY > 70 && Math.abs(deltaY) > Math.abs(deltaX)) {
+    const endX = e.changedTouches[0].clientX;
+    const endY = e.changedTouches[0].clientY;
+    const deltaX = endX - pullStartX.current;
+    const deltaY = endY - pullStartY.current;
+
+    let el: HTMLElement | null = e.currentTarget;
+    while (el) {
+      const style = window.getComputedStyle(el);
+      const overflowY = style.overflowY;
+      if ((overflowY === 'auto' || overflowY === 'scroll') && el.scrollHeight > el.clientHeight) {
+        break;
+      }
+      el = el.parentElement;
+    }
+    const scrollTop = el?.scrollTop ?? 0;
+
+    if (scrollTop === 0 && deltaY > 70 && Math.abs(deltaY) > Math.abs(deltaX)) {
       handlePullRefresh();
       return;
     }
@@ -437,15 +451,6 @@ export function EmpireDashboardPage() {
                   swipeable={false}
                   className="shrink-0"
                 />
-                {/* Member overlay — top right of map */}
-                <div className="absolute top-2 right-2 z-20 pointer-events-none">
-                  <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/90 backdrop-blur-md border border-empire-black-900/10 shadow-[0_4px_12px_rgba(26,24,21,0.08)] pointer-events-auto">
-                    <CreditCard className="w-3.5 h-3.5 text-[#B48A3C]" strokeWidth={2} />
-                    <span className="text-[10px] font-display font-bold text-[#B48A3C] uppercase tracking-widest leading-none">
-                      Member
-                    </span>
-                  </div>
-                </div>
               </div>
 
               {/* Empire Stats: Population, Total Cities, Treasury */}
@@ -467,24 +472,6 @@ export function EmpireDashboardPage() {
                   locked
                 />
               </div>
-
-              {/* Share the Empire bar */}
-              <button
-                onClick={handleShare}
-                className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 transition-all duration-200 hover:border-emerald-500/45 hover:bg-emerald-500/15 active:scale-[0.99]"
-              >
-                <div className="flex items-center gap-2 min-w-0">
-                  <Share2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span className="font-display text-xs font-medium text-emerald-200 truncate">Share the Empire to earn Influence</span>
-                </div>
-                <span className="flex items-center gap-1 text-[10px] text-emerald-400/70 shrink-0">
-                  {shareCopied ? (
-                    <><Check className="w-3 h-3 text-emerald-400" /> Copied</>
-                  ) : (
-                    <><Share2 className="w-3 h-3" /> Share</>
-                  )}
-                </span>
-              </button>
 
               <LocationIntelligenceCards
                 metro={metroData}
