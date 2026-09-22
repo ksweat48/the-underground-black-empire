@@ -401,10 +401,6 @@ export function EmpireDashboardPage() {
   const cityTier = data?.city_population_count ? getCityTier(data.city_population_count) : 'group';
   const cityTierLevel = getCityTierLevel(cityTier);
 
-  const currentFeed = activeTab === 'local'
-    ? mergeFeedWithNews(localCouncilNews, localFeed)
-    : mergeFeedWithNews(empireCouncilNews, empireFeed);
-
   const tabs: DashboardTab[] = ['hq', 'local', 'empire'];
   const activeTabIndex = tabs.indexOf(activeTab);
 
@@ -428,15 +424,16 @@ export function EmpireDashboardPage() {
           {/* ===== Tab Content with Animated Slide ===== */}
           <div ref={tabViewportRef} className="overflow-hidden">
             <div
-              className="flex ease-out"
+              className="flex transition-transform ease-out"
               style={{
                 transform: `translateX(${-activeTabIndex * tabViewportWidth + dragOffset}px)`,
                 transitionDuration: isDragging ? '0ms' : '300ms',
                 transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
+                transitionProperty: 'transform',
               }}
             >
               {/* ===== HQ Tab: Map + Stats + Share ===== */}
-              <div className="shrink-0 w-full flex flex-col gap-3">
+              <div className="shrink-0 flex flex-col gap-3" style={{ width: tabViewportWidth > 0 ? `${tabViewportWidth}px` : '100%' }}>
                 <div className="relative">
                   <SwipeableCardContainer
                     cards={[
@@ -495,7 +492,7 @@ export function EmpireDashboardPage() {
               </div>
 
               {/* ===== Local Tab: City card + Local feed ===== */}
-              <div className="shrink-0 w-full flex flex-col gap-3">
+              <div className="shrink-0 flex flex-col gap-3" style={{ width: tabViewportWidth > 0 ? `${tabViewportWidth}px` : '100%' }}>
                 {data?.city_name && (
                   <CityCard
                     cityName={data.city_name}
@@ -513,7 +510,7 @@ export function EmpireDashboardPage() {
               </div>
 
               {/* ===== Empire Tab: Empire feed ===== */}
-              <div className="shrink-0 w-full flex flex-col gap-3">
+              <div className="shrink-0 flex flex-col gap-3" style={{ width: tabViewportWidth > 0 ? `${tabViewportWidth}px` : '100%' }}>
                 {feedError ? (
                   <ErrorBanner message="Unable to load activity feed." onRetry={() => { setFeedError(false); setFeedLoading(true); }} />
                 ) : (
