@@ -215,7 +215,7 @@ export function EmpireDashboardPage() {
     const ro = new ResizeObserver(measure);
     if (tabViewportRef.current) ro.observe(tabViewportRef.current);
     return () => ro.disconnect();
-  }, []);
+  }, [loading, dashboardError]);
 
   const memberId = session?.user.id ?? null;
 
@@ -426,7 +426,9 @@ export function EmpireDashboardPage() {
             <div
               className="flex transition-transform ease-out"
               style={{
-                transform: `translateX(${-activeTabIndex * tabViewportWidth + dragOffset}px)`,
+                transform: tabViewportWidth > 0
+                  ? `translateX(${-activeTabIndex * tabViewportWidth + dragOffset}px)`
+                  : `translateX($-activeTabIndex * 100 + (dragOffset > 0 ? dragOffset : 0)}%)`,
                 transitionDuration: isDragging ? '0ms' : '300ms',
                 transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
                 transitionProperty: 'transform',
