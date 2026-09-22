@@ -206,6 +206,9 @@ export function EmpireDashboardPage() {
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState(0);
   const pullStartX = useRef(0);
+  const pullStartY = useRef(0);
+  const gestureAxis = useRef<'h' | 'v' | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const tabViewportRef = useRef<HTMLDivElement>(null);
   const [tabViewportWidth, setTabViewportWidth] = useState(0);
 
@@ -215,6 +218,17 @@ export function EmpireDashboardPage() {
     const ro = new ResizeObserver(measure);
     if (tabViewportRef.current) ro.observe(tabViewportRef.current);
     return () => ro.disconnect();
+  }, [loading, dashboardError]);
+
+  // Native non-passive touchmove listener to prevent vertical scroll during horizontal drag
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const preventVerticalScroll = (e: TouchEvent) => {
+      if (gestureAxis.current === 'h') e.preventDefault();
+    };
+    el.addEventListener('touchmove', preventVerticalScroll, { passive: false });
+    return () => el.removeEventListener('touchmove', preventVerticalScroll);
   }, [loading, dashboardError]);
 
   const memberId = session?.user.id ?? null;
@@ -336,38 +350,55 @@ export function EmpireDashboardPage() {
 
   const handleDashboardTouchStart = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
     pullStartX.current = e.touches[0].clientX;
+    pullStartY.current = e.touches[0].clientY;
+    gestureAxis.current = null;
     setIsDragging(true);
   }, []);
 
   const handleDashboardTouchMove = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
     if (!isDragging) return;
-    const delta = e.touches[0].clientX - pullStartX.current;
+    const deltaX = e.touches[0].clientX - pullStartX.current;
+    const deltaY = e.touches[0].clientY - pullStartY.current;
+
+    if (gestureAxis.current === null) {
+      if (Math.abs(deltaX) < 5 && Math.abs(deltaY) < 5) return;
+      gestureAxis.current = Math.abs(deltaX) > Math.abs(deltaY) ? 'h' : 'v';
+    }
+
+    if (gestureAxis.current === 'v') {
+      setDragOffset(0);
+      return;
+    }
+
     const tabs: DashboardTab[] = ['hq', 'local', 'empire'];
     const currentIdx = tabs.indexOf(activeTab);
-    let clamped = delta;
-    if (currentIdx === 0 && delta > 0) clamped = 0;
-    if (currentIdx === tabs.length - 1 && delta < 0) clamped = 0;
-    if (activeTab === 'hq' && delta < 0 && !hasLocalFeed) clamped = 0;
+    let clamped = deltaX;
+    if (currentIdx === 0 && deltaX > 0) clamped = 0;
+    if (currentIdx === tabs.length - 1 && deltaX < 0) clamped = 0;
+    if (activeTab === 'hq' && deltaX < 0 && !hasLocalFeed) clamped = 0;
     setDragOffset(clamped);
   }, [isDragging, activeTab, hasLocalFeed]);
 
   const handleDashboardTouchEnd = useCallback(() => {
     if (!isDragging) return;
-    const threshold = tabViewportWidth * 0.2;
-    const tabs: DashboardTab[] = ['hq', 'local', 'empire'];
-    const currentIdx = tabs.indexOf(activeTab);
-    let nextIdx = currentIdx;
-    if (dragOffset < -threshold && currentIdx < tabs.length - 1) {
-      nextIdx = currentIdx + 1;
-    } else if (dragOffset > threshold && currentIdx > 0) {
-      nextIdx = currentIdx - 1;
+    if (gestureAxis.current === 'h') {
+      const threshold = tabViewportWidth * 0.2;
+      const tabs: DashboardTab[] = ['hq', 'local', 'empire'];
+      const currentIdx = tabs.indexOf(activeTab);
+      let nextIdx = currentIdx;
+      if (dragOffset < -threshold && currentIdx < tabs.length - 1) {
+        nextIdx = currentIdx + 1;
+      } else if (dragOffset > threshold && currentIdx > 0) {
+        nextIdx = currentIdx - 1;
+      }
+      const nextTab = tabs[nextIdx];
+      if (nextTab !== activeTab && (nextTab !== 'local' || hasLocalFeed)) {
+        changeTab(nextTab);
+      }
     }
-    const nextTab = tabs[nextIdx];
     setDragOffset(0);
     setIsDragging(false);
-    if (nextTab !== activeTab && (nextTab !== 'local' || hasLocalFeed)) {
-      changeTab(nextTab);
-    }
+    gestureAxis.current = null;
   }, [isDragging, dragOffset, tabViewportWidth, activeTab, changeTab, hasLocalFeed]);
 
   // If no metro, default to empire tab when user tries local
@@ -407,6 +438,7 @@ export function EmpireDashboardPage() {
   return (
     <Layout fullWidth showTopBar>
       <div
+        ref={containerRef}
         className="w-full min-w-0 px-2 sm:px-3 pb-6 lg:pb-10 flex flex-col"
         onTouchStart={handleDashboardTouchStart}
         onTouchMove={handleDashboardTouchMove}
