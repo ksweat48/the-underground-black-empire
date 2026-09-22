@@ -1,10 +1,7 @@
-import { useState, type ComponentType } from 'react';
+import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   User,
-  Users,
-  Lock,
-  CreditCard,
   Store,
   Vote as VoteIcon,
   Plus,
@@ -12,9 +9,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/shared/cn';
 import { GlassModal } from '@/shared/components/glass-modal';
-import { EmpireFrame } from '@/shared/components/empire-frame';
 import { EmpireEmblem } from '@/shared/components/empire-emblem';
-import { EmpireEmblemIcon } from '@/shared/components/empire-emblem-icon';
 import { NotificationBell } from '@/shared/components/notification-bell';
 import type { EmpireProgressData } from '@/domains/founder-campaign/services';
 import type { EmpireCivilizationName } from '@/config/progression-rules';
@@ -26,23 +21,15 @@ interface HudNavigationProps {
   civLevel: EmpireCivilizationName;
 }
 
-function formatCompact(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
-  return n.toLocaleString();
-}
-
 const CIVILIZATION_ORDER: EmpireCivilizationName[] = [
   'outpost', 'settlement', 'village', 'province', 'kingdom', 'dominion', 'empire',
 ];
 
 /* ===================== TOP HUD ===================== */
 
-export function HudTopBar({ empire, civLevel }: HudNavigationProps) {
+export function HudTopBar({ civLevel }: HudNavigationProps) {
   const navigate = useNavigate();
-  const [showPopulationModal, setShowPopulationModal] = useState(false);
   const [showCivModal, setShowCivModal] = useState(false);
-  const [showTreasuryModal, setShowTreasuryModal] = useState(false);
 
   const civLabel = civLevel.charAt(0).toUpperCase() + civLevel.slice(1);
 
@@ -86,72 +73,11 @@ export function HudTopBar({ empire, civLevel }: HudNavigationProps) {
               </div>
             </div>
 
-            {/* ===== Empire status row ===== */}
-            <div className="flex items-center gap-1 min-w-0">
-              <button
-                onClick={() => setShowPopulationModal(true)}
-                className="command-bar-slot group flex-1 justify-center min-w-0"
-                aria-label="View population stats"
-              >
-                <div className="flex flex-col items-center leading-none">
-                  <span className="text-[8px] font-semibold text-empire-text-muted uppercase tracking-wider">Population</span>
-                  <span className="text-xs font-display font-bold text-empire-white group-hover:text-empire-gold transition-colors tabular-nums">
-                    {formatCompact(empire.total_population)}
-                  </span>
-                </div>
-              </button>
 
-              <div className="command-bar-divider shrink-0" />
-
-              <button
-                onClick={() => navigate('/membership')}
-                className="group flex-1 flex flex-col items-center justify-center gap-0.5 py-0.5 min-w-0"
-                aria-label="View membership options"
-              >
-                <CreditCard className="w-4 h-4 text-[#B48A3C] transition-colors group-hover:text-empire-gold" strokeWidth={2} />
-                <span className="text-[10px] font-display font-bold text-[#B48A3C] uppercase tracking-widest leading-none transition-colors group-hover:text-empire-gold">
-                  Member
-                </span>
-              </button>
-
-              <div className="command-bar-divider shrink-0" />
-
-              {/* Treasury — locked at Outpost */}
-              <button
-                onClick={() => setShowTreasuryModal(true)}
-                className="command-bar-slot group flex-1 justify-center min-w-0"
-                aria-label="Treasury — locked"
-              >
-                <div className="flex flex-col items-center leading-none">
-                  <span className="text-[8px] font-semibold text-empire-text-muted uppercase tracking-wider">Treasury</span>
-                  <span className="text-[9px] text-empire-text-muted leading-none">Locked</span>
-                </div>
-              </button>
-            </div>
           </div>
         </div>
       </div>
       </div>
-
-      {/* Modals rendered outside hud-top to avoid backdrop-filter containing block */}
-      {/* Population breakdown modal */}
-      <GlassModal open={showPopulationModal} onClose={() => setShowPopulationModal(false)} title="Empire Statistics">
-        <div className="space-y-3">
-          <StatRow icon={Users} label="Population" value={formatCompact(empire.total_population)} />
-          <StatRow icon={EmpireEmblemIcon} label="Tribe Cities" value={empire.tribe_city_count} />
-        </div>
-      </GlassModal>
-
-      {/* Treasury locked modal */}
-      <GlassModal open={showTreasuryModal} onClose={() => setShowTreasuryModal(false)} title="Treasury">
-        <div className="text-center py-6 space-y-3">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-empire-gold/5 border border-empire-gold/15">
-            <Lock className="w-6 h-6 text-empire-text-muted" />
-          </div>
-          <p className="text-sm text-sand">The Treasury unlocks when the Empire reaches the <span className="text-empire-gold font-semibold">Settlement</span> stage.</p>
-          <p className="text-xs text-stone">Raise 10 Tribe Cities and a population of 1000 to advance the civilization to Settlement.</p>
-        </div>
-      </GlassModal>
 
       {/* Civilization levels modal */}
       <GlassModal open={showCivModal} onClose={() => setShowCivModal(false)} title="Empire Levels">
@@ -200,26 +126,6 @@ export function HudTopBar({ empire, civLevel }: HudNavigationProps) {
         </div>
       </GlassModal>
     </>
-  );
-}
-
-/* ===================== STAT ROW ===================== */
-
-function StatRow({ icon: Icon, label, value }: { icon: ComponentType<{ className?: string }>; label: string; value: string | number }) {
-  return (
-    <EmpireFrame variant="utility" className="p-3.5">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="icon-circle-sm !w-7 !h-7">
-            <div className="icon-circle-inner">
-              <Icon className="w-5 h-5 text-empire-gold" />
-            </div>
-          </div>
-          <span className="text-sm font-medium text-sand">{label}</span>
-        </div>
-        <span className="text-xl font-display font-bold text-ivory tabular-nums">{value}</span>
-      </div>
-    </EmpireFrame>
   );
 }
 
