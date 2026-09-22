@@ -203,7 +203,19 @@ export function EmpireDashboardPage() {
   const [mapData, setMapData] = useState<Map<string, StateMapData> | null>(null);
   const [mapLoading, setMapLoading] = useState(true);
   const [profileMemberId, setProfileMemberId] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState(0);
   const pullStartX = useRef(0);
+  const tabViewportRef = useRef<HTMLDivElement>(null);
+  const [tabViewportWidth, setTabViewportWidth] = useState(0);
+
+  useEffect(() => {
+    const measure = () => setTabViewportWidth(tabViewportRef.current?.offsetWidth ?? 0);
+    measure();
+    const ro = new ResizeObserver(measure);
+    if (tabViewportRef.current) ro.observe(tabViewportRef.current);
+    return () => ro.disconnect();
+  }, []);
 
   const memberId = session?.user.id ?? null;
 
@@ -324,19 +336,39 @@ export function EmpireDashboardPage() {
 
   const handleDashboardTouchStart = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
     pullStartX.current = e.touches[0].clientX;
+    setIsDragging(true);
   }, []);
 
-  const handleDashboardTouchEnd = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
-    const endX = e.changedTouches[0].clientX;
-    const deltaX = endX - pullStartX.current;
-    if (Math.abs(deltaX) < 50) return;
+  const handleDashboardTouchMove = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
+    if (!isDragging) return;
+    const delta = e.touches[0].clientX - pullStartX.current;
     const tabs: DashboardTab[] = ['hq', 'local', 'empire'];
     const currentIdx = tabs.indexOf(activeTab);
-    const nextIdx = deltaX < 0 ? currentIdx + 1 : currentIdx - 1;
-    if (nextIdx < 0 || nextIdx >= tabs.length) return;
+    let clamped = delta;
+    if (currentIdx === 0 && delta > 0) clamped = 0;
+    if (currentIdx === tabs.length - 1 && delta < 0) clamped = 0;
+    if (activeTab === 'hq' && delta < 0 && !hasLocalFeed) clamped = 0;
+    setDragOffset(clamped);
+  }, [isDragging, activeTab, hasLocalFeed]);
+
+  const handleDashboardTouchEnd = useCallback(() => {
+    if (!isDragging) return;
+    const threshold = tabViewportWidth * 0.2;
+    const tabs: DashboardTab[] = ['hq', 'local', 'empire'];
+    const currentIdx = tabs.indexOf(activeTab);
+    let nextIdx = currentIdx;
+    if (dragOffset < -threshold && currentIdx < tabs.length - 1) {
+      nextIdx = currentIdx + 1;
+    } else if (dragOffset > threshold && currentIdx > 0) {
+      nextIdx = currentIdx - 1;
+    }
     const nextTab = tabs[nextIdx];
-    if (nextTab !== 'local' || hasLocalFeed) changeTab(nextTab);
-  }, [activeTab, changeTab, hasLocalFeed]);
+    setDragOffset(0);
+    setIsDragging(false);
+    if (nextTab !== activeTab && (nextTab !== 'local' || hasLocalFeed)) {
+      changeTab(nextTab);
+    }
+  }, [isDragging, dragOffset, tabViewportWidth, activeTab, changeTab, hasLocalFeed]);
 
   // If no metro, default to empire tab when user tries local
   useEffect(() => {
@@ -381,6 +413,7 @@ export function EmpireDashboardPage() {
       <div
         className="w-full min-w-0 px-2 sm:px-3 pb-6 lg:pb-10 flex flex-col"
         onTouchStart={handleDashboardTouchStart}
+        onTouchMove={handleDashboardTouchMove}
         onTouchEnd={handleDashboardTouchEnd}
       >
         <div className="w-full min-w-0 max-w-[960px] mx-auto flex flex-col gap-3">
@@ -393,10 +426,14 @@ export function EmpireDashboardPage() {
           />
 
           {/* ===== Tab Content with Animated Slide ===== */}
-          <div className="overflow-hidden">
+          <div ref={tabViewportRef} className="overflow-hidden">
             <div
-              className="flex transition-transform duration-300 ease-out"
-              style={{ transform: `translateX(-${activeTabIndex * 100}%)` }}
+              className="flex ease-out"
+              style={{
+                transform: `translateX(${-activeTabIndex * tabViewportWidth + dragOffset}px)`,
+                transitionDuration: isDragging ? '0ms' : '300ms',
+                transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
+              }}
             >
               {/* ===== HQ Tab: Map + Stats + Share ===== */}
               <div className="shrink-0 w-full flex flex-col gap-3">
