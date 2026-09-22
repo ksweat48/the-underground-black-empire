@@ -203,9 +203,6 @@ export function EmpireDashboardPage() {
   const [mapData, setMapData] = useState<Map<string, StateMapData> | null>(null);
   const [mapLoading, setMapLoading] = useState(true);
   const [profileMemberId, setProfileMemberId] = useState<string | null>(null);
-  const [refreshToken, setRefreshToken] = useState(0);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const pullStartY = useRef(0);
   const pullStartX = useRef(0);
 
   const memberId = session?.user.id ?? null;
@@ -236,7 +233,7 @@ export function EmpireDashboardPage() {
       .then(setData)
       .catch(() => { setData(null); setDashboardError(true); })
       .finally(() => setLoading(false));
-  }, [memberId, sessionVersion, refreshToken]);
+  }, [memberId, sessionVersion]);
 
   useEffect(() => { loadDashboard(); }, [loadDashboard]);
 
@@ -246,14 +243,14 @@ export function EmpireDashboardPage() {
         setEmpire(progress);
       })
       .catch(() => {});
-  }, [sessionVersion, refreshToken]);
+  }, [sessionVersion]);
 
   useEffect(() => {
     fetchMapData()
       .then(setMapData)
       .catch(() => setMapData(null))
       .finally(() => setMapLoading(false));
-  }, [sessionVersion, refreshToken]);
+  }, [sessionVersion]);
 
   // Fetch metro data for the member's city
   useEffect(() => {
@@ -286,7 +283,7 @@ export function EmpireDashboardPage() {
             });
         });
     }
-  }, [data?.city_name, memberId, sessionVersion, refreshToken]);
+  }, [data?.city_name, memberId, sessionVersion]);
 
   // Fetch both feeds whenever metro data is available
   useEffect(() => {
@@ -317,52 +314,29 @@ export function EmpireDashboardPage() {
         setFeedLoading(false);
       }
     })();
-  }, [metroData?.metroId, sessionVersion, refreshToken]);
+  }, [metroData?.metroId, sessionVersion]);
 
   const hasLocalFeed = metroData?.metroId != null;
 
-  const handlePullRefresh = useCallback(() => {
-    if (isRefreshing) return;
-    setIsRefreshing(true);
-    setRefreshToken((token) => token + 1);
-    window.setTimeout(() => setIsRefreshing(false), 900);
-  }, [isRefreshing]);
+  const changeTab = useCallback((nextTab: DashboardTab) => {
+    setActiveTab(nextTab);
+  }, []);
 
   const handleDashboardTouchStart = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
-    pullStartY.current = e.touches[0].clientY;
     pullStartX.current = e.touches[0].clientX;
   }, []);
 
   const handleDashboardTouchEnd = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
     const endX = e.changedTouches[0].clientX;
-    const endY = e.changedTouches[0].clientY;
     const deltaX = endX - pullStartX.current;
-    const deltaY = endY - pullStartY.current;
-
-    let el: HTMLElement | null = e.currentTarget;
-    while (el) {
-      const style = window.getComputedStyle(el);
-      const overflowY = style.overflowY;
-      if ((overflowY === 'auto' || overflowY === 'scroll') && el.scrollHeight > el.clientHeight) {
-        break;
-      }
-      el = el.parentElement;
-    }
-    const scrollTop = el?.scrollTop ?? 0;
-
-    if (scrollTop === 0 && deltaY > 70 && Math.abs(deltaY) > Math.abs(deltaX)) {
-      handlePullRefresh();
-      return;
-    }
-
-    if (Math.abs(deltaX) < 50 || Math.abs(deltaX) <= Math.abs(deltaY)) return;
+    if (Math.abs(deltaX) < 50) return;
     const tabs: DashboardTab[] = ['hq', 'local', 'empire'];
     const currentIdx = tabs.indexOf(activeTab);
     const nextIdx = deltaX < 0 ? currentIdx + 1 : currentIdx - 1;
     if (nextIdx < 0 || nextIdx >= tabs.length) return;
     const nextTab = tabs[nextIdx];
-    if (nextTab !== 'local' || hasLocalFeed) setActiveTab(nextTab);
-  }, [activeTab, handlePullRefresh, hasLocalFeed]);
+    if (nextTab !== 'local' || hasLocalFeed) changeTab(nextTab);
+  }, [activeTab, changeTab, hasLocalFeed]);
 
   // If no metro, default to empire tab when user tries local
   useEffect(() => {
@@ -399,6 +373,9 @@ export function EmpireDashboardPage() {
     ? mergeFeedWithNews(localCouncilNews, localFeed)
     : mergeFeedWithNews(empireCouncilNews, empireFeed);
 
+  const tabs: DashboardTab[] = ['hq', 'local', 'empire'];
+  const activeTabIndex = tabs.indexOf(activeTab);
+
   return (
     <Layout fullWidth showTopBar>
       <div
@@ -406,115 +383,108 @@ export function EmpireDashboardPage() {
         onTouchStart={handleDashboardTouchStart}
         onTouchEnd={handleDashboardTouchEnd}
       >
-        {isRefreshing && (
-          <div className="flex items-center justify-center gap-2 py-1 text-[10px] uppercase tracking-[0.18em] text-empire-gold">
-            <span className="w-3 h-3 rounded-full border border-empire-gold/30 border-t-empire-gold animate-spin" />
-            Refreshing
-          </div>
-        )}
         <div className="w-full min-w-0 max-w-[960px] mx-auto flex flex-col gap-3">
 
           {/* ===== Dashboard Tabs ===== */}
           <DashboardTabs
             activeTab={activeTab}
-            onTabChange={setActiveTab}
+            onTabChange={changeTab}
             hasLocalFeed={hasLocalFeed}
           />
 
-          {/* ===== HQ Tab: Map + Stats + Share ===== */}
-          {activeTab === 'hq' && (
-            <>
-              {/* Map with Member overlay */}
-              <div className="relative">
-                <SwipeableCardContainer
-                  cards={[
-                    {
-                      label: 'Empire Map',
-                      node: (
-                        <USMapCard
-                          mapData={mapData}
-                          loading={mapLoading}
-                        />
-                      ),
-                    },
-                    {
-                      label: 'Mission',
-                      node: (
-                        <GuideMissionCard
-                          civLevel={civLevel}
-                          population={empire.total_population}
-                          tribeCityCount={empire.tribe_city_count}
-                        />
-                      ),
-                    },
-                  ]}
-                  swipeable={false}
-                  className="shrink-0"
-                />
-              </div>
+          {/* ===== Tab Content with Animated Slide ===== */}
+          <div className="overflow-hidden">
+            <div
+              className="flex transition-transform duration-300 ease-out"
+              style={{ transform: `translateX(-${activeTabIndex * 100}%)` }}
+            >
+              {/* ===== HQ Tab: Map + Stats + Share ===== */}
+              <div className="shrink-0 w-full flex flex-col gap-3">
+                <div className="relative">
+                  <SwipeableCardContainer
+                    cards={[
+                      {
+                        label: 'Empire Map',
+                        node: (
+                          <USMapCard
+                            mapData={mapData}
+                            loading={mapLoading}
+                          />
+                        ),
+                      },
+                      {
+                        label: 'Mission',
+                        node: (
+                          <GuideMissionCard
+                            civLevel={civLevel}
+                            population={empire.total_population}
+                            tribeCityCount={empire.tribe_city_count}
+                          />
+                        ),
+                      },
+                    ]}
+                    swipeable={false}
+                    className="shrink-0"
+                  />
+                </div>
 
-              {/* Empire Stats: Population, Total Cities, Treasury */}
-              <div className="grid grid-cols-3 gap-2 sm:gap-3">
-                <StatTile
-                  icon={Users}
-                  label="Population"
-                  value={formatCompact(empire.total_population)}
-                />
-                <StatTile
-                  icon={Building2}
-                  label="Total Cities"
-                  value={empire.total_cities.toLocaleString()}
-                />
-                <StatTile
-                  icon={Landmark}
-                  label="Treasury"
-                  value="Locked"
-                  locked
-                />
-              </div>
+                <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                  <StatTile
+                    icon={Users}
+                    label="Population"
+                    value={formatCompact(empire.total_population)}
+                  />
+                  <StatTile
+                    icon={Building2}
+                    label="Total Cities"
+                    value={empire.total_cities.toLocaleString()}
+                  />
+                  <StatTile
+                    icon={Landmark}
+                    label="Treasury"
+                    value="Locked"
+                    locked
+                  />
+                </div>
 
-              <LocationIntelligenceCards
-                metro={metroData}
-                cityName={data?.city_name}
-                cityPopulation={data?.city_population_count ?? 0}
-                cityTier={cityTier}
-                cityTierLevel={cityTierLevel}
-                onOpen={() => setShowCityDrawer(true)}
-              />
-            </>
-
-          )}
-
-          {/* ===== Local Tab: City card + Local feed ===== */}
-          {activeTab === 'local' && (
-            <div className="flex flex-col gap-3">
-              {data?.city_name && (
-                <CityCard
-                  cityName={data.city_name}
+                <LocationIntelligenceCards
+                  metro={metroData}
+                  cityName={data?.city_name}
+                  cityPopulation={data?.city_population_count ?? 0}
                   cityTier={cityTier}
                   cityTierLevel={cityTierLevel}
-                  populationCount={data.city_population_count ?? 0}
-                  onClick={() => setShowCityDrawer(true)}
+                  onOpen={() => setShowCityDrawer(true)}
                 />
-              )}
-              {feedError ? (
-                <ErrorBanner message="Unable to load activity feed." onRetry={() => { setFeedError(false); setFeedLoading(true); }} />
-              ) : (
-                <FeedList events={currentFeed} loading={feedLoading} onCardClick={setProfileMemberId} />
-              )}
-            </div>
-          )}
+              </div>
 
-          {/* ===== Empire Tab: Empire feed ===== */}
-          {activeTab === 'empire' && (
-            <div className="flex flex-col gap-3">
-              {feedError ? (
-                <ErrorBanner message="Unable to load activity feed." onRetry={() => { setFeedError(false); setFeedLoading(true); }} />
-              ) : (
-                <FeedList events={currentFeed} loading={feedLoading} onCardClick={setProfileMemberId} />
-              )}
+              {/* ===== Local Tab: City card + Local feed ===== */}
+              <div className="shrink-0 w-full flex flex-col gap-3">
+                {data?.city_name && (
+                  <CityCard
+                    cityName={data.city_name}
+                    cityTier={cityTier}
+                    cityTierLevel={cityTierLevel}
+                    populationCount={data?.city_population_count ?? 0}
+                    onClick={() => setShowCityDrawer(true)}
+                  />
+                )}
+                {feedError ? (
+                  <ErrorBanner message="Unable to load activity feed." onRetry={() => { setFeedError(false); setFeedLoading(true); }} />
+                ) : (
+                  <FeedList events={mergeFeedWithNews(localCouncilNews, localFeed)} loading={feedLoading} onCardClick={setProfileMemberId} />
+                )}
+              </div>
+
+              {/* ===== Empire Tab: Empire feed ===== */}
+              <div className="shrink-0 w-full flex flex-col gap-3">
+                {feedError ? (
+                  <ErrorBanner message="Unable to load activity feed." onRetry={() => { setFeedError(false); setFeedLoading(true); }} />
+                ) : (
+                  <FeedList events={mergeFeedWithNews(empireCouncilNews, empireFeed)} loading={feedLoading} onCardClick={setProfileMemberId} />
+                )}
+              </div>
             </div>
-          )}
+          </div>
 
         </div>
       </div>
