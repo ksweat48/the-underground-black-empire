@@ -9,4 +9,13 @@ export const supabase = createClient(env.VITE_SUPABASE_URL, env.VITE_SUPABASE_AN
   },
 });
 
+if (typeof window !== 'undefined') {
+  window.addEventListener('pageshow', (event) => {
+    if (event.persisted) {
+      supabase.realtime.disconnect();
+      supabase.realtime.connect();
+    }
+  });
+}
+
 export type SupabaseClient = typeof supabase;
