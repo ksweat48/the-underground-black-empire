@@ -83,7 +83,7 @@ export async function fetchListings(params: {
   }
 
   if (search && search.trim()) {
-    query = query.or(`name.ilike.%${search.trim()}%,description.ilike.%${search.trim()}%,products_services.ilike.%${search.trim}%`);
+    query = query.or(`name.ilike.%${search.trim()}%,description.ilike.%${search.trim()}%,products_services.ilike.%${search.trim()}%`);
   }
 
   const { data, error } = await query;
@@ -414,21 +414,40 @@ export async function updateListing(input: {
   contact_info: string;
   image_url: string | null;
 }): Promise<{ id: string; status: string }> {
+  // First, fetch the current listing to check its status
+  const { data: current, error: fetchError } = await supabase
+    .from('market_listings')
+    .select('status')
+    .eq('id', input.listing_id)
+    .maybeSingle();
+
+  if (fetchError) throw fetchError;
+  if (!current) throw new Error('Listing not found');
+
+  // If the listing was approved, reset to in_review so admins can re-verify
+  const newStatus = current.status === 'approved' ? 'in_review' : current.status;
+
   const { data, error } = await supabase
-    .rpc('update_listing', {
-      p_listing_id: input.listing_id,
-      p_name: input.name,
-      p_category: input.category,
-      p_description: input.description,
-      p_products_services: input.products_services,
-      p_price_display: input.price_display,
-      p_external_url: input.external_url,
-      p_contact_info: input.contact_info,
-      p_image_url: input.image_url ?? '',
-    });
+    .from('market_listings')
+    .update({
+      name: input.name,
+      category: input.category,
+      description: input.description,
+      products_services: input.products_services,
+      price_display: input.price_display,
+      external_url: input.external_url,
+      contact_info: input.contact_info,
+      image_url: input.image_url,
+      status: newStatus,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', input.listing_id)
+    .select('id, status')
+    .maybeSingle();
 
   if (error) throw error;
-  return { id: (data as { id: string }).id, status: (data as { status: string }).status };
+  if (!data) throw new Error('Failed to update listing - you may not have permission to edit this listing.');
+  return { id: data.id, status: data.status };
 }
 
 // ============================================================

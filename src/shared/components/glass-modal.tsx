@@ -26,7 +26,7 @@ export function GlassModal({ open, onClose, title, children }: GlassModalProps) 
 
   return (
     <div className="glass-overlay animate-fade-in" onClick={onClose}>
-      <div className="flex items-start justify-center min-h-full px-4 pt-[calc(env(safe-area-inset-top)+5rem)] pb-[calc(env(safe-area-inset-bottom)+5rem)]">
+      <div className="flex items-start justify-center min-h-full px-4 pt-[calc(env(safe-area-inset-top)+5rem)] pb-[calc(env(safe-area-inset-bottom)+7rem)]">
         <div className="glass-modal" onClick={(e) => e.stopPropagation()}>
           <div className="flex items-center justify-between mb-5">
             <h3 className="font-display text-lg font-semibold text-antique-200 uppercase tracking-wider">{title}</h3>

@@ -510,7 +510,7 @@
 
   .empire-layout-main {
     padding-top: calc(72px + env(safe-area-inset-top));
-  padding-bottom: calc(96px + env(safe-area-inset-bottom));
+  padding-bottom: calc(120px + env(safe-area-inset-bottom));
   }
   @media (min-width: 1024px) {
     .empire-layout-main {
@@ -611,14 +611,14 @@
   .glass-modal {
     @apply glass-panel p-6 max-w-lg w-full overflow-y-auto scrollbar-none animate-scale-in;
     border-radius: var(--radius-card);
-    max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 10rem);
+    max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 12rem);
     margin: 0 auto;
   }
 
   .glass-drawer {
     @apply fixed bottom-0 left-0 right-0 z-50 glass-panel p-6 max-h-[85vh] overflow-y-auto scrollbar-none animate-slide-up;
     border-radius: var(--radius-card) var(--radius-card) 0 0;
-    margin-bottom: calc(env(safe-area-inset-bottom) + 4rem);
+    margin-bottom: calc(env(safe-area-inset-bottom) + 5rem);
   }
 
   /* ===================================================================
