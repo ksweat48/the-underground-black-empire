@@ -36,7 +36,7 @@ import {
   type Organization,
 } from '@/domains/market/services';
 import { ORG_TYPE_LABELS } from '@/domains/market/types';
-import { PLACEHOLDER_LISTINGS, PLACEHOLDER_FEED } from '@/domains/market/placeholder-data';
+import { PLACEHOLDER_FEED } from '@/domains/market/placeholder-data';
 import { ErrorBanner } from '@/shared/components/error-banner';
 
 type CategoryFilter = 'feed' | 'market' | 'organizations';
@@ -209,11 +209,6 @@ export function MarketPage() {
     if (searchOpen) searchInputRef.current?.focus();
   }, [searchOpen]);
 
-  const displayListings = useMemo(() => {
-    if (listings.length > 0) return listings;
-    return PLACEHOLDER_LISTINGS;
-  }, [listings]);
-
   const displayFeed = useMemo(() => {
     if (feed.length > 0) return feed;
     return PLACEHOLDER_FEED;
@@ -221,13 +216,13 @@ export function MarketPage() {
 
   const featuredListings = useMemo(() => {
     if (category !== 'market') return [];
-    return [...displayListings].sort((a, b) => (b.rank_score ?? 0) - (a.rank_score ?? 0)).slice(0, 5);
-  }, [displayListings, category]);
+    return [...listings].sort((a, b) => (b.rank_score ?? 0) - (a.rank_score ?? 0)).slice(0, 5);
+  }, [listings, category]);
 
   const filteredListings = useMemo(() => {
     if (category !== 'market') return [];
-    return displayListings;
-  }, [displayListings, category]);
+    return listings;
+  }, [listings, category]);
 
   return (
     <Layout fullWidth>
@@ -414,48 +409,50 @@ export function MarketPage() {
         {/* ==================== MARKET VIEW ==================== */}
         {category === 'market' && (
           <>
-            {/* Featured horizontal scroll */}
-            {listings.length >= 10 && <section className="animate-fade-up" style={{ animationDelay: '150ms' }}>
-              <div className="flex items-center gap-1.5 mb-2">
-                <TrendingUp className="w-3.5 h-3.5 text-empire-gold" />
-                <h2 className="font-display text-[10px] font-semibold text-empire-ivory uppercase tracking-wider">Featured</h2>
+            {loading ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="w-5 h-5 text-empire-text-muted animate-spin" />
               </div>
-              {loading ? (
-                <div className="flex justify-center py-8">
-                  <Loader2 className="w-5 h-5 text-empire-text-muted animate-spin" />
-                </div>
-              ) : listingsError ? (
-                <ErrorBanner message="Unable to load listings." onRetry={loadListings} />
-              ) : featuredListings.length === 0 ? (
-                <EmptyState
-                  icon={Store}
-                  title="No listings yet"
-                  description="Be the first to list a business in your area."
-                  actionLabel="List a Business"
-                  onAction={() => navigate('/market/create/listing')}
-                />
-              ) : (
-                <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1 -mx-1 px-1">
-                  {featuredListings.map((listing) => (
-                    <FeaturedListingCard key={listing.id} listing={listing} onClick={() => navigate(`/market/listing/${listing.id}`)} />
-                  ))}
-                </div>
-              )}
-            </section>}
+            ) : listingsError ? (
+              <ErrorBanner message="Unable to load listings." onRetry={loadListings} />
+            ) : filteredListings.length === 0 ? (
+              <EmptyState
+                icon={Store}
+                title="No listings yet"
+                description="Be the first to list a business in your area."
+                actionLabel="List a Business"
+                onAction={() => navigate('/market/create/listing')}
+              />
+            ) : (
+              <>
+                {/* Featured horizontal scroll */}
+                {listings.length >= 10 && (
+                  <section className="animate-fade-up" style={{ animationDelay: '150ms' }}>
+                    <div className="flex items-center gap-1.5 mb-2">
+                      <TrendingUp className="w-3.5 h-3.5 text-empire-gold" />
+                      <h2 className="font-display text-[10px] font-semibold text-empire-ivory uppercase tracking-wider">Featured</h2>
+                    </div>
+                    <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1 -mx-1 px-1">
+                      {featuredListings.map((listing) => (
+                        <FeaturedListingCard key={listing.id} listing={listing} onClick={() => navigate(`/market/listing/${listing.id}`)} />
+                      ))}
+                    </div>
+                  </section>
+                )}
 
-            {/* All listings grid — Market view only */}
-            {category === 'market' && filteredListings.length > 5 && (
-              <section className="animate-fade-up" style={{ animationDelay: '200ms' }}>
-                <div className="flex items-center gap-1.5 mb-2">
-                  <Store className="w-3.5 h-3.5 text-empire-gold" />
-                  <h2 className="font-display text-[10px] font-semibold text-empire-ivory uppercase tracking-wider">All Listings</h2>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {filteredListings.slice(5).map((listing) => (
-                    <ListingCard key={listing.id} listing={listing} onClick={() => navigate(`/market/listing/${listing.id}`)} onToggleSave={handleToggleSave} />
-                  ))}
-                </div>
-              </section>
+                {/* All listings grid — Market view only */}
+                <section className="animate-fade-up" style={{ animationDelay: '200ms' }}>
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <Store className="w-3.5 h-3.5 text-empire-gold" />
+                    <h2 className="font-display text-[10px] font-semibold text-empire-ivory uppercase tracking-wider">All Listings</h2>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {(listings.length >= 10 ? filteredListings.slice(5) : filteredListings).map((listing) => (
+                      <ListingCard key={listing.id} listing={listing} onClick={() => navigate(`/market/listing/${listing.id}`)} onToggleSave={handleToggleSave} />
+                    ))}
+                  </div>
+                </section>
+              </>
             )}
           </>
         )}
