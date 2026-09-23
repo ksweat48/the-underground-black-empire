@@ -351,7 +351,13 @@ export function MarketPage() {
                     <FeedItemRow
                       key={item.id}
                       item={item}
-                      onClick={item.listing_id ? () => navigate(`/market/listing/${item.listing_id}`) : undefined}
+                      onClick={
+                        item.feed_type === 'organization' && item.id
+                          ? () => navigate(`/market/organization/${item.id}`)
+                          : item.listing_id
+                            ? () => navigate(`/market/listing/${item.listing_id}`)
+                            : undefined
+                      }
                     />
                   ))}
                 </div>
@@ -687,11 +693,18 @@ function FeedItemRow({ item, onClick }: { item: CommunityFeedItem; onClick?: () 
   const feedTypeConfig = {
     update: { label: 'Update', icon: MessageCircle, color: 'text-empire-info' },
     event: { label: 'Event', icon: CalendarDays, color: 'text-empire-gold' },
+    listing: { label: 'New Listing', icon: Store, color: 'text-emerald-400' },
+    organization: { label: 'New Organization', icon: HeartHandshake, color: 'text-sky-400' },
   };
   const config = feedTypeConfig[item.feed_type];
   const Icon = config.icon;
   const typeBadge = item.feed_type === 'update' && item.update_type ? updateTypeConfig[item.update_type] ?? updateTypeConfig.update : null;
   const interactive = !!onClick;
+  const categoryBadge = item.feed_type === 'listing' && item.category
+    ? { label: item.category, color: 'text-empire-gold', bg: 'bg-empire-gold/10 border-empire-gold/20' }
+    : item.feed_type === 'organization' && item.org_type
+      ? { label: ORG_TYPE_LABELS[item.org_type as keyof typeof ORG_TYPE_LABELS] ?? item.org_type, color: 'text-sky-400', bg: 'bg-sky-500/10 border-sky-500/20' }
+      : null;
 
   return (
     <div
@@ -730,6 +743,11 @@ function FeedItemRow({ item, onClick }: { item: CommunityFeedItem; onClick?: () 
           {!typeBadge && (
             <span className={cn('text-[9px] font-bold uppercase tracking-wider', config.color)}>
               {config.label}
+            </span>
+          )}
+          {categoryBadge && (
+            <span className={cn('text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md border capitalize', categoryBadge.bg, categoryBadge.color)}>
+              {categoryBadge.label}
             </span>
           )}
           {item.listing_name && (

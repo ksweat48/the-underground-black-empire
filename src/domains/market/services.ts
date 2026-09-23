@@ -635,7 +635,23 @@ export async function fetchCommunityFeed(cityId?: string, metroCityIds?: string[
     .limit(limit);
   if (cityIds) eventsQuery = eventsQuery.in('city_id', cityIds);
 
-  const [updatesRes, eventsRes] = await Promise.all([updatesQuery, eventsQuery]);
+  let listingsQuery = supabase
+    .from('market_listings')
+    .select('id, owner_id, city_id, name, category, description, image_url, created_at')
+    .in('status', ['approved', 'in_review'])
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (cityIds) listingsQuery = listingsQuery.in('city_id', cityIds);
+
+  let orgsQuery = supabase
+    .from('organizations')
+    .select('id, owner_id, city_id, name, org_type, description, image_url, created_at')
+    .in('status', ['approved', 'in_review'])
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (cityIds) orgsQuery = orgsQuery.in('city_id', cityIds);
+
+  const [updatesRes, eventsRes, listingsRes, orgsRes] = await Promise.all([updatesQuery, eventsQuery, listingsQuery, orgsQuery]);
 
   const items: CommunityFeedItem[] = [];
 
@@ -669,6 +685,40 @@ export async function fetchCommunityFeed(cityId?: string, metroCityIds?: string[
       update_type: null,
       created_at: row.created_at,
       rank_score: 0,
+    });
+  }
+
+  for (const row of listingsRes.data ?? []) {
+    items.push({
+      id: row.id,
+      feed_type: 'listing',
+      listing_id: row.id,
+      listing_name: row.name,
+      city_id: row.city_id,
+      body: row.description ?? '',
+      image_url: row.image_url,
+      author_id: row.owner_id,
+      update_type: null,
+      created_at: row.created_at,
+      rank_score: 0,
+      category: (row as { category?: string }).category ?? null,
+    });
+  }
+
+  for (const row of orgsRes.data ?? []) {
+    items.push({
+      id: row.id,
+      feed_type: 'organization',
+      listing_id: null,
+      listing_name: row.name,
+      city_id: row.city_id,
+      body: row.description ?? '',
+      image_url: row.image_url,
+      author_id: row.owner_id,
+      update_type: null,
+      created_at: row.created_at,
+      rank_score: 0,
+      org_type: (row as { org_type?: string }).org_type ?? null,
     });
   }
 

@@ -90,7 +90,7 @@ export interface ListingComment {
 
 export interface CommunityFeedItem {
   id: string;
-  feed_type: 'update' | 'event';
+  feed_type: 'update' | 'event' | 'listing' | 'organization';
   listing_id: string | null;
   listing_name: string | null;
   city_id: string;
@@ -100,6 +100,8 @@ export interface CommunityFeedItem {
   update_type: string | null;
   created_at: string;
   rank_score: number;
+  category?: string | null;
+  org_type?: string | null;
 }
 
 export interface VoteChoice {
