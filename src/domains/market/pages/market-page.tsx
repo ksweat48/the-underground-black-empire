@@ -36,7 +36,7 @@ import {
   type Organization,
 } from '@/domains/market/services';
 import { ORG_TYPE_LABELS } from '@/domains/market/types';
-import { PLACEHOLDER_LISTINGS, PLACEHOLDER_EVENTS, PLACEHOLDER_FEED } from '@/domains/market/placeholder-data';
+import { PLACEHOLDER_LISTINGS, PLACEHOLDER_FEED } from '@/domains/market/placeholder-data';
 import { ErrorBanner } from '@/shared/components/error-banner';
 
 type CategoryFilter = 'feed' | 'market' | 'organizations';
@@ -70,11 +70,9 @@ export function MarketPage() {
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [loading, setLoading] = useState(true);
   const [feedLoading, setFeedLoading] = useState(true);
-  const [eventsLoading, setEventsLoading] = useState(true);
   const [orgsLoading, setOrgsLoading] = useState(true);
   const [listingsError, setListingsError] = useState(false);
   const [feedError, setFeedError] = useState(false);
-  const [eventsError, setEventsError] = useState(false);
   const [orgsError, setOrgsError] = useState(false);
 
   useEffect(() => {
@@ -130,9 +128,7 @@ export function MarketPage() {
   }, [cityInfo.cityId, cityInfo.metroId, scope]);
 
   const loadEvents = useCallback(async () => {
-    if (!cityInfo.cityId) { setEventsLoading(false); return; }
-    setEventsLoading(true);
-    setEventsError(false);
+    if (!cityInfo.cityId) return;
     try {
       let metroIds: string[] = [];
       if (scope === 'local' && cityInfo.metroId) {
@@ -147,9 +143,6 @@ export function MarketPage() {
       setEvents(data);
     } catch {
       setEvents([]);
-      setEventsError(true);
-    } finally {
-      setEventsLoading(false);
     }
   }, [cityInfo.cityId, cityInfo.metroId, scope]);
 
@@ -220,11 +213,6 @@ export function MarketPage() {
     if (listings.length > 0) return listings;
     return PLACEHOLDER_LISTINGS;
   }, [listings]);
-
-  const displayEvents = useMemo(() => {
-    if (events.length > 0) return events;
-    return PLACEHOLDER_EVENTS;
-  }, [events]);
 
   const displayFeed = useMemo(() => {
     if (feed.length > 0) return feed;
@@ -324,33 +312,19 @@ export function MarketPage() {
         {category === 'feed' && (
           <>
             {/* Upcoming Events horizontal scroll */}
-            <section className="animate-fade-up" style={{ animationDelay: '150ms' }}>
-              <div className="flex items-center gap-1.5 mb-2">
-                <CalendarDays className="w-3.5 h-3.5 text-empire-gold" />
-                <h2 className="font-display text-[10px] font-semibold text-empire-ivory uppercase tracking-wider">Events</h2>
-              </div>
-              {eventsLoading ? (
-                <div className="flex justify-center py-4">
-                  <Loader2 className="w-4 h-4 text-empire-text-muted animate-spin" />
+            {events.length > 0 && (
+              <section className="animate-fade-up" style={{ animationDelay: '150ms' }}>
+                <div className="flex items-center gap-1.5 mb-2">
+                  <CalendarDays className="w-3.5 h-3.5 text-empire-gold" />
+                  <h2 className="font-display text-[10px] font-semibold text-empire-ivory uppercase tracking-wider">Events</h2>
                 </div>
-              ) : eventsError ? (
-                <ErrorBanner message="Unable to load events." onRetry={loadEvents} />
-              ) : displayEvents.length === 0 ? (
-                <EmptyState
-                  icon={CalendarDays}
-                  title="No events this week"
-                  description="Create an event to bring your community together."
-                  actionLabel="Create an Event"
-                  onAction={() => navigate('/market/create/event')}
-                />
-              ) : (
                 <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1 -mx-1 px-1">
-                  {displayEvents.map((event) => (
+                  {events.map((event) => (
                     <EventCard key={event.id} event={event} onClick={() => navigate(`/market/listing/${event.listing_id ?? ''}`)} />
                   ))}
                 </div>
-              )}
-            </section>
+              </section>
+            )}
 
             {/* Combined community feed */}
             <section className="animate-fade-up" style={{ animationDelay: '200ms' }}>
@@ -435,7 +409,7 @@ export function MarketPage() {
         {category === 'market' && (
           <>
             {/* Featured horizontal scroll */}
-            <section className="animate-fade-up" style={{ animationDelay: '150ms' }}>
+            {listings.length >= 10 && <section className="animate-fade-up" style={{ animationDelay: '150ms' }}>
               <div className="flex items-center gap-1.5 mb-2">
                 <TrendingUp className="w-3.5 h-3.5 text-empire-gold" />
                 <h2 className="font-display text-[10px] font-semibold text-empire-ivory uppercase tracking-wider">Featured</h2>
@@ -461,7 +435,7 @@ export function MarketPage() {
                   ))}
                 </div>
               )}
-            </section>
+            </section>}
 
             {/* All listings grid — Market view only */}
             {category === 'market' && filteredListings.length > 5 && (
