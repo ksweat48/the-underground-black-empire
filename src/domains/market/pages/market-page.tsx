@@ -4,8 +4,6 @@ import {
   Search,
   X,
   Store,
-  Package,
-  Wrench,
   CalendarDays,
   Heart,
   HeartHandshake,
@@ -35,23 +33,19 @@ import {
   type MarketListing,
   type CommunityFeedItem,
   type MarketEvent,
-  type ListingCategory,
   type Organization,
 } from '@/domains/market/services';
 import { ORG_TYPE_LABELS } from '@/domains/market/types';
 import { PLACEHOLDER_LISTINGS, PLACEHOLDER_EVENTS, PLACEHOLDER_FEED } from '@/domains/market/placeholder-data';
 import { ErrorBanner } from '@/shared/components/error-banner';
 
-type CategoryFilter = 'feed' | 'market' | ListingCategory | 'organizations';
+type CategoryFilter = 'feed' | 'market' | 'organizations';
 type ScopeFilter = 'local' | 'empire';
 
 const CATEGORY_CONFIG: Record<CategoryFilter, { label: string; icon: typeof Store }> = {
   feed: { label: 'Feed', icon: MessageCircle },
   market: { label: 'Market', icon: Store },
-  products: { label: 'Products', icon: Package },
-  services: { label: 'Services', icon: Wrench },
   organizations: { label: 'Organizations', icon: HeartHandshake },
-  events: { label: 'Events', icon: CalendarDays },
 };
 
 export function MarketPage() {
@@ -238,17 +232,13 @@ export function MarketPage() {
   }, [feed]);
 
   const featuredListings = useMemo(() => {
-    if (category === 'feed' || category === 'events' || category === 'organizations') return [];
-    const source = category === 'market'
-      ? displayListings
-      : displayListings.filter((l) => l.category === category);
-    return [...source].sort((a, b) => (b.rank_score ?? 0) - (a.rank_score ?? 0)).slice(0, 5);
+    if (category !== 'market') return [];
+    return [...displayListings].sort((a, b) => (b.rank_score ?? 0) - (a.rank_score ?? 0)).slice(0, 5);
   }, [displayListings, category]);
 
   const filteredListings = useMemo(() => {
-    if (category === 'feed' || category === 'events' || category === 'organizations') return [];
-    if (category === 'market') return displayListings;
-    return displayListings.filter((l) => l.category === category);
+    if (category !== 'market') return [];
+    return displayListings;
   }, [displayListings, category]);
 
   return (
@@ -441,39 +431,8 @@ export function MarketPage() {
           </section>
         )}
 
-        {/* ==================== EVENTS VIEW ==================== */}
-        {category === 'events' && (
-          <section className="animate-fade-up" style={{ animationDelay: '150ms' }}>
-            <div className="flex items-center gap-1.5 mb-2">
-              <CalendarDays className="w-3.5 h-3.5 text-empire-gold" />
-              <h2 className="font-display text-[10px] font-semibold text-empire-ivory uppercase tracking-wider">Events</h2>
-            </div>
-            {eventsLoading ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="w-5 h-5 text-empire-text-muted animate-spin" />
-              </div>
-            ) : eventsError ? (
-              <ErrorBanner message="Unable to load events." onRetry={loadEvents} />
-            ) : displayEvents.length === 0 ? (
-              <EmptyState
-                icon={CalendarDays}
-                title="No events this week"
-                description="Create an event to bring your community together."
-                actionLabel="Create an Event"
-                onAction={() => navigate('/market/create/event')}
-              />
-            ) : (
-              <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1 -mx-1 px-1">
-                {displayEvents.map((event) => (
-                  <EventCard key={event.id} event={event} onClick={() => navigate(`/market/listing/${event.listing_id ?? ''}`)} />
-                ))}
-              </div>
-            )}
-          </section>
-        )}
-
-        {/* ==================== MARKET / PRODUCTS / SERVICES VIEWS ==================== */}
-        {category !== 'feed' && category !== 'events' && category !== 'organizations' && (
+        {/* ==================== MARKET VIEW ==================== */}
+        {category === 'market' && (
           <>
             {/* Featured horizontal scroll */}
             <section className="animate-fade-up" style={{ animationDelay: '150ms' }}>
