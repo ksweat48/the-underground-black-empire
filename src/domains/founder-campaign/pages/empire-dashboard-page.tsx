@@ -447,11 +447,13 @@ export function EmpireDashboardPage() {
         <div className="w-full min-w-0 max-w-[960px] mx-auto flex flex-col gap-3">
 
           {/* ===== Dashboard Tabs ===== */}
-          <DashboardTabs
-            activeTab={activeTab}
-            onTabChange={changeTab}
-            hasLocalFeed={hasLocalFeed}
-          />
+          <div className="sticky top-0 z-40 -mx-2 px-2 pt-2 pb-1 bg-empire-ink/95 backdrop-blur-xl">
+            <DashboardTabs
+              activeTab={activeTab}
+              onTabChange={changeTab}
+              hasLocalFeed={hasLocalFeed}
+            />
+          </div>
 
           {/* ===== Tab Content with Animated Slide ===== */}
           <div ref={tabViewportRef} className="overflow-hidden">
