@@ -31,7 +31,6 @@ export const PLACEHOLDER_LISTINGS: MarketListing[] = [
     rank_score: 95,
     city_name: 'Atlanta',
     city_state: 'GA',
-    city_state: 'GA',
   },
   {
     id: 'ph-listing-2',
