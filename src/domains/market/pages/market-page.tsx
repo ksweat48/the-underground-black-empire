@@ -224,6 +224,11 @@ export function MarketPage() {
     return listings;
   }, [listings, category]);
 
+  const featuredOrganizations = useMemo(() => {
+    if (category !== 'organizations') return [];
+    return [...organizations].sort((a, b) => (b.engagement_score ?? 0) - (a.engagement_score ?? 0)).slice(0, 5);
+  }, [organizations, category]);
+
   return (
     <Layout fullWidth>
       <div className="w-full min-w-0 max-w-[960px] mx-auto px-2 sm:px-3 pt-3 pb-24 space-y-4">
@@ -363,11 +368,7 @@ export function MarketPage() {
 
         {/* ==================== ORGANIZATIONS VIEW ==================== */}
         {category === 'organizations' && (
-          <section className="animate-fade-up" style={{ animationDelay: '150ms' }}>
-            <div className="flex items-center gap-1.5 mb-2">
-              <HeartHandshake className="w-3.5 h-3.5 text-empire-gold" />
-              <h2 className="font-display text-[10px] font-semibold text-empire-ivory uppercase tracking-wider">Organizations</h2>
-            </div>
+          <>
             {orgsLoading ? (
               <div className="flex justify-center py-8">
                 <Loader2 className="w-5 h-5 text-empire-text-muted animate-spin" />
@@ -383,27 +384,51 @@ export function MarketPage() {
                 onAction={() => navigate('/market/create/organization')}
               />
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {organizations.map((org) => (
-                  <OrganizationCard
-                    key={org.id}
-                    org={org}
-                    onClick={() => navigate(`/market/organization/${org.id}`)}
-                    onToggleSave={(orgId, currentlySaved) => {
-                      setOrganizations((prev) =>
-                        prev.map((o) =>
-                          o.id === orgId
-                            ? { ...o, is_saved: !currentlySaved, save_count: Math.max(0, o.save_count + (currentlySaved ? -1 : 1)) }
-                            : o
-                        )
-                      );
-                      if (userId) toggleOrganizationSave(orgId, userId, currentlySaved).catch(() => {});
-                    }}
-                  />
-                ))}
-              </div>
+              <>
+                {/* Featured horizontal scroll */}
+                {organizations.length >= 10 && (
+                  <section className="animate-fade-up" style={{ animationDelay: '150ms' }}>
+                    <div className="flex items-center gap-1.5 mb-2">
+                      <TrendingUp className="w-3.5 h-3.5 text-empire-gold" />
+                      <h2 className="font-display text-[10px] font-semibold text-empire-ivory uppercase tracking-wider">Featured</h2>
+                    </div>
+                    <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1 -mx-1 px-1">
+                      {featuredOrganizations.map((org) => (
+                        <FeaturedOrganizationCard key={org.id} org={org} onClick={() => navigate(`/market/organization/${org.id}`)} />
+                      ))}
+                    </div>
+                  </section>
+                )}
+
+                {/* All organizations grid */}
+                <section className="animate-fade-up" style={{ animationDelay: '200ms' }}>
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <HeartHandshake className="w-3.5 h-3.5 text-empire-gold" />
+                    <h2 className="font-display text-[10px] font-semibold text-empire-ivory uppercase tracking-wider">All Organizations</h2>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {(organizations.length >= 10 ? organizations.slice(5) : organizations).map((org) => (
+                      <OrganizationCard
+                        key={org.id}
+                        org={org}
+                        onClick={() => navigate(`/market/organization/${org.id}`)}
+                        onToggleSave={(orgId, currentlySaved) => {
+                          setOrganizations((prev) =>
+                            prev.map((o) =>
+                              o.id === orgId
+                                ? { ...o, is_saved: !currentlySaved, save_count: Math.max(0, o.save_count + (currentlySaved ? -1 : 1)) }
+                                : o
+                            )
+                          );
+                          if (userId) toggleOrganizationSave(orgId, userId, currentlySaved).catch(() => {});
+                        }}
+                      />
+                    ))}
+                  </div>
+                </section>
+              </>
             )}
-          </section>
+          </>
         )}
 
         {/* ==================== MARKET VIEW ==================== */}
@@ -803,6 +828,55 @@ function EmptyState({
           {actionLabel}
         </button>
       )}
+    </div>
+  );
+}
+
+// ==================== Featured Organization Card (horizontal) ====================
+
+function FeaturedOrganizationCard({ org, onClick }: { org: Organization; onClick: () => void }) {
+  const goalNum = org.funding_goal || 0;
+  const raisedNum = org.total_raised || 0;
+  const progressPct = goalNum > 0 ? Math.min(100, (raisedNum / goalNum) * 100) : 0;
+
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={onClick}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') onClick();
+      }}
+      className="frame-intel shrink-0 w-[240px] p-2.5 flex items-center gap-2.5 text-left transition-all duration-200 hover:border-empire-gold/25 group active:scale-[0.98] cursor-pointer"
+    >
+      <div className="relative shrink-0 w-12 h-12 rounded-lg overflow-hidden bg-ink-800/10">
+        {org.image_url ? (
+          <img src={org.image_url} alt={org.name} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+        ) : (
+          <div className="flex items-center justify-center w-full h-full">
+            <HeartHandshake className="w-5 h-5 text-empire-text-muted/30" />
+          </div>
+        )}
+        {org.is_verified && <div className="absolute top-0.5 right-0.5"><BadgeCheck className="w-3.5 h-3.5 text-empire-success" /></div>}
+      </div>
+      <div className="flex-1 min-w-0 space-y-0.5">
+        <div className="flex items-center gap-1.5">
+          <span className="badge-gold text-[8px] py-0.5 px-1.5 shrink-0">{ORG_TYPE_LABELS[org.org_type]}</span>
+          {!org.is_verified && org.status === 'in_review' && (
+            <span className="text-[8px] font-semibold text-amber-400 shrink-0">In Review</span>
+          )}
+        </div>
+        <h3 className="font-display text-xs font-semibold text-empire-ivory leading-tight line-clamp-1">{org.name}</h3>
+        <div className="flex items-center gap-2">
+          {goalNum > 0 && <span className="text-[11px] font-semibold text-emerald-400 shrink-0">${raisedNum.toLocaleString()}</span>}
+          {org.city_name && <span className="flex items-center gap-0.5 text-[10px] text-empire-text-muted line-clamp-1"><MapPin className="w-2.5 h-2.5 shrink-0" />{org.city_state ? `${org.city_name}, ${org.city_state}` : org.city_name}</span>}
+        </div>
+        {goalNum > 0 && (
+          <div className="h-1 rounded-full bg-ink-700/30 overflow-hidden">
+            <div className="h-full rounded-full bg-gradient-to-r from-emerald-600 to-emerald-400" style={{ width: `${progressPct}%` }} />
+          </div>
+        )}
+      </div>
     </div>
   );
 }
