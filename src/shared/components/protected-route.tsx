@@ -75,7 +75,7 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
     };
   }, [requireAdmin, loading, userId]);
 
-  if (loading || adminLoading || onboardingComplete === null) {
+  if (loading || adminLoading || (session && onboardingComplete === null)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-ink-950">
         <Loader2 className="w-6 h-6 text-gold-400 animate-spin" />
