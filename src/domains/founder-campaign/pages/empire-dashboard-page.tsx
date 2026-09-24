@@ -462,7 +462,7 @@ export function EmpireDashboardPage() {
               style={{
                 transform: tabViewportWidth > 0
                   ? `translateX(${-activeTabIndex * tabViewportWidth + dragOffset}px)`
-                  : `translateX($-activeTabIndex * 100 + (dragOffset > 0 ? dragOffset : 0)}%)`,
+                  : `translateX(${-activeTabIndex * 100 + (dragOffset > 0 ? dragOffset : 0)}%)`,
                 transitionDuration: isDragging ? '0ms' : '300ms',
                 transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
                 transitionProperty: 'transform',
