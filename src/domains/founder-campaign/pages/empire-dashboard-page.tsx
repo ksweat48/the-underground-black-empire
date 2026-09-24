@@ -210,10 +210,10 @@ export function EmpireDashboardPage() {
   const gestureAxis = useRef<'h' | 'v' | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const tabViewportRef = useRef<HTMLDivElement>(null);
-  const [tabViewportWidth, setTabViewportWidth] = useState(0);
+  const tabViewportWidthRef = useRef(0);
 
   useEffect(() => {
-    const measure = () => setTabViewportWidth(tabViewportRef.current?.offsetWidth ?? 0);
+    const measure = () => { tabViewportWidthRef.current = tabViewportRef.current?.offsetWidth ?? 0; };
     measure();
     const ro = new ResizeObserver(measure);
     if (tabViewportRef.current) ro.observe(tabViewportRef.current);
@@ -382,7 +382,7 @@ export function EmpireDashboardPage() {
   const handleDashboardTouchEnd = useCallback(() => {
     if (!isDragging) return;
     if (gestureAxis.current === 'h') {
-      const threshold = tabViewportWidth * 0.2;
+      const threshold = (tabViewportWidthRef.current || window.innerWidth) * 0.2;
       const tabs: DashboardTab[] = ['hq', 'local', 'empire'];
       const currentIdx = tabs.indexOf(activeTab);
       let nextIdx = currentIdx;
@@ -399,7 +399,7 @@ export function EmpireDashboardPage() {
     setDragOffset(0);
     setIsDragging(false);
     gestureAxis.current = null;
-  }, [isDragging, dragOffset, tabViewportWidth, activeTab, changeTab, hasLocalFeed]);
+  }, [isDragging, dragOffset, activeTab, changeTab, hasLocalFeed]);
 
   // If no metro, default to empire tab when user tries local
   useEffect(() => {
@@ -460,16 +460,14 @@ export function EmpireDashboardPage() {
             <div
               className="flex transition-transform ease-out"
               style={{
-                transform: tabViewportWidth > 0
-                  ? `translateX(${-activeTabIndex * tabViewportWidth + dragOffset}px)`
-                  : `translateX(${-activeTabIndex * 100 + (dragOffset > 0 ? dragOffset : 0)}%)`,
+                transform: `translateX(${-activeTabIndex * 100 + (tabViewportWidthRef.current > 0 ? (dragOffset / tabViewportWidthRef.current) * 100 : 0)}%)`,
                 transitionDuration: isDragging ? '0ms' : '300ms',
                 transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
                 transitionProperty: 'transform',
               }}
             >
               {/* ===== HQ Tab: Map + Stats + Share ===== */}
-              <div className="shrink-0 flex flex-col gap-3" style={{ width: tabViewportWidth > 0 ? `${tabViewportWidth}px` : '100%' }}>
+              <div className="shrink-0 w-full flex flex-col gap-3">
                 <div className="lg:grid lg:grid-cols-[1fr_360px] lg:gap-4 lg:items-start">
                   {/* Left column: Map + Stats */}
                   <div className="flex flex-col gap-3">
@@ -548,7 +546,7 @@ export function EmpireDashboardPage() {
               </div>
 
               {/* ===== Local Tab: City card + Local feed ===== */}
-              <div className="shrink-0 flex flex-col gap-3" style={{ width: tabViewportWidth > 0 ? `${tabViewportWidth}px` : '100%' }}>
+              <div className="shrink-0 w-full flex flex-col gap-3">
                 <div className="lg:max-w-[640px] mx-auto w-full flex flex-col gap-3">
                   {data?.city_name && (
                     <CityCard
@@ -568,7 +566,7 @@ export function EmpireDashboardPage() {
               </div>
 
               {/* ===== Empire Tab: Empire feed ===== */}
-              <div className="shrink-0 flex flex-col gap-3" style={{ width: tabViewportWidth > 0 ? `${tabViewportWidth}px` : '100%' }}>
+              <div className="shrink-0 w-full flex flex-col gap-3">
                 <div className="lg:max-w-[640px] mx-auto w-full flex flex-col gap-3">
                   {feedError ? (
                     <ErrorBanner message="Unable to load activity feed." onRetry={() => { setFeedError(false); setFeedLoading(true); }} />
