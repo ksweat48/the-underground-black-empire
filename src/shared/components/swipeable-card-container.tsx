@@ -26,7 +26,10 @@ export function SwipeableCardContainer({
   const [measuredWidth, setMeasuredWidth] = useState(0);
 
   useEffect(() => {
-    const measure = () => setMeasuredWidth(containerRef.current?.offsetWidth ?? 0);
+    const measure = () => {
+      const w = containerRef.current?.offsetWidth ?? 0;
+      if (w > 0) setMeasuredWidth(w);
+    };
     measure();
     const ro = new ResizeObserver(measure);
     if (containerRef.current) ro.observe(containerRef.current);

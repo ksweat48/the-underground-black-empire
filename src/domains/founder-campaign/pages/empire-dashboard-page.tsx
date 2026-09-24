@@ -470,7 +470,7 @@ export function EmpireDashboardPage() {
               <div className="shrink-0 w-full flex flex-col gap-3">
                 <div className="lg:grid lg:grid-cols-[1fr_360px] lg:gap-4 lg:items-start">
                   {/* Left column: Map + Stats */}
-                  <div className="flex flex-col gap-3">
+                  <div className="flex flex-col gap-3 min-w-0">
                     <div className="relative">
                       <SwipeableCardContainer
                         cards={[
