@@ -467,7 +467,7 @@ export function EmpireDashboardPage() {
               }}
             >
               {/* ===== HQ Tab: Map + Stats + Share ===== */}
-              <div className="shrink-0 w-full flex flex-col gap-3">
+              <div className="shrink-0 min-w-full flex flex-col gap-3">
                 <div className="lg:grid lg:grid-cols-[1fr_360px] lg:gap-4 lg:items-start">
                   {/* Left column: Map + Stats */}
                   <div className="flex flex-col gap-3">
@@ -546,7 +546,7 @@ export function EmpireDashboardPage() {
               </div>
 
               {/* ===== Local Tab: City card + Local feed ===== */}
-              <div className="shrink-0 w-full flex flex-col gap-3">
+              <div className="shrink-0 min-w-full flex flex-col gap-3">
                 <div className="lg:max-w-[640px] mx-auto w-full flex flex-col gap-3">
                   {data?.city_name && (
                     <CityCard
@@ -566,7 +566,7 @@ export function EmpireDashboardPage() {
               </div>
 
               {/* ===== Empire Tab: Empire feed ===== */}
-              <div className="shrink-0 w-full flex flex-col gap-3">
+              <div className="shrink-0 min-w-full flex flex-col gap-3">
                 <div className="lg:max-w-[640px] mx-auto w-full flex flex-col gap-3">
                   {feedError ? (
                     <ErrorBanner message="Unable to load activity feed." onRetry={() => { setFeedError(false); setFeedLoading(true); }} />
