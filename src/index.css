@@ -507,6 +507,11 @@
   .hud-top {
     @apply fixed top-0 left-0 right-0 z-40 glass-hud-top;
   }
+  @media (min-width: 1024px) {
+    .hud-top {
+      left: 240px;
+    }
+  }
 
   .empire-layout-main {
     padding-top: calc(72px + env(safe-area-inset-top));
@@ -515,6 +520,8 @@
   @media (min-width: 1024px) {
     .empire-layout-main {
       padding-top: calc(80px + env(safe-area-inset-top));
+      padding-bottom: calc(env(safe-area-inset-bottom) + 2rem);
+      padding-left: 240px;
     }
   }
 
@@ -528,7 +535,7 @@
   }
 
   .hud-bottom {
-    @apply fixed left-0 right-0 z-40 flex justify-center;
+    @apply fixed left-0 right-0 z-40 flex justify-center lg:hidden;
     bottom: 0;
     padding: 0 0.5rem calc(env(safe-area-inset-bottom) + 0.5rem);
     pointer-events: none;
@@ -595,6 +602,133 @@
     width: 1px;
     height: 24px;
     background: linear-gradient(to bottom, transparent, rgba(26,24,21,0.10), transparent);
+  }
+
+  /* ===================================================================
+     DESKTOP NAVIGATION RAIL
+     =================================================================== */
+  .desktop-nav-rail {
+    display: none;
+  }
+  @media (min-width: 1024px) {
+    .desktop-nav-rail {
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: 240px;
+      z-index: 50;
+      background: linear-gradient(180deg, rgba(255,255,255,0.97), rgba(250,250,250,0.97));
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-right: 1px solid rgba(26,24,21,0.08);
+      box-shadow: 4px 0 24px rgba(26,24,21,0.06), var(--shadow-inset-highlight);
+      padding: 1.25rem 0.875rem;
+    }
+  }
+
+  .desktop-nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 4px 6px;
+    margin-bottom: 1.5rem;
+    border-radius: var(--radius-card-sm);
+    transition: background var(--anim-fast);
+  }
+  .desktop-nav-brand:hover {
+    background: rgba(26,24,21,0.04);
+  }
+  .desktop-nav-brand-name {
+    font-family: var(--font-display, 'Outfit', sans-serif);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    line-height: 1.3;
+    color: var(--empire-text-secondary);
+  }
+
+  .desktop-nav-links {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+  }
+
+  .desktop-nav-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: var(--radius-card-sm);
+    font-family: var(--font-display, 'Outfit', sans-serif);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--empire-text-muted);
+    transition: all var(--anim-fast) var(--ease-out);
+    position: relative;
+  }
+  .desktop-nav-link:hover {
+    background: rgba(26,24,21,0.04);
+    color: var(--empire-ivory);
+  }
+  .desktop-nav-link-active {
+    color: var(--empire-gold);
+    background: rgba(17,17,17,0.06);
+    font-weight: 600;
+  }
+  .desktop-nav-link-active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 20px;
+    border-radius: var(--radius-pill);
+    background: var(--empire-gold);
+  }
+
+  .desktop-nav-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(26,24,21,0.06);
+  }
+
+  .desktop-create-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-radius: var(--radius-button);
+    background: linear-gradient(135deg, var(--empire-gold-light), var(--empire-gold));
+    color: #FFFFFF;
+    font-family: var(--font-display, 'Outfit', sans-serif);
+    font-size: 13px;
+    font-weight: 600;
+    box-shadow: 0 4px 16px rgba(17,17,17,0.20), var(--shadow-inset-highlight);
+    transition: all var(--anim-fast);
+  }
+  .desktop-create-button:hover {
+    box-shadow: 0 4px 20px rgba(17,17,17,0.30), var(--shadow-inset-highlight);
+    transform: translateY(-1px);
+  }
+  .desktop-create-button:active {
+    transform: translateY(0);
+  }
+
+  .desktop-nav-caption {
+    font-size: 10px;
+    font-style: italic;
+    color: var(--empire-text-muted);
+    text-align: center;
+    line-height: 1.4;
+    padding: 0 8px;
   }
 
   /* ===================================================================

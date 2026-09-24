@@ -444,10 +444,10 @@ export function EmpireDashboardPage() {
         onTouchMove={handleDashboardTouchMove}
         onTouchEnd={handleDashboardTouchEnd}
       >
-        <div className="w-full min-w-0 max-w-[960px] mx-auto flex flex-col gap-3">
+        <div className="w-full min-w-0 max-w-[960px] lg:max-w-[1200px] mx-auto flex flex-col gap-3">
 
           {/* ===== Dashboard Tabs ===== */}
-          <div className="sticky top-0 z-40 -mx-2 px-2 pt-2 pb-1 bg-empire-ink/95 backdrop-blur-xl">
+          <div className="sticky top-0 z-40 -mx-2 px-2 pt-2 pb-1 bg-white/95 backdrop-blur-xl">
             <DashboardTabs
               activeTab={activeTab}
               onTabChange={changeTab}
@@ -470,88 +470,112 @@ export function EmpireDashboardPage() {
             >
               {/* ===== HQ Tab: Map + Stats + Share ===== */}
               <div className="shrink-0 flex flex-col gap-3" style={{ width: tabViewportWidth > 0 ? `${tabViewportWidth}px` : '100%' }}>
-                <div className="relative">
-                  <SwipeableCardContainer
-                    cards={[
-                      {
-                        label: 'Empire Map',
-                        node: (
-                          <USMapCard
-                            mapData={mapData}
-                            loading={mapLoading}
-                          />
-                        ),
-                      },
-                      {
-                        label: 'Mission',
-                        node: (
-                          <GuideMissionCard
-                            civLevel={civLevel}
-                            population={empire.total_population}
-                            tribeCityCount={empire.tribe_city_count}
-                          />
-                        ),
-                      },
-                    ]}
-                    swipeable={false}
-                    className="shrink-0"
-                  />
+                <div className="lg:grid lg:grid-cols-[1fr_360px] lg:gap-4 lg:items-start">
+                  {/* Left column: Map + Stats */}
+                  <div className="flex flex-col gap-3">
+                    <div className="relative">
+                      <SwipeableCardContainer
+                        cards={[
+                          {
+                            label: 'Empire Map',
+                            node: (
+                              <USMapCard
+                                mapData={mapData}
+                                loading={mapLoading}
+                              />
+                            ),
+                          },
+                          {
+                            label: 'Mission',
+                            node: (
+                              <GuideMissionCard
+                                civLevel={civLevel}
+                                population={empire.total_population}
+                                tribeCityCount={empire.tribe_city_count}
+                              />
+                            ),
+                          },
+                        ]}
+                        swipeable={false}
+                        className="shrink-0"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                      <StatTile
+                        icon={Users}
+                        label="Population"
+                        value={formatCompact(empire.total_population)}
+                      />
+                      <StatTile
+                        icon={Building2}
+                        label="Total Cities"
+                        value={empire.total_cities.toLocaleString()}
+                      />
+                      <StatTile
+                        icon={Landmark}
+                        label="Treasury"
+                        value="Locked"
+                        locked
+                      />
+                    </div>
+                  </div>
+
+                  {/* Right column: Location Intelligence */}
+                  <div className="hidden lg:block">
+                    <LocationIntelligenceCards
+                      metro={metroData}
+                      cityName={data?.city_name}
+                      cityPopulation={data?.city_population_count ?? 0}
+                      cityTier={cityTier}
+                      cityTierLevel={cityTierLevel}
+                      onOpen={() => setShowCityDrawer(true)}
+                    />
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-2 sm:gap-3">
-                  <StatTile
-                    icon={Users}
-                    label="Population"
-                    value={formatCompact(empire.total_population)}
-                  />
-                  <StatTile
-                    icon={Building2}
-                    label="Total Cities"
-                    value={empire.total_cities.toLocaleString()}
-                  />
-                  <StatTile
-                    icon={Landmark}
-                    label="Treasury"
-                    value="Locked"
-                    locked
+                {/* Mobile: Location Intelligence below map */}
+                <div className="lg:hidden">
+                  <LocationIntelligenceCards
+                    metro={metroData}
+                    cityName={data?.city_name}
+                    cityPopulation={data?.city_population_count ?? 0}
+                    cityTier={cityTier}
+                    cityTierLevel={cityTierLevel}
+                    onOpen={() => setShowCityDrawer(true)}
                   />
                 </div>
-
-                <LocationIntelligenceCards
-                  metro={metroData}
-                  cityName={data?.city_name}
-                  cityPopulation={data?.city_population_count ?? 0}
-                  cityTier={cityTier}
-                  cityTierLevel={cityTierLevel}
-                  onOpen={() => setShowCityDrawer(true)}
-                />
               </div>
 
               {/* ===== Local Tab: City card + Local feed ===== */}
               <div className="shrink-0 flex flex-col gap-3" style={{ width: tabViewportWidth > 0 ? `${tabViewportWidth}px` : '100%' }}>
-                {data?.city_name && (
-                  <CityCard
-                    cityName={data.city_name}
-                    cityTier={cityTier}
-                    cityTierLevel={cityTierLevel}
-                    populationCount={data?.city_population_count ?? 0}
-                    onClick={() => setShowCityDrawer(true)}
-                  />
-                )}
-                {feedError ? (
-                  <ErrorBanner message="Unable to load activity feed." onRetry={() => { setFeedError(false); setFeedLoading(true); }} />
-                ) : (
-                  <FeedList events={mergeFeedWithNews(localCouncilNews, localFeed)} loading={feedLoading} onCardClick={setProfileMemberId} />
-                )}
+                <div className="lg:max-w-[640px] mx-auto w-full flex flex-col gap-3">
+                  {data?.city_name && (
+                    <CityCard
+                      cityName={data.city_name}
+                      cityTier={cityTier}
+                      cityTierLevel={cityTierLevel}
+                      populationCount={data?.city_population_count ?? 0}
+                      onClick={() => setShowCityDrawer(true)}
+                    />
+                  )}
+                  {feedError ? (
+                    <ErrorBanner message="Unable to load activity feed." onRetry={() => { setFeedError(false); setFeedLoading(true); }} />
+                  ) : (
+                    <FeedList events={mergeFeedWithNews(localCouncilNews, localFeed)} loading={feedLoading} onCardClick={setProfileMemberId} />
+                  )}
+                </div>
               </div>
 
               {/* ===== Empire Tab: Empire feed ===== */}
               <div className="shrink-0 flex flex-col gap-3" style={{ width: tabViewportWidth > 0 ? `${tabViewportWidth}px` : '100%' }}>
-                {feedError ? (
-                  <ErrorBanner message="Unable to load activity feed." onRetry={() => { setFeedError(false); setFeedLoading(true); }} />
-                ) : (
-                  <FeedList events={mergeFeedWithNews(empireCouncilNews, empireFeed)} loading={feedLoading} onCardClick={setProfileMemberId} />
-                )}
+                <div className="lg:max-w-[640px] mx-auto w-full flex flex-col gap-3">
+                  {feedError ? (
+                    <ErrorBanner message="Unable to load activity feed." onRetry={() => { setFeedError(false); setFeedLoading(true); }} />
+                  ) : (
+                    <FeedList events={mergeFeedWithNews(empireCouncilNews, empireFeed)} loading={feedLoading} onCardClick={setProfileMemberId} />
+                  )}
+                </div>
               </div>
             </div>
           </div>

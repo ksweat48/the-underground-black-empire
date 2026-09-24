@@ -366,7 +366,7 @@ export function ProfilePage() {
     <Layout fullWidth>
       <div className="fixed inset-0 z-[1] pointer-events-none bg-radial-warm opacity-50" />
 
-      <div className="relative z-10 flex-1 min-h-0 overflow-y-auto scrollbar-none w-full max-w-[960px] mx-auto px-2 sm:px-3 pt-3 pb-24 space-y-4">
+      <div className="relative z-10 flex-1 min-h-0 overflow-y-auto scrollbar-none w-full max-w-[960px] lg:max-w-[1100px] mx-auto px-2 sm:px-3 pt-3 pb-24 lg:pb-10 space-y-4">
         {/* Referrals Card — solid green with matching card effects */}
         <section
           role="button"

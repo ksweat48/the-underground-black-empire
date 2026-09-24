@@ -139,7 +139,7 @@ export function ListingDetailPage() {
   if (!listing) {
     return (
       <Layout fullWidth>
-        <div className="max-w-[960px] mx-auto px-4 py-8">
+        <div className="max-w-[960px] lg:max-w-[1100px] mx-auto px-4 py-8">
           <div className="frame-utility p-8 text-center">
             <Store className="w-8 h-8 text-empire-text-muted mx-auto mb-3" />
             <p className="text-sm text-empire-text-secondary">This listing is not available.</p>
@@ -154,7 +154,7 @@ export function ListingDetailPage() {
 
   return (
     <Layout fullWidth>
-      <div className="max-w-[960px] mx-auto px-2 sm:px-3 pt-3 pb-32 space-y-4">
+      <div className="max-w-[960px] lg:max-w-[1100px] mx-auto px-2 sm:px-3 pt-3 pb-32 lg:pb-10 space-y-4">
         {/* Back button */}
         <button
           onClick={() => navigate('/market')}

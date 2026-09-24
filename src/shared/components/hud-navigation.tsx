@@ -131,6 +131,50 @@ export function HudTopBar({ civLevel }: HudNavigationProps) {
 
 /* ===================== BOTTOM NAVIGATION ===================== */
 
+export function HudDesktopRail() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { openSheet } = useCreateSheet();
+
+  const items = [
+    { label: 'Empire', icon: EmpireEmblem, path: '/empire', active: location.pathname === '/empire' },
+    { label: 'Market', icon: Store, path: '/market', active: location.pathname.startsWith('/market') },
+    { label: 'Vote', icon: VoteIcon, path: '/vote', active: location.pathname === '/vote' },
+    { label: 'Profile', icon: User, path: '/profile', active: location.pathname === '/profile' },
+  ];
+
+  return (
+    <aside className="desktop-nav-rail" aria-label="Primary navigation">
+      <button onClick={() => navigate('/empire')} className="desktop-nav-brand" aria-label="Go to Empire dashboard">
+        <img src="/ube-icon-black.png" alt="" className="w-9 h-9 object-contain" />
+        <span className="desktop-nav-brand-name">THE UNDERGROUND<br />BLACK EMPIRE</span>
+      </button>
+
+      <nav className="desktop-nav-links">
+        {items.map(({ label, icon: Icon, path, active }) => (
+          <button
+            key={label}
+            onClick={() => navigate(path)}
+            className={cn('desktop-nav-link', active && 'desktop-nav-link-active')}
+            aria-current={active ? 'page' : undefined}
+          >
+            <Icon className="w-[18px] h-[18px]" />
+            <span>{label}</span>
+          </button>
+        ))}
+      </nav>
+
+      <div className="desktop-nav-footer">
+        <button onClick={openSheet} className="desktop-create-button">
+          <Plus className="w-4 h-4" />
+          <span>Create</span>
+        </button>
+        <p className="desktop-nav-caption">Build locally. Move collectively.</p>
+      </div>
+    </aside>
+  );
+}
+
 export function HudBottomBar() {
   const location = useLocation();
   const navigate = useNavigate();

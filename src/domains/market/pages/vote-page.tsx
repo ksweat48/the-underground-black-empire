@@ -60,7 +60,7 @@ export function VotePage() {
 
   return (
     <Layout fullWidth>
-      <div className="max-w-[960px] mx-auto px-2 sm:px-3 pt-3 pb-24 space-y-4">
+      <div className="max-w-[960px] lg:max-w-[1100px] mx-auto px-2 sm:px-3 pt-3 pb-24 lg:pb-10 space-y-4">
         <VoteHeader tab={tab} onTabChange={setTab} />
         {tab === 'initiatives' ? (
           <InitiativesTab userId={userId} sessionVersion={sessionVersion} />

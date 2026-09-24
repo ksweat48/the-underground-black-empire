@@ -1,7 +1,7 @@
 import { type ReactNode, useEffect, useState } from 'react';
 import { Header } from './header';
 import { EmpireBackground } from './empire-background';
-import { HudTopBar, HudBottomBar } from './hud-navigation';
+import { HudTopBar, HudBottomBar, HudDesktopRail } from './hud-navigation';
 import { InfluenceCelebrationPopup } from './influence-celebration-popup';
 import { useAuth } from '@/domains/identity/auth-context';
 import {
@@ -63,13 +63,16 @@ function EmpireLayout({
   return (
     <div className="relative h-screen flex flex-col overflow-hidden">
       <EmpireBackground />
+      <HudDesktopRail />
       {showTopBar && <HudTopBar empire={empire} civLevel={civLevel} />}
       <main
         className={`relative z-10 flex-1 min-w-0 empire-layout-main overflow-y-auto scrollbar-thin ${showTopBar ? '' : 'empire-layout-main--no-topbar'} ${fullWidth ? 'flex flex-col' : 'container-empire'}`}
       >
         {children}
       </main>
-      <HudBottomBar />
+      <div className="lg:hidden">
+        <HudBottomBar />
+      </div>
       <InfluenceCelebrationPopup />
     </div>
   );
