@@ -146,7 +146,7 @@ export function HudDesktopRail() {
   return (
     <aside className="desktop-nav-rail" aria-label="Primary navigation">
       <button onClick={() => navigate('/empire')} className="desktop-nav-brand" aria-label="Go to Empire dashboard">
-        <img src="/ube-icon-black.png" alt="" className="w-9 h-9 object-contain" />
+        <EmpireEmblem variant="dark" className="w-9 h-9 object-contain" />
         <span className="desktop-nav-brand-name">THE UNDERGROUND<br />BLACK EMPIRE</span>
       </button>
 

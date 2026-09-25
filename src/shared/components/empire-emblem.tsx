@@ -1,3 +1,5 @@
+import { useState } from 'react';
+import { Landmark } from 'lucide-react';
 import { cn } from '@/shared/cn';
 
 interface EmpireEmblemProps {
@@ -12,12 +14,19 @@ const EMBLEM_SRC = {
 } as const;
 
 export function EmpireEmblem({ variant, className, alt = 'The Underground Black Empire' }: EmpireEmblemProps) {
+  const [imageFailed, setImageFailed] = useState(false);
+
+  if (imageFailed) {
+    return <Landmark aria-label={alt} className={cn('select-none', className)} />;
+  }
+
   return (
     <img
       src={EMBLEM_SRC[variant]}
       alt={alt}
       className={cn('object-contain select-none', className)}
       draggable={false}
+      onError={() => setImageFailed(true)}
     />
   );
 }
