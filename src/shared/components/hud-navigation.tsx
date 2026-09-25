@@ -137,10 +137,10 @@ export function HudDesktopRail() {
   const { openSheet } = useCreateSheet();
 
   const items = [
-    { label: 'Empire', icon: EmpireEmblem, path: '/empire', active: location.pathname === '/empire' },
-    { label: 'Market', icon: Store, path: '/market', active: location.pathname.startsWith('/market') },
-    { label: 'Vote', icon: VoteIcon, path: '/vote', active: location.pathname === '/vote' },
-    { label: 'Profile', icon: User, path: '/profile', active: location.pathname === '/profile' },
+    { label: 'Empire', path: '/empire', active: location.pathname === '/empire', isEmpire: true },
+    { label: 'Market', icon: Store, path: '/market', active: location.pathname.startsWith('/market'), isEmpire: false },
+    { label: 'Vote', icon: VoteIcon, path: '/vote', active: location.pathname === '/vote', isEmpire: false },
+    { label: 'Profile', icon: User, path: '/profile', active: location.pathname === '/profile', isEmpire: false },
   ];
 
   return (
@@ -151,14 +151,18 @@ export function HudDesktopRail() {
       </button>
 
       <nav className="desktop-nav-links">
-        {items.map(({ label, icon: Icon, path, active }) => (
+        {items.map(({ label, icon: Icon, path, active, isEmpire }) => (
           <button
             key={label}
             onClick={() => navigate(path)}
             className={cn('desktop-nav-link', active && 'desktop-nav-link-active')}
             aria-current={active ? 'page' : undefined}
           >
-            <Icon className="w-[18px] h-[18px]" />
+            {isEmpire ? (
+              <EmpireEmblem variant="light" className="w-[18px] h-[18px] object-contain" />
+            ) : (
+              <Icon className="w-[18px] h-[18px]" />
+            )}
             <span>{label}</span>
           </button>
         ))}
