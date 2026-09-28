@@ -670,8 +670,8 @@ function DashboardTabs({
 }) {
   const tabs: { key: DashboardTab; label: string; disabled?: boolean }[] = [
     { key: 'hq', label: 'HQ' },
-    { key: 'local', label: 'Local', disabled: !hasLocalFeed },
-    { key: 'empire', label: 'Empire' },
+    { key: 'local', label: 'Local News', disabled: !hasLocalFeed },
+    { key: 'empire', label: 'Empire News' },
   ];
 
   return (
