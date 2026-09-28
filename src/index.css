@@ -887,6 +887,17 @@
     letter-spacing: 0.08em;
   }
 
+  .seg-control-wide .seg-btn-narrow {
+    @apply flex-none;
+    flex: 0 0 auto;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+
+  .seg-control-wide .seg-btn-wide {
+    @apply flex-1;
+  }
+
   .seg-btn-active {
     color: var(--empire-gold);
     background: rgba(255,255,255,0.95);

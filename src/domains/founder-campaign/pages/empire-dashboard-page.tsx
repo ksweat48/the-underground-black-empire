@@ -685,6 +685,7 @@ function DashboardTabs({
             disabled={tab.disabled}
             className={cn(
               'seg-btn',
+              tab.key === 'hq' ? 'seg-btn-narrow' : 'seg-btn-wide',
               isActive && 'seg-btn-active',
               tab.disabled && 'opacity-35 cursor-not-allowed pointer-events-none',
             )}
