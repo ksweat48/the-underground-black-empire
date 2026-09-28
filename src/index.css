@@ -890,8 +890,8 @@
   .seg-control-wide .seg-btn-narrow {
     @apply flex-none;
     flex: 0 0 auto;
-    padding-left: 0.5rem;
-    padding-right: 0.5rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
   }
 
   .seg-control-wide .seg-btn-wide {
