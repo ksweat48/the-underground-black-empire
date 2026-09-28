@@ -61,7 +61,7 @@ export function HudTopBar({ civLevel }: HudNavigationProps) {
                 aria-label="Go to Empire dashboard"
               >
                 <img
-                  src="/the_underground_black_empire_logo.png"
+                  src="/UBE_logo.png"
                   alt="The Underground Empire"
                   className="h-10 w-auto object-contain transition-transform group-hover:scale-105"
                 />

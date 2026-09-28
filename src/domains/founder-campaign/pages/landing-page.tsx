@@ -7,7 +7,7 @@ import { cn } from '@/shared/cn';
 
 const ONBOARDING_ROUTE = '/onboarding/city';
 const AUTH_ROUTE = '/auth/sign-in';
-const LOGO = '/the_underground_black_empire_logo.png';
+const LOGO = '/UBE_logo.png';
 
 type SnapSectionProps = {
   children: React.ReactNode;

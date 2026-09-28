@@ -277,7 +277,7 @@ function TierCard({ tier, active, memberName }: { tier: MembershipTier; active: 
           </div>
         </div>
       </div>
-      <div className="pointer-events-none absolute bottom-[-26%] right-[-4%] opacity-[0.08]"><img src="/the_underground_black_empire_logo_no_background.png" alt="" className="w-[320px] max-w-none grayscale invert" /></div>
+      <div className="pointer-events-none absolute bottom-[-26%] right-[-4%] opacity-[0.08]"><img src="/UBE_logo.png" alt="" className="w-[320px] max-w-none grayscale invert" /></div>
     </div>
   );
 }
