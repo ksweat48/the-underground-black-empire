@@ -10,7 +10,7 @@ export function Header() {
           aria-label="Go to home page"
         >
           <img
-            src="/UBE_logo2.png"
+            src="/UBE_logo.png"
             alt="The Underground Black Empire"
             className="h-12 w-auto max-w-[160px] object-contain"
           />
