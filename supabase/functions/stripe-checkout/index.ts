@@ -119,7 +119,7 @@ Deno.serve(async (req: Request) => {
       if (!customerResponse.ok) {
         const errBody = await customerResponse.text();
         return new Response(
-          JSON.stringify({ error: "Failed to create Stripe customer", details: errBody }),
+          JSON.stringify({ error: "Failed to create Stripe customer" }),
           { status: 502, headers: { ...cors, "Content-Type": "application/json" } },
         );
       }
@@ -158,7 +158,7 @@ Deno.serve(async (req: Request) => {
     if (!checkoutResponse.ok) {
       const errBody = await checkoutResponse.text();
       return new Response(
-        JSON.stringify({ error: "Failed to create checkout session", details: errBody }),
+        JSON.stringify({ error: "Failed to create checkout session" }),
         { status: 502, headers: { ...cors, "Content-Type": "application/json" } },
       );
     }
@@ -171,7 +171,7 @@ Deno.serve(async (req: Request) => {
     );
   } catch (err) {
     return new Response(
-      JSON.stringify({ error: err.message || "Internal server error" }),
+      JSON.stringify({ error: "Internal server error" }),
       { status: 500, headers: { ...cors, "Content-Type": "application/json" } },
     );
   }

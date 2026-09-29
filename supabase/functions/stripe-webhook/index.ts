@@ -33,7 +33,13 @@ async function verifyStripeSignature(payload: string, signature: string, secret:
       .map((b) => b.toString(16).padStart(2, "0"))
       .join("");
 
-    return computedSignature === providedSignature;
+    if (computedSignature !== providedSignature) return false;
+
+    const toleranceMs = 5 * 60 * 1000;
+    const ageMs = Math.abs(Date.now() - Number(timestamp) * 1000);
+    if (ageMs > toleranceMs) return false;
+
+    return true;
   } catch {
     return false;
   }
@@ -184,7 +190,7 @@ Deno.serve(async (req: Request) => {
     );
   } catch (err) {
     return new Response(
-      JSON.stringify({ error: err.message || "Internal server error" }),
+      JSON.stringify({ error: "Internal server error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }

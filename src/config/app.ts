@@ -4,7 +4,7 @@ export const APP_CONFIG = {
   tagline: 'The Empire Is Forming',
   description:
     'A city-based, gamified civic and community platform. Build your city. Grow your empire. Leave a legacy.',
-  url: 'https://the-underground-black-empire.netlify.app',
+  url: 'https://theundergroundblackempire.com',
   supportEmail: 'theundergroundblackempire@gmail.com',
   version: '0.1.0',
   phase: 'Pioneer Campaign',
