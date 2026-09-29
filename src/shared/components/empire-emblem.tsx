@@ -9,8 +9,8 @@ interface EmpireEmblemProps {
 }
 
 const EMBLEM_SRC = {
-  light: '/ube-icon-black.png',
-  dark: '/ube-icon-white.png',
+  light: '/UBE_icon_official.png',
+  dark: '/UBE_icon_official.png',
 } as const;
 
 export function EmpireEmblem({ variant, className, alt = 'The Underground Black Empire' }: EmpireEmblemProps) {
