@@ -30,10 +30,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [memberState, setMemberState] = useState<MemberState | null>(null);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }: { data: { session: Session | null } }) => {
-      setSession(data.session ? { user: data.session.user } : null);
-      setLoading(false);
-    });
+    supabase.auth.getSession().then(
+      ({ data, error }: { data: { session: Session | null }; error: Error | null }) => {
+        if (error) {
+          setError('Unable to connect. Please refresh the page.');
+        } else {
+          setSession(data.session ? { user: data.session.user } : null);
+        }
+        setLoading(false);
+      },
+      () => {
+        setError('Unable to connect. Please refresh the page.');
+        setLoading(false);
+      },
+    );
 
     const { data: listener } = supabase.auth.onAuthStateChange(
       (_event: string, session: Session | null) => {

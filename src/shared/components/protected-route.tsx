@@ -88,7 +88,13 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
   }
 
   if (!onboardingComplete) {
-    if (!memberState) return <Loader2 className="w-6 h-6 text-gold-400 animate-spin" />;
+    if (!memberState) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-ink-950">
+          <Loader2 className="w-6 h-6 text-gold-400 animate-spin" />
+        </div>
+      );
+    }
     return <Navigate to={getResumePath(memberState)} replace />;
   }
 

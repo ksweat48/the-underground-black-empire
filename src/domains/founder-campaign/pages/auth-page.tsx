@@ -58,18 +58,31 @@ export function AuthPage({ mode }: AuthPageProps) {
           setIdentityError('Please select your gender.');
           return;
         }
-        await signUp({ email, password });
-        await createMemberRecord(email);
-        const { error: rpcError } = await supabase.rpc('update_ethnic_identity', {
-          p_ethnic_identity: ethnicSelected,
-          p_ethnic_identity_detail: ethnicSelected === 'another' ? ethnicDetail.trim() : null,
-        });
-        if (rpcError) throw new Error(parseSupabaseError(rpcError));
-        const { error: genderError } = await supabase.rpc('update_gender', {
-          p_gender: gender,
-          p_gender_detail: gender === 'other' ? genderDetail.trim() : null,
-        });
-        if (genderError) throw new Error(parseSupabaseError(genderError));
+        const newSession = await signUp({ email, password });
+        try {
+          await createMemberRecord(email);
+        } catch (createErr) {
+          await supabase.auth.signOut();
+          throw new Error('Account creation failed. Please try again.');
+        }
+        try {
+          const { error: rpcError } = await supabase.rpc('update_ethnic_identity', {
+            p_ethnic_identity: ethnicSelected,
+            p_ethnic_identity_detail: ethnicSelected === 'another' ? ethnicDetail.trim() : null,
+          });
+          if (rpcError) throw new Error(parseSupabaseError(rpcError));
+          const { error: genderError } = await supabase.rpc('update_gender', {
+            p_gender: gender,
+            p_gender_detail: gender === 'other' ? genderDetail.trim() : null,
+          });
+          if (genderError) throw new Error(parseSupabaseError(genderError));
+        } catch (identityErr) {
+          if (identityErr instanceof Error) {
+            setIdentityError(identityErr.message);
+          }
+          navigate('/onboarding/city', { replace: true });
+          return;
+        }
       } else {
         await signIn({ email, password });
       }
@@ -221,7 +234,7 @@ export function AuthPage({ mode }: AuthPageProps) {
         <p className="text-center text-sm text-ink-400 mt-4">
           {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
           <Link
-            to={isSignUp ? '/auth/sign-in' : '/onboarding/city'}
+            to={isSignUp ? '/auth/sign-in' : '/auth/sign-up'}
             className="text-gold-300 hover:text-gold-200 font-medium"
           >
             {isSignUp ? 'Sign in' : 'Join the Empire'}

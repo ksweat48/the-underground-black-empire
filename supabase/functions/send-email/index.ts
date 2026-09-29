@@ -420,6 +420,28 @@ interface SendEmailRequest {
   preview?: boolean;
 }
 
+const ADMIN_ONLY_TYPES = [
+  "listing_submitted",
+  "listing_approved",
+  "listing_needs_changes",
+  "listing_removed",
+  "voting_window_opened",
+  "city_upgrade",
+  "empire_upgrade",
+  "quest_notification",
+  "leadership_nomination",
+  "leadership_election",
+  "treasury_funding_vote",
+  "general_announcement",
+];
+
+const SELF_SERVICE_TYPES = [
+  "welcome",
+  "email_verification",
+  "password_reset",
+  "vote_confirmation",
+];
+
 Deno.serve(async (req: Request) => {
   const cors = getCorsHeaders(req);
 
@@ -459,6 +481,29 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    const isAdmin = await userClient
+      .from("members")
+      .select("is_admin")
+      .eq("id", user.id)
+      .maybeSingle()
+      .then(({ data }) => Boolean(data?.is_admin));
+
+    if (ADMIN_ONLY_TYPES.includes(type) && !isAdmin) {
+      return new Response(
+        JSON.stringify({ error: "Not authorized to send this email type" }),
+        { status: 403, headers: { ...cors, "Content-Type": "application/json" } },
+      );
+    }
+
+    if (SELF_SERVICE_TYPES.includes(type) && !isAdmin) {
+      if (to && to.toLowerCase() !== user.email?.toLowerCase()) {
+        return new Response(
+          JSON.stringify({ error: "You can only send emails to your own address" }),
+          { status: 403, headers: { ...cors, "Content-Type": "application/json" } },
+        );
+      }
+    }
+
     const baseParams: EmailParams = {
       firstName: params?.firstName ?? "Member",
       emailTitle: params?.emailTitle ?? "",
@@ -488,10 +533,17 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    if (!isAdmin && to.toLowerCase() !== user.email?.toLowerCase()) {
+      return new Response(
+        JSON.stringify({ error: "You can only send emails to your own address" }),
+        { status: 403, headers: { ...cors, "Content-Type": "application/json" } },
+      );
+    }
+
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
     if (!resendApiKey) {
       return new Response(
-        JSON.stringify({ error: "Email service not configured. RESEND_API_KEY secret is missing." }),
+        JSON.stringify({ error: "Email service not configured." }),
         { status: 500, headers: { ...cors, "Content-Type": "application/json" } },
       );
     }
@@ -513,9 +565,8 @@ Deno.serve(async (req: Request) => {
     });
 
     if (!resendResponse.ok) {
-      const errorBody = await resendResponse.text();
       return new Response(
-        JSON.stringify({ error: `Resend API error: ${resendResponse.status}`, details: errorBody }),
+        JSON.stringify({ error: "Email delivery failed" }),
         { status: 502, headers: { ...cors, "Content-Type": "application/json" } },
       );
     }
@@ -527,7 +578,7 @@ Deno.serve(async (req: Request) => {
     );
   } catch (err) {
     return new Response(
-      JSON.stringify({ error: err.message || "Internal server error" }),
+      JSON.stringify({ error: "Internal server error" }),
       { status: 500, headers: { ...cors, "Content-Type": "application/json" } },
     );
   }

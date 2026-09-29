@@ -28,22 +28,22 @@ import {
 import { ProfessionAutocomplete } from '@/shared/components/profession-autocomplete';
 import { supabase } from '@/shared/supabase-client';
 import { parseSupabaseError } from '@/shared/errors';
-import { createListing } from '@/domains/market/services';
-import type { ListingCategory } from '@/domains/market/types';
+import { createListing, createOrganization } from '@/domains/market/services';
+import type { ListingCategory, OrgType } from '@/domains/market/types';
 
 const BUSINESS_CATEGORIES: { key: ListingCategory; label: string }[] = [
   { key: 'products', label: 'Products' },
   { key: 'services', label: 'Services' },
 ];
 
-const ORG_TYPES = [
-  'Nonprofit',
-  'Community Organization',
-  'Mission-Based Organization',
-  'Initiative',
-  'Foundation',
-  'Other',
-] as const;
+const ORG_TYPE_OPTIONS: { label: string; value: OrgType }[] = [
+  { label: 'Nonprofit', value: 'nonprofit' },
+  { label: 'Community Organization', value: 'community_organization' },
+  { label: 'Mission-Based Organization', value: 'mission_based' },
+  { label: 'Initiative', value: 'initiative' },
+  { label: 'Foundation', value: 'foundation' },
+  { label: 'Other', value: 'other' },
+];
 
 interface ListingFormData {
   name: string;
@@ -226,19 +226,34 @@ export function OnboardingIdentityPage() {
       let listingIdParam = '';
       if (needsListing && cityId) {
         try {
-          const listing = await createListing({
-            city_id: cityId,
-            name: listingData.name.trim(),
-            category: listingData.category,
-            description: listingData.description.trim(),
-            products_services: '',
-            price_display: listingData.price_display.trim(),
-            external_url: normalizeUrl(listingData.external_url),
-            contact_info: listingData.contact_info.trim(),
-            image_url: listingImageUrl,
-            status: 'in_review',
-          });
-          listingIdParam = `&listing=${listing.id}`;
+          if (supportRole === 'organization') {
+            const fundingGoalNum = parseInt(fundingGoal.replace(/[^0-9]/g, ''), 10) || 0;
+            const org = await createOrganization({
+              city_id: cityId,
+              name: listingData.name.trim(),
+              org_type: (orgType || 'community_organization') as OrgType,
+              description: listingData.description.trim(),
+              funding_goal: fundingGoalNum,
+              external_url: normalizeUrl(listingData.external_url),
+              contact_info: listingData.contact_info.trim(),
+              image_url: listingImageUrl,
+            });
+            listingIdParam = `&listing=${org.id}`;
+          } else {
+            const listing = await createListing({
+              city_id: cityId,
+              name: listingData.name.trim(),
+              category: listingData.category,
+              description: listingData.description.trim(),
+              products_services: '',
+              price_display: listingData.price_display.trim(),
+              external_url: normalizeUrl(listingData.external_url),
+              contact_info: listingData.contact_info.trim(),
+              image_url: listingImageUrl,
+              status: 'in_review',
+            });
+            listingIdParam = `&listing=${listing.id}`;
+          }
         } catch {
           // Listing creation failure should not block onboarding
         }
@@ -466,8 +481,8 @@ export function OnboardingIdentityPage() {
                 className="input-field text-sm cursor-pointer"
               >
                 <option value="">Select type...</option>
-                {ORG_TYPES.map((t) => (
-                  <option key={t} value={t}>{t}</option>
+                {ORG_TYPE_OPTIONS.map((t) => (
+                  <option key={t.value} value={t.value}>{t.label}</option>
                 ))}
               </select>
             </div>

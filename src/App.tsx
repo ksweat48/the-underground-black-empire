@@ -193,7 +193,7 @@ function LandingRedirect() {
     if (memberState && !memberState.cityId) {
       return <Navigate to="/onboarding/city" replace />;
     }
-    return <PageLoader />;
+    return <Navigate to="/onboarding/city" replace />;
   }
   return <LandingPage />;
 }

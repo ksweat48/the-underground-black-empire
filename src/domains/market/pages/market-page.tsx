@@ -36,7 +36,6 @@ import {
   type Organization,
 } from '@/domains/market/services';
 import { ORG_TYPE_LABELS } from '@/domains/market/types';
-import { PLACEHOLDER_FEED } from '@/domains/market/placeholder-data';
 import { ErrorBanner } from '@/shared/components/error-banner';
 
 type CategoryFilter = 'feed' | 'market' | 'organizations';
@@ -209,10 +208,7 @@ export function MarketPage() {
     if (searchOpen) searchInputRef.current?.focus();
   }, [searchOpen]);
 
-  const displayFeed = useMemo(() => {
-    if (feed.length > 0) return feed;
-    return PLACEHOLDER_FEED;
-  }, [feed]);
+  const displayFeed = feed;
 
   const featuredListings = useMemo(() => {
     if (category !== 'market') return [];
