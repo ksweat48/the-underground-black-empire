@@ -1,10 +1,14 @@
 import { type CSSProperties, useCallback, useEffect, useRef, useState } from 'react';
 import {
+  AlertTriangle,
+  ArrowDown,
+  ArrowUp,
   Check,
   ChevronLeft,
   ChevronRight,
   Info,
   Loader2,
+  RefreshCw,
 } from 'lucide-react';
 import { Layout } from '@/shared/components/layout';
 import { GlassModal } from '@/shared/components/glass-modal';
@@ -15,11 +19,11 @@ import { useAuth } from '@/domains/identity/auth-context';
 import {
   fetchMembershipTiers,
   fetchMyMembership,
-  updateMembershipTier,
+  downgradeToWhite,
   startStripeCheckout,
   TIER_DETAILS,
 } from '@/domains/membership/services';
-import type { MembershipTier, MembershipTierId, MemberMembership, CardColor, TierDetails } from '@/domains/membership/types';
+import type { MembershipTier, MembershipTierId, MemberMembership, CardColor, TierDetails as TierDetailsType } from '@/domains/membership/types';
 
 const COLOR_DOT: Record<CardColor, string> = {
   white: 'bg-white border border-stone-300',
@@ -73,6 +77,28 @@ const CARD_COLOR_LABEL: Record<MembershipTierId, string> = {
   plum: 'Plum',
 };
 
+const TIER_SORT: Record<MembershipTierId, number> = {
+  white: 1,
+  black: 2,
+  black_plus: 3,
+  emerald: 4,
+  plum: 5,
+};
+
+type ChangeDirection = 'upgrade' | 'downgrade' | 'switch';
+
+function getChangeDirection(currentTier: MembershipTierId, targetTier: MembershipTierId): ChangeDirection {
+  if (targetTier === 'white' && currentTier !== 'white') return 'downgrade';
+  if (TIER_SORT[targetTier] > TIER_SORT[currentTier]) return 'upgrade';
+  return 'switch';
+}
+
+function getCtaLabel(tier: MembershipTierId, direction: ChangeDirection, defaultLabel: string): string {
+  if (direction === 'downgrade') return 'Downgrade to Free';
+  if (direction === 'switch') return `Switch to ${CARD_COLOR_LABEL[tier]}`;
+  return defaultLabel;
+}
+
 export function MembershipPage() {
   const { session, sessionVersion } = useAuth();
   const userId = session?.user.id ?? '';
@@ -83,7 +109,9 @@ export function MembershipPage() {
   const [loadError, setLoadError] = useState(false);
   const [selecting, setSelecting] = useState<MembershipTierId | null>(null);
   const [selectError, setSelectError] = useState<string | null>(null);
+  const [selectSuccess, setSelectSuccess] = useState<string | null>(null);
   const [learnMoreTier, setLearnMoreTier] = useState<MembershipTierId | null>(null);
+  const [confirmDowngrade, setConfirmDowngrade] = useState<MembershipTier | null>(null);
   const touchStartX = useRef<number | null>(null);
 
   const loadData = useCallback(async () => {
@@ -111,24 +139,60 @@ export function MembershipPage() {
 
   useEffect(() => { loadData(); }, [loadData, sessionVersion]);
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const checkoutStatus = params.get('checkout');
+    const tierParam = params.get('tier');
+    if (checkoutStatus === 'success' && tierParam) {
+      setSelectSuccess(`Your ${CARD_COLOR_LABEL[tierParam as MembershipTierId] ?? tierParam} membership is now active.`);
+      window.history.replaceState({}, '', '/membership');
+    } else if (checkoutStatus === 'scheduled' && tierParam) {
+      setSelectSuccess(`Your switch to ${CARD_COLOR_LABEL[tierParam as MembershipTierId] ?? tierParam} will take effect at your next billing cycle.`);
+      window.history.replaceState({}, '', '/membership');
+    } else if (checkoutStatus === 'cancelled') {
+      setSelectError('Checkout was cancelled. Your membership was not changed.');
+      window.history.replaceState({}, '', '/membership');
+    }
+  }, []);
+
   const chooseTier = async (tier: MembershipTier) => {
     if (!userId || !myMembership || myMembership.membership_tier === tier.id) return;
+    const direction = getChangeDirection(myMembership.membership_tier, tier.id);
+
+    if (direction === 'downgrade') {
+      setConfirmDowngrade(tier);
+      return;
+    }
+
     setSelecting(tier.id);
     setSelectError(null);
+    setSelectSuccess(null);
     try {
-      if (tier.price_monthly === 0) {
-        await updateMembershipTier(userId, tier.id);
-        await loadData();
+      const checkoutUrl = await startStripeCheckout(tier.id);
+      if (checkoutUrl) {
+        window.location.href = checkoutUrl;
       } else {
-        const checkoutUrl = await startStripeCheckout(tier.id);
-        if (checkoutUrl) {
-          window.location.href = checkoutUrl;
-        } else {
-          setSelectError('Unable to start checkout. Please try again.');
-        }
+        setSelectError('Unable to start checkout. Please try again.');
       }
     } catch {
       setSelectError('Unable to update your membership tier. Please try again.');
+    } finally {
+      setSelecting(null);
+    }
+  };
+
+  const confirmDowngradeToWhite = async () => {
+    if (!confirmDowngrade) return;
+    setSelecting('white');
+    setSelectError(null);
+    setSelectSuccess(null);
+    setConfirmDowngrade(null);
+    try {
+      await downgradeToWhite();
+      await loadData();
+      setSelectSuccess('You have been downgraded to the Free White membership.');
+    } catch {
+      setSelectError('Unable to downgrade your membership. Please try again.');
     } finally {
       setSelecting(null);
     }
@@ -167,14 +231,21 @@ export function MembershipPage() {
     || (typeof session?.user.user_metadata?.display_name === 'string' ? session.user.user_metadata.display_name.trim() : '')
     || session?.user.email?.split('@')[0]
     || 'Member';
+  const currentTierId = myMembership?.membership_tier ?? 'white';
   const desktopStartIndex = Math.min(Math.max(activeIndex - 1, 0), Math.max(tiers.length - 3, 0));
   const tabletStartIndex = Math.min(Math.max(activeIndex - 1, 0), Math.max(tiers.length - 2, 0));
 
   return (
     <Layout fullWidth>
       {selectError && (
-        <div className="flex items-center gap-2 p-3 rounded-lg bg-empire-danger/10 border border-empire-danger/20 animate-fade-up mb-4">
-          <p className="text-xs text-empire-danger flex-1">{selectError}</p>
+        <div className="flex items-center gap-2 p-3 rounded-lg bg-red-50 border border-red-200 animate-fade-up mb-4">
+          <p className="text-xs text-red-700 flex-1">{selectError}</p>
+        </div>
+      )}
+      {selectSuccess && (
+        <div className="flex items-center gap-2 p-3 rounded-lg bg-emerald-50 border border-emerald-200 animate-fade-up mb-4">
+          <Check className="h-4 w-4 text-emerald-700 shrink-0" />
+          <p className="text-xs text-emerald-700 flex-1">{selectSuccess}</p>
         </div>
       )}
       <div className="membership-page w-full overflow-hidden pb-24">
@@ -195,6 +266,8 @@ export function MembershipPage() {
               {tiers.map((tier, index) => {
                 const details = TIER_DETAILS[tier.id];
                 const isActive = index === activeIndex;
+                const isCurrent = currentTierId === tier.id;
+                const direction = isCurrent ? null : getChangeDirection(currentTierId, tier.id);
                 return (
                   <div
                     key={tier.id}
@@ -209,9 +282,11 @@ export function MembershipPage() {
                       <TierCard tier={tier} active={isActive} memberName={memberName} />
                     </button>
                     {details && (
-                      <TierDetails
+                      <TierDetailsPanel
                         details={details}
-                        isCurrent={myMembership?.membership_tier === tier.id}
+                        tierId={tier.id}
+                        isCurrent={isCurrent}
+                        direction={direction}
                         onSelect={() => chooseTier(tier)}
                         selecting={selecting === tier.id}
                         disabled={!!selecting}
@@ -239,6 +314,47 @@ export function MembershipPage() {
       <GlassModal open={!!learnMoreTier} onClose={() => setLearnMoreTier(null)} title={learnMoreTier ? TIER_DETAILS[learnMoreTier].learnMoreTitle ?? '' : ''}>
         {learnMoreTier && <div className="space-y-3"><p className="whitespace-pre-line text-sm leading-6 text-stone-600">{TIER_DETAILS[learnMoreTier].learnMoreBody}</p><button onClick={() => setLearnMoreTier(null)} className="btn-secondary w-full px-4 py-2 text-sm">Close</button></div>}
       </GlassModal>
+
+      <GlassModal
+        open={!!confirmDowngrade}
+        onClose={() => setConfirmDowngrade(null)}
+        title="Downgrade to Free Membership?"
+      >
+        {confirmDowngrade && (
+          <div className="space-y-4">
+            <div className="flex items-start gap-3 rounded-xl bg-red-50 border border-red-200 p-3">
+              <AlertTriangle className="h-5 w-5 text-red-600 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="text-sm font-semibold text-red-900">This takes effect immediately.</p>
+                <p className="text-xs text-red-700 leading-5">
+                  You will lose access to your paid tier benefits right away, including
+                  remaining monthly voting credits, treasury participation, and any tier-specific
+                  features. Your Empire Level and Influence are not affected.
+                </p>
+              </div>
+            </div>
+            <p className="text-sm text-stone-600">
+              Your Stripe subscription will be canceled immediately. You can rejoin a paid
+              membership at any time.
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setConfirmDowngrade(null)}
+                className="btn-secondary flex-1 px-4 py-2.5 text-sm"
+              >
+                Keep My Membership
+              </button>
+              <button
+                onClick={confirmDowngradeToWhite}
+                disabled={selecting === 'white'}
+                className="flex-1 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
+              >
+                {selecting === 'white' ? <Loader2 className="mx-auto h-4 w-4 animate-spin" /> : 'Downgrade Now'}
+              </button>
+            </div>
+          </div>
+        )}
+      </GlassModal>
     </Layout>
   );
 }
@@ -251,7 +367,7 @@ function TierCard({ tier, active, memberName }: { tier: MembershipTier; active: 
     <div className={cn(CARD_SURFACE[tier.id], 'relative aspect-[1.72/1] w-full overflow-hidden rounded-[22px] p-5 text-left shadow-2xl transition-all duration-300 sm:p-8', active ? 'ring-2 ring-stone-900/10' : '')}>
       <div className="relative z-10 flex h-full min-h-0 flex-col justify-between">
         <div className="flex min-h-0 items-start justify-between gap-4">
-          <div className="min-w-0">
+          <div className="min-h-0">
             <p className={cn('text-[10px] font-bold uppercase tracking-[0.28em]', mutedClass)}>The Underground</p>
             <p className={cn('mt-1 text-[10px] uppercase tracking-[0.18em]', mutedClass)}>Black Empire</p>
           </div>
@@ -282,21 +398,29 @@ function TierCard({ tier, active, memberName }: { tier: MembershipTier; active: 
   );
 }
 
-function TierDetails({
+function TierDetailsPanel({
   details,
+  tierId,
   isCurrent,
+  direction,
   onSelect,
   selecting,
   disabled,
   onLearnMore,
 }: {
-  details: TierDetails;
+  details: TierDetailsType;
+  tierId: MembershipTierId;
   isCurrent: boolean;
+  direction: ChangeDirection | null;
   onSelect: () => void;
   selecting: boolean;
   disabled: boolean;
   onLearnMore: () => void;
 }) {
+  const ctaLabel = direction ? getCtaLabel(tierId, direction, details.ctaLabel) : details.ctaLabel;
+  const isDowngrade = direction === 'downgrade';
+  const isSwitch = direction === 'switch';
+
   return (
     <div className="membership-details-panel mt-4">
       <div className="frame-utility rounded-2xl p-4 sm:p-5">
@@ -309,7 +433,35 @@ function TierDetails({
           {isCurrent ? (
             <div className="flex items-center justify-center gap-2 rounded-xl bg-stone-100 px-4 py-2.5 text-xs font-semibold text-stone-500 sm:text-sm sm:px-5 sm:py-3"><Check className="h-4 w-4" />Current membership</div>
           ) : (
-            <button type="button" onClick={onSelect} disabled={disabled} className="rounded-xl bg-stone-900 px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-stone-700 disabled:opacity-60 sm:px-5 sm:py-3 sm:text-sm">{selecting ? <Loader2 className="mx-auto h-4 w-4 animate-spin" /> : details.ctaLabel}</button>
+            <div className="flex flex-col gap-1.5">
+              <button
+                type="button"
+                onClick={onSelect}
+                disabled={disabled}
+                className={cn(
+                  'inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-semibold transition disabled:opacity-60 sm:px-5 sm:py-3 sm:text-sm',
+                  isDowngrade
+                    ? 'bg-red-600 text-white hover:bg-red-700'
+                    : 'bg-stone-900 text-white hover:bg-stone-700',
+                )}
+              >
+                {selecting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : isDowngrade ? (
+                  <ArrowDown className="h-4 w-4" />
+                ) : isSwitch ? (
+                  <RefreshCw className="h-4 w-4" />
+                ) : (
+                  <ArrowUp className="h-4 w-4" />
+                )}
+                {ctaLabel}
+              </button>
+              {isSwitch && (
+                <p className="text-[10px] text-stone-400 leading-tight">
+                  Takes effect at your next billing cycle
+                </p>
+              )}
+            </div>
           )}
           {details.learnMoreTitle && <button type="button" onClick={onLearnMore} className="inline-flex items-center justify-center gap-1.5 px-2 py-2.5 text-xs font-semibold text-stone-500 transition hover:text-stone-900 sm:py-3 sm:text-sm"><Info className="h-4 w-4" />Details</button>}
         </div>

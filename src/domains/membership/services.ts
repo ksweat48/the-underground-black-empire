@@ -38,27 +38,29 @@ export async function fetchMyMembership(userId: string): Promise<MemberMembershi
   return data as MemberMembership | null;
 }
 
-export async function updateMembershipTier(userId: string, tier: MembershipTierId): Promise<void> {
-  const updates: Record<string, unknown> = { membership_tier: tier };
-  if (tier === 'white') {
-    updates.membership_started_at = null;
-  } else {
-    const { data: existing } = await supabase
-      .from('members')
-      .select('membership_started_at')
-      .eq('id', userId)
-      .maybeSingle();
-    if (!existing?.membership_started_at) {
-      updates.membership_started_at = new Date().toISOString();
-    }
+/**
+ * Downgrade to the free White tier. Cancels the Stripe subscription
+ * immediately and sets the membership tier to white via the server-side
+ * change_membership_tier function.
+ */
+export async function downgradeToWhite(): Promise<void> {
+  const { error } = await supabase.functions.invoke('stripe-cancel', {
+    headers: {
+      Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token ?? ''}`,
+    },
+  });
+
+  if (error) {
+    throw new Error(error.message || 'Failed to downgrade membership');
   }
-  const { error } = await supabase
-    .from('members')
-    .update(updates)
-    .eq('id', userId);
-  if (error) throw error;
 }
 
+/**
+ * Start a Stripe checkout or tier switch for a paid tier.
+ * - If the member has no active subscription, redirects to Stripe checkout.
+ * - If the member already has an active subscription on a different paid tier,
+ *   switches the subscription price at the next billing cycle.
+ */
 export async function startStripeCheckout(tierId: MembershipTierId): Promise<string | null> {
   const { data, error } = await supabase.functions.invoke('stripe-checkout', {
     body: { tierId },
@@ -70,6 +72,15 @@ export async function startStripeCheckout(tierId: MembershipTierId): Promise<str
   }
 
   return data?.url ?? null;
+}
+
+/**
+ * Switch from one paid tier to another paid tier. Takes effect at the
+ * next billing cycle. Returns the redirect URL (membership page with
+ * a "scheduled" query param).
+ */
+export async function switchPaidTier(tierId: MembershipTierId): Promise<string | null> {
+  return startStripeCheckout(tierId);
 }
 
 export async function fetchVotingCredits(userId: string): Promise<VotingCredits | null> {
@@ -87,7 +98,6 @@ export async function ensureVotingCreditsRow(userId: string): Promise<void> {
     .from('voting_credits')
     .insert({ member_id: userId, balance: 0 })
     .eq('member_id', userId);
-  // Ignore duplicate key errors — row already exists
   if (error && !error.message.includes('duplicate')) {
     // silently ignore — row may already exist
   }

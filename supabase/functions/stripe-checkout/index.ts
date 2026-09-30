@@ -84,7 +84,6 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Get or create Stripe customer
     const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeSecretKey) {
       return new Response(
@@ -93,15 +92,16 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Check if member already has a Stripe customer ID
+    // Get member's Stripe info and current tier
     const { data: member } = await adminClient
       .from("members")
-      .select("stripe_customer_id, email, display_name")
+      .select("stripe_customer_id, stripe_subscription_id, stripe_subscription_status, membership_tier, email, display_name")
       .eq("id", user.id)
       .maybeSingle();
 
     let customerId = member?.stripe_customer_id;
 
+    // Create Stripe customer if needed
     if (!customerId) {
       const customerResponse = await fetch("https://api.stripe.com/v1/customers", {
         method: "POST",
@@ -117,7 +117,6 @@ Deno.serve(async (req: Request) => {
       });
 
       if (!customerResponse.ok) {
-        const errBody = await customerResponse.text();
         return new Response(
           JSON.stringify({ error: "Failed to create Stripe customer" }),
           { status: 502, headers: { ...cors, "Content-Type": "application/json" } },
@@ -133,7 +132,71 @@ Deno.serve(async (req: Request) => {
         .eq("id", user.id);
     }
 
-    // Create Stripe Checkout session for subscription
+    // If member already has an active subscription, switch the price
+    // at the next billing cycle instead of creating a new checkout.
+    if (
+      member?.stripe_subscription_id &&
+      member?.stripe_subscription_status === "active" &&
+      member?.membership_tier !== "white" &&
+      member?.membership_tier !== tierId
+    ) {
+      const subResponse = await fetch(
+        `https://api.stripe.com/v1/subscriptions/${member.stripe_subscription_id}`,
+        {
+          headers: { "Authorization": `Bearer ${stripeSecretKey}` },
+        },
+      );
+      const subscription = await subResponse.json();
+
+      const currentPriceId = subscription?.items?.data?.[0]?.price?.id;
+      const itemId = subscription?.items?.data?.[0]?.id;
+
+      if (!itemId) {
+        return new Response(
+          JSON.stringify({ error: "Could not retrieve subscription details" }),
+          { status: 502, headers: { ...cors, "Content-Type": "application/json" } },
+        );
+      }
+
+      // Update the subscription item with the new price.
+      // proration_behavior=none means the change takes effect at the
+      // next billing cycle — the member keeps their current tier until then.
+      const updateParams = new URLSearchParams();
+      updateParams.append("items[0][id]", itemId);
+      updateParams.append("items[0][price]", tier.stripe_price_id);
+      updateParams.append("proration_behavior", "none");
+      updateParams.append("metadata[supabase_user_id]", user.id);
+      updateParams.append("metadata[tier_id]", tierId);
+
+      const updateResponse = await fetch(
+        `https://api.stripe.com/v1/subscriptions/${member.stripe_subscription_id}`,
+        {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${stripeSecretKey}`,
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: updateParams,
+        },
+      );
+
+      if (!updateResponse.ok) {
+        return new Response(
+          JSON.stringify({ error: "Failed to update subscription" }),
+          { status: 502, headers: { ...cors, "Content-Type": "application/json" } },
+        );
+      }
+
+      // The webhook will fire subscription.updated at the billing cycle
+      // boundary and update the membership_tier in the database then.
+      // Return a redirect to the membership page with a "scheduled" message.
+      return new Response(
+        JSON.stringify({ url: `${SITE_URL}/membership?checkout=scheduled&tier=${tierId}` }),
+        { status: 200, headers: { ...cors, "Content-Type": "application/json" } },
+      );
+    }
+
+    // No existing active subscription — create a new checkout session
     const checkoutParams = new URLSearchParams({
       customer: customerId,
       "line_items[0][price]": tier.stripe_price_id,
@@ -156,7 +219,6 @@ Deno.serve(async (req: Request) => {
     });
 
     if (!checkoutResponse.ok) {
-      const errBody = await checkoutResponse.text();
       return new Response(
         JSON.stringify({ error: "Failed to create checkout session" }),
         { status: 502, headers: { ...cors, "Content-Type": "application/json" } },

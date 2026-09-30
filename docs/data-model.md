@@ -86,6 +86,55 @@
 - `created_at` timestamptz DEFAULT now()
 - **Never UPDATEd or DELETEd.**
 
+## Membership Tables
+
+### membership_tiers (reference)
+- `id` text PK (white | black | black_plus | emerald | plum)
+- `display_name` text NOT NULL
+- `public_label` text NOT NULL
+- `price_monthly` integer NOT NULL DEFAULT 0 (in whole dollars)
+- `voting_credits` integer NOT NULL DEFAULT 0
+- `card_color` text NOT NULL (white | black | emerald | plum)
+- `purpose` text NOT NULL
+- `sort_order` integer NOT NULL DEFAULT 0
+- `stripe_price_id` text (nullable — null for free tier)
+
+### voting_credits
+- `member_id` uuid PK FK -> members (ON DELETE CASCADE)
+- `balance` integer NOT NULL DEFAULT 0
+- `last_reset_date` date (nullable)
+- `updated_at` timestamptz DEFAULT now()
+
+### legacy_fund
+- `id` integer PK DEFAULT 1 (singleton)
+- `total_reserve` numeric NOT NULL DEFAULT 0
+- `updated_at` timestamptz DEFAULT now()
+
+### stripe_payment_events (append-only audit)
+- `id` uuid PK DEFAULT gen_random_uuid()
+- `member_id` uuid FK -> members (ON DELETE CASCADE)
+- `stripe_event_id` text UNIQUE NOT NULL
+- `event_type` text NOT NULL
+- `subscription_id` text (nullable)
+- `customer_id` text (nullable)
+- `amount_total` bigint (nullable)
+- `currency` text (nullable)
+- `tier_id` text (nullable)
+- `created_at` timestamptz DEFAULT now()
+
+### members (membership-related columns)
+- `membership_tier` text NOT NULL DEFAULT 'white' — writable only via `change_membership_tier` function
+- `membership_started_at` timestamptz (nullable) — set when first joining a paid tier, cleared on downgrade to White
+- `stripe_customer_id` text (nullable) — managed by edge functions
+- `stripe_subscription_id` text (nullable) — managed by edge functions
+- `stripe_subscription_status` text DEFAULT 'inactive' — managed by webhook
+
+### change_membership_tier function (SECURITY DEFINER)
+- Accepts a target tier ID, validates it exists, and updates the calling member's own row.
+- When downgrading to White: clears `membership_started_at`, sets `stripe_subscription_status` to 'canceled'.
+- When upgrading/switching: preserves `membership_started_at` if already set, otherwise sets it to now().
+- EXECUTE granted to `authenticated` role only.
+
 ## Conventions
 
 - All IDs are uuid, defaulting to `gen_random_uuid()`.

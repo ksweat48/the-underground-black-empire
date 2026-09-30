@@ -7,5 +7,8 @@ verify_jwt = true
 [functions.stripe-checkout]
 verify_jwt = true
 
+[functions.stripe-cancel]
+verify_jwt = true
+
 [functions.stripe-webhook]
 verify_jwt = false
