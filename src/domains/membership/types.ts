@@ -16,6 +16,15 @@ export interface VotingCredits {
   member_id: string;
   balance: number;
   last_reset_date: string | null;
+  updated_at?: string;
+}
+
+export interface CreditLedgerEntry {
+  id: string;
+  amount: number;
+  source: 'monthly_grant' | 'initial_grant' | 'vote_spend';
+  reference_id: string | null;
+  created_at: string;
 }
 
 export interface LegacyFund {

@@ -21,7 +21,7 @@
 
 ### Admin (`src/domains/admin/`)
 - Administrative controls
-- Basic reporting (founder counts, city counts, XP awarded)
+- Basic reporting (founder counts, city counts, Influence awarded)
 - Feature flag visibility
 - Audit log (structure in place, populated by edge functions)
 

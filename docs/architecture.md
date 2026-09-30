@@ -7,7 +7,7 @@ The Underground Black Empire is a modular monolith built on Vite + React + TypeS
 ## Key Principles
 
 - **Single Source of Truth (SSOT):** Every business rule lives in one authoritative config module under `src/config/`. UI and backend both read from the same definitions.
-- **Server-Authoritative:** XP, founder numbers, referrals, treasury, and all sensitive calculations are validated and computed on the server. The client never writes authoritative state.
+- **Server-Authoritative:** Influence, founder numbers, referrals, treasury, and all sensitive calculations are validated and computed on the server. The client never writes authoritative state.
 - **Modular Monolith:** Code is organized by business domain, not by file type. Each domain owns its types, services, queries, and UI. No premature microservices.
 - **Append-Only Ledgers:** Financial and influence-sensitive systems use append-only ledger records. Balances are derived, never overwritten without history.
 
@@ -37,7 +37,7 @@ The Underground Black Empire is a modular monolith built on Vite + React + TypeS
 
 1. Client reads from Supabase via the anon-key client (RLS-enforced).
 2. Sensitive mutations go through edge functions (server-side validation).
-3. Append-only ledgers record every XP, referral, and financial change.
+3. Append-only ledgers record every Influence, referral, and financial change.
 4. Derived balances are computed from ledger sums, never stored directly.
 
 ## Membership System — Two-Axis Model
@@ -72,12 +72,14 @@ Membership Tier and Empire Level are two independent axes that together determin
 
 ### Monthly Voting Credits
 
-Voting credits are issued monthly according to the member's current tier. The amounts are:
+Voting credits are issued monthly on each member's personal anniversary date (the day of the month they first upgraded to a paid tier). Credits accumulate and carry forward if unused. The amounts are:
 - White: 0 credits
 - Black: 10 credits
 - Black+: 25 credits
 - Emerald: 50 credits
 - Plum: 100 credits
+
+A daily pg_cron job at midnight UTC grants credits to members whose anniversary falls on that day. New paid members receive their first credits immediately on checkout via the `grant_initial_voting_credits` function. Every grant and spend is recorded in the `voting_credit_ledger` append-only table for full auditability.
 
 ### Security
 

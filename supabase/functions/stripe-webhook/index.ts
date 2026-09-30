@@ -130,6 +130,9 @@ Deno.serve(async (req: Request) => {
             stripe_subscription_id: subscriptionId,
             stripe_subscription_status: "active",
           }).eq("id", userId);
+
+          // Grant initial voting credits immediately on first paid checkout
+          await adminClient.rpc("grant_initial_voting_credits", { p_member_id: userId });
         }
 
         await adminClient.from("stripe_payment_events").insert({

@@ -3,6 +3,7 @@ import type {
   MembershipTier,
   MembershipTierId,
   VotingCredits,
+  CreditLedgerEntry,
   LegacyFund,
   MemberMembership,
   BenefitItem,
@@ -13,6 +14,7 @@ export type {
   MembershipTier,
   MembershipTierId,
   VotingCredits,
+  CreditLedgerEntry,
   LegacyFund,
   MemberMembership,
   BenefitItem,
@@ -91,6 +93,17 @@ export async function fetchVotingCredits(userId: string): Promise<VotingCredits 
     .maybeSingle();
   if (error) throw error;
   return data as VotingCredits | null;
+}
+
+export async function fetchCreditLedger(userId: string, limit = 10): Promise<CreditLedgerEntry[]> {
+  const { data, error } = await supabase
+    .from('voting_credit_ledger')
+    .select('id, amount, source, reference_id, created_at')
+    .eq('member_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return (data ?? []) as CreditLedgerEntry[];
 }
 
 export async function ensureVotingCreditsRow(userId: string): Promise<void> {

@@ -43,15 +43,18 @@
 - `verified_at` timestamptz (nullable)
 - `created_at` timestamptz DEFAULT now()
 
-### xp_ledger (append-only)
+### influence_ledger (append-only)
 - `id` uuid PK
 - `member_id` uuid FK -> members
 - `amount` int NOT NULL (positive for awards, negative for reversals)
-- `source` text NOT NULL (founder_signup | city_selection | referral_verified | mission_completed | admin_adjustment | reversal)
+- `source` text NOT NULL (signup_completed | city_selected | news_like | marketplace_like | ballot_participation | city_level_upgrade | empire_level_upgrade | event_checkin_verified | mission_completed | verified_referral | verified_event_hosted | reversal)
+- `event_type` text (nullable)
 - `reference_id` uuid (nullable, links to source record)
+- `idempotency_key` text UNIQUE (nullable, prevents double-awards)
 - `notes` text (nullable)
 - `created_at` timestamptz DEFAULT now()
 - **Never UPDATEd or DELETEd.** Reversals are new negative rows.
+- Influence is the single progression currency. Level and Voting Power are derived from total Influence.
 
 ### city_progress (cached)
 - `city_id` uuid PK FK -> cities
@@ -102,8 +105,18 @@
 ### voting_credits
 - `member_id` uuid PK FK -> members (ON DELETE CASCADE)
 - `balance` integer NOT NULL DEFAULT 0
-- `last_reset_date` date (nullable)
+- `last_reset_date` date (nullable) — last date credits were granted
 - `updated_at` timestamptz DEFAULT now()
+
+### voting_credit_ledger (append-only)
+- `id` uuid PK DEFAULT gen_random_uuid()
+- `member_id` uuid FK -> members (ON DELETE CASCADE)
+- `amount` int NOT NULL (positive for grants, negative for spends)
+- `source` text NOT NULL (monthly_grant | initial_grant | vote_spend)
+- `reference_id` uuid (nullable, links to vote record for spends)
+- `created_at` timestamptz DEFAULT now()
+- **Never UPDATEd or DELETEd.**
+- RLS: members can read their own entries. All writes go through SECURITY DEFINER functions.
 
 ### legacy_fund
 - `id` integer PK DEFAULT 1 (singleton)
@@ -134,6 +147,18 @@
 - When downgrading to White: clears `membership_started_at`, sets `stripe_subscription_status` to 'canceled'.
 - When upgrading/switching: preserves `membership_started_at` if already set, otherwise sets it to now().
 - EXECUTE granted to `authenticated` role only.
+
+### grant_monthly_voting_credits function (SECURITY DEFINER)
+- Runs daily via pg_cron at midnight UTC.
+- Grants credits to paid members whose anniversary (day-of-month of `membership_started_at`) falls on today.
+- Handles short-month edge cases: if anniversary is 31st but month has 30 days, grants on the last day.
+- Idempotent: skips members already granted this month via `last_reset_date` check.
+- EXECUTE granted to `service_role`.
+
+### grant_initial_voting_credits function (SECURITY DEFINER)
+- Called after a member's first paid checkout to grant credits immediately.
+- Only grants if `last_reset_date` is null (no prior grant), preventing double-grants.
+- EXECUTE granted to `service_role`.
 
 ## Conventions
 

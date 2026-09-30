@@ -362,75 +362,48 @@ The application does not stop evolving. Only the civilization ladder is complete
 
 ### Overview
 
-Voting Power (VP) determines how strongly a member's Voting Credits count in Empire decisions. It is derived from two inputs only: **Level** (driven by XP) and **Influence** (earned through verified referrals and voting). VP is never purchased, never spent, and never decays.
+Voting Power (VP) determines how strongly a member's Voting Credits count in Empire decisions. It is derived from **Level** only. Level is determined by total Influence. VP is never purchased, never spent, and never decays.
 
 ### Formula
 
 ```
-VP = MIN(1.00 + level_bonus + influence_bonus, 5.00)
+VP = MIN(1.00 + (Level - 1) × 0.05, 5.00)
 ```
 
-**Level Bonus:**
++0.05 VP for every Level above Level 1, capped at 5.00 (reached at Level 81).
 
-```
-level_bonus = MIN((level - 1) × 0.05, 1.50)
-```
-
-+0.05 VP for every Level above Level 1, capped at +1.50 (reached at Level 31).
-
-| Level | Level Bonus |
-|-------|-------------|
-| 1     | +0.00       |
-| 2     | +0.05       |
-| 3     | +0.10       |
-| 5     | +0.20       |
-| 10    | +0.45       |
-| 20    | +0.95       |
-| 30    | +1.45       |
-| 31+   | +1.50       |
-
-**Influence Bonus:**
-
-```
-influence_bonus = MIN(FLOOR(influence / 10) × 0.01, 2.50)
-```
-
-+0.01 VP for every 10 Influence, capped at +2.50 (reached at 2,500 Influence).
-
-| Influence | Influence Bonus |
-|-----------|-----------------|
-| 0         | +0.00           |
-| 10        | +0.01           |
-| 50        | +0.05           |
-| 100       | +0.10           |
-| 250       | +0.25           |
-| 500       | +0.50           |
-| 1,000     | +1.00           |
-| 1,500     | +1.50           |
-| 2,000     | +2.00           |
-| 2,500+    | +2.50           |
+| Level | Level Bonus | Total VP |
+|-------|-------------|----------|
+| 1     | +0.00       | 1.00×    |
+| 2     | +0.05       | 1.05×    |
+| 5     | +0.20       | 1.20×    |
+| 10    | +0.45       | 1.45×    |
+| 20    | +0.95       | 1.95×    |
+| 40    | +1.95       | 2.95×    |
+| 60    | +2.95       | 3.95×    |
+| 81+   | +4.00       | 5.00×    |
 
 ### VP Examples
 
-| Level | Influence | Base | Level Bonus | Influence Bonus | Total VP |
-|-------|-----------|------|-------------|-----------------|----------|
-| 1     | 0         | 1.00 | +0.00       | +0.00           | 1.00×    |
-| 3     | 0         | 1.00 | +0.10       | +0.00           | 1.10×    |
-| 10    | 500       | 1.00 | +0.45       | +0.50           | 1.95×    |
-| 20    | 1,000     | 1.00 | +0.95       | +1.00           | 2.95×    |
-| 31+   | 2,500+    | 1.00 | +1.50       | +2.50           | 5.00×    |
+| Level | Base | Level Bonus | Total VP |
+|-------|------|-------------|----------|
+| 1     | 1.00 | +0.00       | 1.00×    |
+| 10    | 1.00 | +0.45       | 1.45×    |
+| 20    | 1.00 | +0.95       | 1.95×    |
+| 40    | 1.00 | +1.95       | 2.95×    |
+| 81+   | 1.00 | +4.00       | 5.00×    |
 
 ### Ballot Mechanics
 
 - **Credit cap:** 100 Voting Credits per member per ballot.
 - **Maximum weighted voting power:** 100 credits × 5.00 VP = **500**.
 - Votes are final. Credits are consumed at submission.
-- VP is snapshotted at the moment a vote is cast — later changes to Level or Influence do not retroactively affect past votes.
-- Buying credits never awards XP, Influence, or Level.
+- VP is snapshotted at the moment a vote is cast — later changes to Level do not retroactively affect past votes.
+- Buying credits never awards Influence or Level.
 
 ### Design Rationale
 
-The linear level rate (+0.05/level) keeps unlimited Level progression from creating unlimited voting weight. The Influence bonus rewards proven impact (voting and verified referrals) without allowing purchased credits to inflate VP. A veteran member who has helped build the Empire carries real weight in decisions — strong enough to feel earned, without making a single person equivalent to twenty community members.
+The linear level rate (+0.05/level) keeps unlimited Level progression from creating unlimited voting weight. VP is driven by Level alone, and Level is driven by Influence alone — so voting weight reflects earned participation, not purchased power. A veteran member who has helped build the Empire carries real weight in decisions — strong enough to feel earned, without making a single person equivalent to twenty community members.
 
 ---
 

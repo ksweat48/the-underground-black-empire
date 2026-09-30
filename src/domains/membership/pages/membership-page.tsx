@@ -9,6 +9,7 @@ import {
   Info,
   Loader2,
   RefreshCw,
+  Sparkles,
 } from 'lucide-react';
 import { Layout } from '@/shared/components/layout';
 import { GlassModal } from '@/shared/components/glass-modal';
@@ -19,11 +20,13 @@ import { useAuth } from '@/domains/identity/auth-context';
 import {
   fetchMembershipTiers,
   fetchMyMembership,
+  fetchVotingCredits,
+  fetchCreditLedger,
   downgradeToWhite,
   startStripeCheckout,
   TIER_DETAILS,
 } from '@/domains/membership/services';
-import type { MembershipTier, MembershipTierId, MemberMembership, CardColor, TierDetails as TierDetailsType } from '@/domains/membership/types';
+import type { MembershipTier, MembershipTierId, MemberMembership, VotingCredits, CreditLedgerEntry, CardColor, TierDetails as TierDetailsType } from '@/domains/membership/types';
 
 const COLOR_DOT: Record<CardColor, string> = {
   white: 'bg-white border border-stone-300',
@@ -104,6 +107,8 @@ export function MembershipPage() {
   const userId = session?.user.id ?? '';
   const [tiers, setTiers] = useState<MembershipTier[]>([]);
   const [myMembership, setMyMembership] = useState<MemberMembership | null>(null);
+  const [votingCredits, setVotingCredits] = useState<VotingCredits | null>(null);
+  const [ledgerEntries, setLedgerEntries] = useState<CreditLedgerEntry[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
@@ -121,12 +126,16 @@ export function MembershipPage() {
     }
     setLoadError(false);
     try {
-      const [tierData, membership] = await Promise.all([
+      const [tierData, membership, credits, ledger] = await Promise.all([
         fetchMembershipTiers(),
         fetchMyMembership(userId),
+        fetchVotingCredits(userId),
+        fetchCreditLedger(userId, 5),
       ]);
       setTiers(tierData);
       setMyMembership(membership);
+      setVotingCredits(credits);
+      setLedgerEntries(ledger);
       const index = tierData.findIndex((tier) => tier.id === (membership?.membership_tier ?? 'white'));
       setActiveIndex(index >= 0 ? index : 0);
     } catch {
@@ -247,6 +256,13 @@ export function MembershipPage() {
           <Check className="h-4 w-4 text-emerald-700 shrink-0" />
           <p className="text-xs text-emerald-700 flex-1">{selectSuccess}</p>
         </div>
+      )}
+      {currentTierId !== 'white' && votingCredits && (
+        <CreditBalancePanel
+          credits={votingCredits}
+          ledger={ledgerEntries}
+          membershipStartedAt={myMembership?.membership_started_at ?? null}
+        />
       )}
       <div className="membership-page w-full overflow-hidden pb-24">
         {tiers.length > 0 ? (
@@ -465,6 +481,86 @@ function TierDetailsPanel({
           )}
           {details.learnMoreTitle && <button type="button" onClick={onLearnMore} className="inline-flex items-center justify-center gap-1.5 px-2 py-2.5 text-xs font-semibold text-stone-500 transition hover:text-stone-900 sm:py-3 sm:text-sm"><Info className="h-4 w-4" />Details</button>}
         </div>
+      </div>
+    </div>
+  );
+}
+
+const LEDGER_SOURCE_LABELS: Record<string, string> = {
+  monthly_grant: 'Monthly grant',
+  initial_grant: 'Initial grant',
+  vote_spend: 'Vote cast',
+};
+
+function formatLedgerDate(dateStr: string): string {
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function formatAnniversary(startedAt: string | null): string {
+  if (!startedAt) return '';
+  const d = new Date(startedAt);
+  const day = d.getDate();
+  const suffix = day % 10 === 1 && day !== 11 ? 'st'
+    : day % 10 === 2 && day !== 12 ? 'nd'
+    : day % 10 === 3 && day !== 13 ? 'rd'
+    : 'th';
+  return `${day}${suffix}`;
+}
+
+function CreditBalancePanel({
+  credits,
+  ledger,
+  membershipStartedAt,
+}: {
+  credits: VotingCredits;
+  ledger: CreditLedgerEntry[];
+  membershipStartedAt: string | null;
+}) {
+  const anniversary = formatAnniversary(membershipStartedAt);
+
+  return (
+    <div className="mx-auto max-w-[1180px] px-5 mb-6">
+      <div className="frame-utility rounded-2xl p-5 sm:p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-stone-900 text-white">
+              <Sparkles className="h-5 w-5" />
+            </span>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-stone-500">Voting Credits</p>
+              <p className="font-display text-2xl font-bold text-stone-900 leading-tight">{credits.balance}</p>
+            </div>
+          </div>
+          {anniversary && (
+            <div className="text-right">
+              <p className="text-xs font-semibold uppercase tracking-wider text-stone-500">Next Grant</p>
+              <p className="text-sm font-semibold text-stone-700">Every {anniversary} of the month</p>
+            </div>
+          )}
+        </div>
+        <p className="mt-3 text-xs text-stone-500 leading-relaxed">
+          Credits are granted on your monthly anniversary date and carry forward if unused.
+          Spend them on treasury votes and ballots.
+        </p>
+        {ledger.length > 0 && (
+          <div className="mt-4 border-t border-stone-200 pt-3">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-stone-400 mb-2">Recent Activity</p>
+            <div className="space-y-1.5">
+              {ledger.map((entry) => (
+                <div key={entry.id} className="flex items-center justify-between text-xs">
+                  <span className="text-stone-600">{LEDGER_SOURCE_LABELS[entry.source] ?? entry.source}</span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-stone-400">{formatLedgerDate(entry.created_at)}</span>
+                    <span className={cn('font-semibold tabular-nums', entry.amount > 0 ? 'text-emerald-700' : 'text-stone-700')}>
+                      {entry.amount > 0 ? '+' : ''}{entry.amount}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
