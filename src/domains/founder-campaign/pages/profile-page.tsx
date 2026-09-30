@@ -30,6 +30,7 @@ import { supabase } from '@/shared/supabase-client';
 import {
   getCityTier,
   getLevelFromInfluence,
+  getLevelThreshold,
   getVotingPowerBreakdown,
   type CityTierName,
 } from '@/config/progression-rules';
@@ -73,6 +74,32 @@ import {
   type LeadershipEligibility,
   type MyNominationStatus,
 } from '@/domains/leadership/services';
+
+/* ---------- Status Titles ---------- */
+
+const STATUS_TIERS = [
+  { title: 'Advocate', minLevel: 1 },
+  { title: 'Champion', minLevel: 6 },
+  { title: 'Steward', minLevel: 11 },
+  { title: 'Guardian', minLevel: 16 },
+  { title: 'Vanguard', minLevel: 21 },
+  { title: 'Luminary', minLevel: 26 },
+] as const;
+
+function getStatusTitle(level: number): string {
+  let title = STATUS_TIERS[0].title;
+  for (const tier of STATUS_TIERS) {
+    if (level >= tier.minLevel) title = tier.title;
+  }
+  return title;
+}
+
+function getNextStatusMilestone(level: number): { title: string; level: number } | null {
+  for (const tier of STATUS_TIERS) {
+    if (level < tier.minLevel) return { title: tier.title, level: tier.minLevel };
+  }
+  return null;
+}
 
 /* ---------- Types ---------- */
 
@@ -334,6 +361,16 @@ export function ProfilePage() {
   const initials = getInitials(member.display_name || 'Member');
   const referralLink = `${window.location.origin}/auth/sign-up?ref=${referralCode || 'PENDING'}`;
 
+  const statusTitle = getStatusTitle(founderLevel.level);
+  const nextMilestone = getNextStatusMilestone(founderLevel.level);
+  const currentLevelStart = getLevelThreshold(founderLevel.level);
+  const ringRadius = 52;
+  const ringCircumference = 2 * Math.PI * ringRadius;
+  const levelSpan = founderLevel.nextThreshold !== null ? founderLevel.nextThreshold - currentLevelStart : 1;
+  const levelProgress = founderLevel.nextThreshold !== null ? Math.min(1, Math.max(0, (influence - currentLevelStart) / levelSpan)) : 1;
+  const ringDashOffset = ringCircumference * (1 - levelProgress);
+  const influenceToGo = founderLevel.nextThreshold !== null ? Math.max(0, founderLevel.nextThreshold - influence) : 0;
+
   const membershipTier: MembershipTierId = myMembership?.membership_tier ?? 'white';
   const profileCardColor = MEMBERSHIP_CARD_COLOR[membershipTier];
   const profileCardConfig = PROFILE_CARD_STYLE[profileCardColor];
@@ -371,94 +408,112 @@ export function ProfilePage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
           {/* Left column: Profile + City */}
           <div className="space-y-4">
-        {/* Profile Card — color changes with membership tier */}
-        <section className={cn(profileCardConfig.card, 'p-5 animate-fade-up')} style={{ animationDelay: '50ms' }}>
-          <div className="relative z-10 flex items-start justify-between gap-4">
-            {/* Avatar */}
+        {/* Empire Status Card — centered avatar in gold progress ring */}
+        <section className="card-white-member p-6 animate-fade-up flex flex-col items-center" style={{ animationDelay: '50ms' }}>
+          {/* Gear menu — top right */}
+          <div className="absolute top-4 right-4 z-20" ref={menuRef}>
             <button
-              onClick={() => setShowProfileModal(true)}
-              className="relative flex-shrink-0 group"
-              aria-label="View profile details"
+              ref={gearRef}
+              onClick={() => {
+                if (!showMenu && gearRef.current) {
+                  const rect = gearRef.current.getBoundingClientRect();
+                  setMenuPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
+                }
+                setShowMenu(!showMenu);
+              }}
+              className="p-2 rounded-lg transition-colors text-stone-500 hover:text-stone-800 hover:bg-stone-200/60"
+              aria-label="Menu"
             >
+              <Settings className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Gold progress ring with avatar centered inside */}
+          <button
+            onClick={() => setShowProfileModal(true)}
+            className="relative group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-400/50 rounded-full"
+            aria-label="View profile details"
+          >
+            <svg width="128" height="128" viewBox="0 0 128 128" className="-rotate-90">
+              <defs>
+                <linearGradient id="goldRing" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#D4AF37" />
+                  <stop offset="50%" stopColor="#F4D03F" />
+                  <stop offset="100%" stopColor="#B8860B" />
+                </linearGradient>
+              </defs>
+              <circle cx="64" cy="64" r={ringRadius} fill="none" stroke="rgba(0,0,0,0.06)" strokeWidth="4" />
+              <circle
+                cx="64" cy="64" r={ringRadius}
+                fill="none"
+                stroke="url(#goldRing)"
+                strokeWidth="4"
+                strokeLinecap="round"
+                strokeDasharray={ringCircumference}
+                strokeDashoffset={ringDashOffset}
+                style={{ transition: 'stroke-dashoffset 0.6s ease-out' }}
+              />
+            </svg>
+            <div className="absolute inset-0 flex items-center justify-center">
               <div
-                className="w-16 h-16 rounded-full flex items-center justify-center transition-transform group-hover:scale-105 overflow-hidden"
-                style={profileCardConfig.avatarStyle}
+                className="w-20 h-20 rounded-full overflow-hidden transition-transform group-hover:scale-105 flex items-center justify-center"
+                style={{
+                  background: 'linear-gradient(160deg, #F0F0F0, #D8D8D8)',
+                  border: '2px solid rgba(0,0,0,0.08)',
+                  boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.8), 0 4px 12px rgba(0,0,0,0.10)',
+                }}
               >
                 <Avatar
                   src={member.avatar_url}
                   initials={initials}
                   initialsClassName="font-display font-bold text-xl"
-                  initialsStyle={profileCardConfig.initialsStyle}
+                  initialsStyle={{ color: '#1a1815', textShadow: '0 1px 2px rgba(255,255,255,0.6)' }}
                 />
               </div>
-              <div className={cn('absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-2 flex items-center justify-center shadow-md', profileCardConfig.badgeBg, profileCardConfig.badgeBorder)}>
-                <Award className={cn('w-3.5 h-3.5', profileCardConfig.badgeIcon)} />
-              </div>
-            </button>
-
-            {/* Membership status — inset panel */}
-            <button
-              type="button"
-              onClick={() => navigate('/membership')}
-              aria-label="View membership options"
-              className={cn(
-                'flex-1 min-w-0 px-3 py-2 text-left transition-all duration-200 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-400/60',
-                profileCardConfig.inset,
-              )}
-            >
-              <div className="flex items-center gap-1.5">
-                <CreditCard className={cn('w-4 h-4 shrink-0', profileCardConfig.iconColor)} />
-                <p className={cn('text-sm uppercase tracking-wider font-bold', profileCardConfig.textBold)}>Member</p>
-              </div>
-              <p className={cn('text-[10px] uppercase tracking-wider mt-0.5', profileCardConfig.textMuted)}>{cardLabel}</p>
-            </button>
-
-            {/* Gear menu */}
-            <div className="relative" ref={menuRef}>
-              <button
-                ref={gearRef}
-                onClick={() => {
-                  if (!showMenu && gearRef.current) {
-                    const rect = gearRef.current.getBoundingClientRect();
-                    setMenuPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
-                  }
-                  setShowMenu(!showMenu);
-                }}
-                className={cn('p-2 rounded-lg transition-colors', profileCardConfig.gearButton)}
-                aria-label="Menu"
-              >
-                <Settings className="w-4 h-4" />
-              </button>
             </div>
-          </div>
+          </button>
 
-          {/* Divider */}
-          <div className={cn('relative z-10 mt-4 mb-3', profileCardConfig.divider)} />
+          {/* Status Title */}
+          <h2 className="font-display text-lg font-bold tracking-[0.15em] text-stone-900 mt-4">{statusTitle.toUpperCase()}</h2>
 
-          {/* Stats Row — Your Level, Influence, Voting Power */}
-          <div className="relative z-10 grid grid-cols-[1fr_auto_1fr_auto_1fr] items-stretch gap-1.5 sm:gap-2">
+          {/* Membership Card — clickable, separate from earned status */}
+          <button
+            type="button"
+            onClick={() => navigate('/membership')}
+            aria-label="View membership options"
+            className="mt-3 w-full max-w-[260px] flex items-center justify-between gap-2 px-4 py-2.5 rounded-xl border border-stone-200/80 bg-stone-50/80 hover:bg-stone-100/80 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-400/50"
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              <CreditCard className="w-4 h-4 text-stone-600 shrink-0" />
+              <span className="text-xs font-semibold text-stone-700 truncate">Member — {cardLabel}</span>
+            </div>
+            <ChevronRight className="w-4 h-4 text-stone-400 shrink-0" />
+          </button>
+
+          {/* Stats Row — Level | Influence | Voting Power */}
+          <div className="mt-5 w-full max-w-[320px] grid grid-cols-[1fr_auto_1fr_auto_1fr] items-center gap-1.5">
             <StatButton
               label="Level"
               value={String(founderLevel.level)}
               icon={Star}
-              variant={profileCardConfig.statVariant}
+              variant="white"
               isActive={activeStatPill === 'level'}
               onClick={() => setActiveStatPill(activeStatPill === 'level' ? null : 'level')}
             />
-            <div className={profileCardConfig.statDivider} aria-hidden="true" />
+            <div className="stat-divider-white" aria-hidden="true" />
             <StatButton
               label="Influence"
-              value={String(influence)}
+              value={`${influence}/${founderLevel.nextThreshold ?? 'MAX'}`}
               icon={TrendingUp}
-              variant={profileCardConfig.statVariant}
+              variant="white"
               isActive={activeStatPill === 'influence'}
               onClick={() => setActiveStatPill(activeStatPill === 'influence' ? null : 'influence')}
             />
-            <div className={profileCardConfig.statDivider} aria-hidden="true" />
+            <div className="stat-divider-white" aria-hidden="true" />
             <StatButton
               label="Voting Power"
               value={`${votingPower.toFixed(2)}×`}
-              variant={profileCardConfig.statVariant}
+              variant="white"
               accent
               isActive={activeStatPill === 'vp'}
               onClick={() => setActiveStatPill(activeStatPill === 'vp' ? null : 'vp')}
@@ -467,7 +522,7 @@ export function ProfilePage() {
 
           {/* Dropdown explanation pill */}
           {activeStatPill && (
-            <div className="relative z-10 mt-3 animate-fade-up">
+            <div className="mt-3 w-full max-w-[320px] animate-fade-up">
               <StatPill
                 type={activeStatPill}
                 level={founderLevel.level}
@@ -475,15 +530,17 @@ export function ProfilePage() {
               />
             </div>
           )}
+        </section>
 
-          {/* Progress bar to next level */}
-          {founderLevel.nextThreshold !== null && (
-            <div className="relative z-10 mt-4">
-              <div className="flex items-center justify-between mb-1.5">
-                <span className={cn('text-[10px] uppercase tracking-wider', profileCardConfig.textMuted)}>Next Level</span>
-                <span className={cn('text-xs tabular-nums', profileCardConfig.textBold)}>{influence} / {founderLevel.nextThreshold} Influence</span>
+        {/* Progress Section — Next Level + Next Status */}
+        <section className="card-white-member p-5 animate-fade-up" style={{ animationDelay: '75ms' }}>
+          {founderLevel.nextThreshold !== null ? (
+            <>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[10px] uppercase tracking-wider text-stone-500">Next Level: Level {founderLevel.level + 1}</span>
+                <span className="text-xs tabular-nums font-semibold text-stone-900">{influence} / {founderLevel.nextThreshold} Influence</span>
               </div>
-              <div className={profileCardConfig.progressTrack}>
+              <div className="progress-track">
                 <div
                   className="progress-fill progress-fill-xp"
                   style={{ width: `${Math.min(100, (influence / founderLevel.nextThreshold) * 100)}%` }}
@@ -491,6 +548,19 @@ export function ProfilePage() {
                   <span className="progress-shimmer" aria-hidden="true" />
                 </div>
               </div>
+              <p className="text-[11px] text-stone-500 mt-2 text-center">
+                {influenceToGo.toLocaleString()} Influence to go
+              </p>
+            </>
+          ) : (
+            <p className="text-xs text-stone-500 text-center">Maximum level reached</p>
+          )}
+
+          {nextMilestone && (
+            <div className="mt-3 pt-3 border-t border-stone-200/60 text-center">
+              <span className="text-[10px] uppercase tracking-wider text-stone-400">
+                Next Status: {nextMilestone.title} — Level {nextMilestone.level}
+              </span>
             </div>
           )}
         </section>
