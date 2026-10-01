@@ -181,7 +181,7 @@ export function MembershipPage() {
       if (checkoutUrl) {
         window.location.href = checkoutUrl;
       } else {
-        setSelectError('Unable to start checkout. Please try again.');
+        setSelectError('Your session may have expired. Please sign in again and retry.');
       }
     } catch {
       setSelectError('Unable to update your membership tier. Please try again.');
