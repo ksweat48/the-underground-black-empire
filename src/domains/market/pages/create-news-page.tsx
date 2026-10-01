@@ -21,22 +21,23 @@ export function CreateNewsPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [authChecking, setAuthChecking] = useState(true);
-  const [isCorrespondent, setIsCorrespondent] = useState(false);
+  const [isCouncilLeader, setIsCouncilLeader] = useState(false);
 
   useEffect(() => {
     if (!userId) { setAuthChecking(false); return; }
     Promise.all([
       fetchMemberCityInfo(userId),
       supabase
-        .from('members')
-        .select('correspondent_status')
-        .eq('id', userId)
+        .from('metro_council')
+        .select('id')
+        .eq('member_id', userId)
+        .limit(1)
         .maybeSingle(),
     ])
       .then(([info, memberRes]) => {
         setCityId(info.cityId);
         setCityName(info.cityName);
-        setIsCorrespondent(memberRes.data?.correspondent_status === 'approved');
+        setIsCouncilLeader(!!memberRes.data);
       })
       .catch(() => {})
       .finally(() => setAuthChecking(false));
@@ -58,7 +59,7 @@ export function CreateNewsPage() {
         news_date: newsDate || null,
         image_url: imageUrl.trim() || null,
       });
-      navigate('/market');
+      navigate('/empire');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to submit news.');
     } finally {
@@ -76,7 +77,7 @@ export function CreateNewsPage() {
     );
   }
 
-  if (!isCorrespondent) {
+  if (!isCouncilLeader) {
     return (
       <Layout fullWidth>
         <div className="max-w-[600px] mx-auto px-4 py-8">
@@ -84,11 +85,10 @@ export function CreateNewsPage() {
           <div className="frame-utility p-8 text-center space-y-3">
             <ShieldAlert className="w-8 h-8 text-empire-gold mx-auto" />
             <p className="font-display text-base font-semibold text-empire-ivory">
-              Correspondents Only
+              Elected Leaders Only
             </p>
             <p className="text-sm text-empire-text-muted">
-              Posting local news is reserved for approved Council Correspondents.
-              Contact your city leadership to apply.
+              Empire news can be published by elected leaders who have accepted their council seat.
             </p>
             <button onClick={() => navigate('/empire')} className="btn-secondary text-sm py-2 px-4">
               Back to Empire
@@ -119,7 +119,7 @@ export function CreateNewsPage() {
 
         <div className="flex items-center gap-2">
           <Newspaper className="w-5 h-5 text-empire-gold" />
-          <h1 className="font-display text-lg font-bold text-empire-ivory">Post Local News</h1>
+          <h1 className="font-display text-lg font-bold text-empire-ivory">Post Empire News</h1>
         </div>
 
         {error && (
@@ -185,7 +185,7 @@ export function CreateNewsPage() {
 
           <div className="frame-utility p-3">
             <p className="text-xs text-empire-text-muted">
-              Your news will be submitted for review and shared with the community in{' '}
+              Your news will be published immediately to the Empire feed and identified with{' '}
               <span className="font-medium text-empire-ivory">{cityName}</span>.
             </p>
           </div>
@@ -196,7 +196,7 @@ export function CreateNewsPage() {
             className="btn-primary w-full text-sm py-2.5 disabled:opacity-50"
           >
             {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-            Submit for Review
+            Publish to Empire Feed
           </button>
         </div>
       </div>

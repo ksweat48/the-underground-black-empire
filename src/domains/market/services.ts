@@ -477,7 +477,7 @@ export async function createLocalNews(input: CreateNewsInput): Promise<LocalNews
       location_text: input.location_text,
       news_date: input.news_date,
       image_url: input.image_url,
-      status: 'pending',
+      status: 'approved',
     })
     .select()
     .single();
