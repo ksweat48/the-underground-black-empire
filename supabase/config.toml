@@ -5,7 +5,7 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.stripe-checkout]
-verify_jwt = true
+verify_jwt = false
 
 [functions.stripe-cancel]
 verify_jwt = true

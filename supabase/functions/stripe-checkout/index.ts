@@ -1,6 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2.57.4";
 
-const corsHeaders = {
+const corsHeaders: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
@@ -100,7 +100,7 @@ Deno.serve(async (req: Request) => {
         body: new URLSearchParams({
           email: user.email ?? "",
           name: member?.display_name ?? "",
-          metadata: { supabase_user_id: user.id },
+          "metadata[supabase_user_id]": user.id,
         }),
       });
 
@@ -192,7 +192,8 @@ Deno.serve(async (req: Request) => {
       mode: "subscription",
       success_url: `${SITE_URL}/membership?checkout=success&tier=${tierId}`,
       cancel_url: `${SITE_URL}/membership?checkout=cancelled`,
-      metadata: JSON.stringify({ supabase_user_id: user.id, tier_id: tierId }),
+      "metadata[supabase_user_id]": user.id,
+      "metadata[tier_id]": tierId,
       "subscription_data[metadata][supabase_user_id]": user.id,
       "subscription_data[metadata][tier_id]": tierId,
     });
