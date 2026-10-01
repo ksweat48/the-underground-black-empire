@@ -1302,6 +1302,30 @@
     cursor: default;
   }
 
+  .membership-action-button {
+    display: inline-flex;
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 1px solid #171717;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #333333, #171717) !important;
+    color: #ffffff !important;
+    box-shadow: 0 8px 18px rgba(26, 24, 21, 0.18);
+  }
+
+  .membership-action-button:hover:not(:disabled) {
+    background: linear-gradient(135deg, #171717, #000000) !important;
+    box-shadow: 0 10px 22px rgba(26, 24, 21, 0.24);
+    transform: translateY(-1px);
+  }
+
+  .membership-action-button:disabled {
+    cursor: wait;
+    opacity: 0.6;
+  }
+
   .membership-slide-active {
     cursor: default;
     opacity: 1;

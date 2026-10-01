@@ -458,7 +458,7 @@ function TierDetailsPanel({
                   'inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-semibold transition disabled:opacity-60 sm:px-5 sm:py-3 sm:text-sm',
                   isDowngrade
                     ? 'bg-red-600 text-white hover:bg-red-700'
-                    : 'bg-stone-900 text-white hover:bg-stone-700',
+                    : 'membership-action-button',
                 )}
               >
                 {selecting ? (
