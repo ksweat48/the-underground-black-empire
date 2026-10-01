@@ -9,7 +9,7 @@ const corsHeaders: Record<string, string> = {
 const SITE_URL = "https://theundergroundblackempire.com";
 
 Deno.serve(async (req: Request) => {
-  const cors = getCorsHeaders(req);
+  const cors = corsHeaders;
 
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: cors });
