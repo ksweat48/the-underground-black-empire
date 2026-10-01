@@ -1,22 +1,10 @@
 import { createClient } from "npm:@supabase/supabase-js@2.57.4";
 
-const ALLOWED_ORIGINS = [
-  "https://theundergroundblackempire.com",
-  "https://the-underground-black-empire.netlify.app",
-  "http://localhost:5173",
-  "http://localhost:4173",
-];
-
-function getCorsHeaders(req: Request): Record<string, string> {
-  const origin = req.headers.get("Origin") ?? "";
-  const allowed = ALLOWED_ORIGINS.includes(origin) ? origin : "";
-  return {
-    "Access-Control-Allow-Origin": allowed,
-    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
-    "Vary": "Origin",
-  };
-}
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
+};
 
 const SITE_URL = "https://theundergroundblackempire.com";
 
