@@ -35,15 +35,24 @@ Deno.serve(async (req: Request) => {
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const userClient = createClient(supabaseUrl, authHeader.replace("Bearer ", ""), {
-      auth: { persistSession: false },
+    const accessToken = authHeader.replace(/^Bearer\s+/i, "").trim();
+    if (!accessToken) {
+      return new Response(
+        JSON.stringify({ error: "Missing authorization token" }),
+        { status: 401, headers: { ...cors, "Content-Type": "application/json" } },
+      );
+    }
+    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: `Bearer ${accessToken}` } },
+      auth: { persistSession: false, autoRefreshToken: false },
     });
     const adminClient = createClient(supabaseUrl, serviceRoleKey, {
-      auth: { persistSession: false },
+      auth: { persistSession: false, autoRefreshToken: false },
     });
 
-    const { data: { user }, error: userError } = await userClient.auth.getUser();
+    const { data: { user }, error: userError } = await userClient.auth.getUser(accessToken);
     if (userError || !user) {
       return new Response(
         JSON.stringify({ error: "Invalid or expired session" }),

@@ -64,9 +64,9 @@ export async function downgradeToWhite(): Promise<void> {
  *   switches the subscription price at the next billing cycle.
  */
 export async function startStripeCheckout(tierId: MembershipTierId): Promise<string | null> {
-  const { data: sessionData } = await supabase.auth.getSession();
+  const { data: sessionData, error: sessionError } = await supabase.auth.refreshSession();
   const accessToken = sessionData.session?.access_token;
-  if (!accessToken) {
+  if (sessionError || !accessToken) {
     console.error('Stripe checkout failed: no active session');
     return null;
   }
