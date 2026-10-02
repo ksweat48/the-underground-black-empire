@@ -5,6 +5,7 @@ import type {
   LocalNewsItem,
   MarketEvent,
   ListingComment,
+  NewsComment,
   CommunityFeedItem,
   Vote,
   ContentReportInput,
@@ -21,6 +22,7 @@ import type {
   CreateOrganizationInput,
   OrganizationVoteCandidate,
   OrgType,
+  FeedPostType,
 } from './types';
 
 export type {
@@ -29,6 +31,7 @@ export type {
   LocalNewsItem,
   MarketEvent,
   ListingComment,
+  NewsComment,
   CommunityFeedItem,
   Vote,
   ContentReportInput,
@@ -45,6 +48,7 @@ export type {
   CreateOrganizationInput,
   OrganizationVoteCandidate,
   OrgType,
+  FeedPostType,
 };
 
 // ============================================================
@@ -1185,4 +1189,119 @@ export async function recordOrgVoteSupport(
 
   if (error) throw error;
   return Number(data) ?? 0;
+}
+
+// ============================================================
+// UNIFIED ENGAGEMENT: BOOST, NEWS LIKES/SAVES/COMMENTS
+// ============================================================
+
+export async function toggleBoost(
+  postType: FeedPostType,
+  postId: string,
+  currentlyBoosted: boolean
+): Promise<boolean> {
+  if (currentlyBoosted) {
+    const { error } = await supabase.rpc('unboost_post', {
+      p_post_type: postType,
+      p_post_id: postId,
+    });
+    if (error) throw error;
+    return false;
+  } else {
+    const { error } = await supabase.rpc('boost_post', {
+      p_post_type: postType,
+      p_post_id: postId,
+    });
+    if (error) throw error;
+    return true;
+  }
+}
+
+export async function toggleNewsLike(
+  newsId: string,
+  currentlyLiked: boolean
+): Promise<boolean> {
+  if (currentlyLiked) {
+    const { error } = await supabase.rpc('unlike_news', { p_news_id: newsId });
+    if (error) throw error;
+    return false;
+  } else {
+    const { error } = await supabase.rpc('like_news', { p_news_id: newsId });
+    if (error) throw error;
+    return true;
+  }
+}
+
+export async function toggleNewsSave(
+  newsId: string,
+  currentlySaved: boolean
+): Promise<boolean> {
+  if (currentlySaved) {
+    const { error } = await supabase
+      .from('news_saves')
+      .delete()
+      .eq('news_id', newsId)
+      .eq('member_id', supabase.auth.getUser().data.user?.id ?? '');
+    if (error) throw error;
+    return false;
+  } else {
+    const { error } = await supabase
+      .from('news_saves')
+      .insert({ news_id: newsId });
+    if (error) throw error;
+    return true;
+  }
+}
+
+export async function fetchNewsComments(newsId: string): Promise<NewsComment[]> {
+  const { data, error } = await supabase
+    .from('news_comments')
+    .select(`
+      *,
+      author:member_id ( display_name, avatar_url )
+    `)
+    .eq('news_id', newsId)
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+
+  return (data ?? []).map((row) => {
+    const authorData = (Array.isArray(row.author) ? row.author[0] : row.author) as {
+      display_name: string | null;
+      avatar_url: string | null;
+    } | null;
+    return {
+      id: row.id,
+      member_id: row.member_id,
+      news_id: row.news_id,
+      body: row.body,
+      created_at: row.created_at,
+      updated_at: row.updated_at,
+      author_name: authorData?.display_name ?? 'Member',
+      author_avatar_url: authorData?.avatar_url ?? null,
+    } as NewsComment;
+  });
+}
+
+export async function createNewsComment(newsId: string, body: string): Promise<void> {
+  const { error } = await supabase
+    .from('news_comments')
+    .insert({ news_id: newsId, body });
+
+  if (error) throw error;
+}
+
+export async function fetchBoostedPostIds(
+  postType: FeedPostType,
+  postIds: string[]
+): Promise<Set<string>> {
+  if (postIds.length === 0) return new Set();
+  const { data, error } = await supabase
+    .from('post_boosts')
+    .select('post_id')
+    .eq('post_type', postType)
+    .in('post_id', postIds);
+
+  if (error) throw error;
+  return new Set((data ?? []).map((r) => r.post_id as string));
 }

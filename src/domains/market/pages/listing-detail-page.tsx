@@ -4,7 +4,7 @@ import {
   ArrowLeft,
   Heart,
   MessageCircle,
-  Share2,
+  Bookmark,
   MapPin,
   ExternalLink,
   BadgeCheck,
@@ -226,7 +226,7 @@ export function ListingDetailPage() {
               <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
                 <ShieldAlert className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
                 <p className="text-xs text-amber-200/90">
-                  This listing has not yet been verified by the Empire. It is still visible and can receive likes, comments, and shares.
+                  This listing has not yet been verified by the Empire. It is still visible and can receive likes, comments, and saves.
                 </p>
               </div>
             )}
@@ -308,7 +308,7 @@ export function ListingDetailPage() {
                     : 'frame-utility text-empire-text-muted hover:text-empire-ivory'
                 )}
               >
-                <Share2 className="w-3.5 h-3.5" />
+                <Bookmark className="w-3.5 h-3.5" />
                 {listing.is_saved ? 'Saved' : 'Save'}
               </button>
               <button

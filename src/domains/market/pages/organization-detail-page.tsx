@@ -4,7 +4,6 @@ import {
   ArrowLeft,
   Heart,
   MessageCircle,
-  Share2,
   MapPin,
   ExternalLink,
   BadgeCheck,
@@ -316,16 +315,6 @@ export function OrganizationDetailPage() {
               >
                 <HeartHandshake className="w-3.5 h-3.5" />
                 {org.is_saved ? 'Saved' : 'Save'}
-              </button>
-              <button
-                onClick={() => {
-                  if (navigator.share) {
-                    navigator.share({ title: org.name, url: window.location.href });
-                  }
-                }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium frame-utility text-empire-text-muted hover:text-empire-ivory transition-all ml-auto"
-              >
-                <Share2 className="w-3.5 h-3.5" />
               </button>
             </div>
           </div>

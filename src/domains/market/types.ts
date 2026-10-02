@@ -56,6 +56,13 @@ export interface LocalNewsItem {
   status: ContentStatus;
   created_at: string;
   updated_at: string;
+  like_count?: number;
+  comment_count?: number;
+  save_count?: number;
+  boost_count?: number;
+  is_liked?: boolean;
+  is_saved?: boolean;
+  is_boosted?: boolean;
 }
 
 export interface MarketEvent {
@@ -88,6 +95,19 @@ export interface ListingComment {
   author_name?: string;
 }
 
+export interface NewsComment {
+  id: string;
+  member_id: string;
+  news_id: string;
+  body: string;
+  created_at: string;
+  updated_at: string;
+  author_name?: string;
+  author_avatar_url?: string | null;
+}
+
+export type FeedPostType = 'listing' | 'organization' | 'news' | 'event' | 'update';
+
 export interface CommunityFeedItem {
   id: string;
   feed_type: 'update' | 'event' | 'listing' | 'organization';
@@ -102,6 +122,13 @@ export interface CommunityFeedItem {
   rank_score: number;
   category?: string | null;
   org_type?: string | null;
+  like_count?: number;
+  comment_count?: number;
+  save_count?: number;
+  boost_count?: number;
+  is_liked?: boolean;
+  is_saved?: boolean;
+  is_boosted?: boolean;
 }
 
 export interface VoteChoice {

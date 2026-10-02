@@ -25,6 +25,7 @@ import { EmpireEmblem } from '@/shared/components/empire-emblem';
 import { MemberProfileModal } from '@/shared/components/member-profile-modal';
 import { Avatar } from '@/shared/components/avatar';
 import { ErrorBanner } from '@/shared/components/error-banner';
+import { EngagementBar } from '@/shared/components/engagement-bar';
 
 import { useAuth } from '@/domains/identity/auth-context';
 import {
@@ -560,7 +561,7 @@ export function EmpireDashboardPage() {
                   {feedError ? (
                     <ErrorBanner message="Unable to load activity feed." onRetry={() => { setFeedError(false); setFeedLoading(true); }} />
                   ) : (
-                    <FeedList events={mergeFeedWithNews(localCouncilNews, localFeed)} loading={feedLoading} onCardClick={setProfileMemberId} />
+                    <FeedList events={mergeFeedWithNews(localCouncilNews, localFeed)} loading={feedLoading} onCardClick={setProfileMemberId} currentUserId={memberId ?? undefined} />
                   )}
                 </div>
               </div>
@@ -571,7 +572,7 @@ export function EmpireDashboardPage() {
                   {feedError ? (
                     <ErrorBanner message="Unable to load activity feed." onRetry={() => { setFeedError(false); setFeedLoading(true); }} />
                   ) : (
-                    <FeedList events={mergeFeedWithNews(empireCouncilNews, empireFeed)} loading={feedLoading} onCardClick={setProfileMemberId} />
+                    <FeedList events={mergeFeedWithNews(empireCouncilNews, empireFeed)} loading={feedLoading} onCardClick={setProfileMemberId} currentUserId={memberId ?? undefined} />
                   )}
                 </div>
               </div>
@@ -848,7 +849,7 @@ function CityCard({
 
 // ==================== Feed List (Intelligence Cards) ====================
 
-function FeedList({ events, loading, onCardClick }: { events: MergedFeedItem[]; loading: boolean; onCardClick: (memberId: string) => void }) {
+function FeedList({ events, loading, onCardClick, currentUserId }: { events: MergedFeedItem[]; loading: boolean; onCardClick: (memberId: string) => void; currentUserId?: string }) {
   if (loading) {
     return (
       <div className="w-full space-y-2">
@@ -878,7 +879,7 @@ function FeedList({ events, loading, onCardClick }: { events: MergedFeedItem[]; 
   return (
     <div className="w-full space-y-2">
       {events.map((event) => (
-        <IntelligenceCard key={event.id} event={event} onCardClick={onCardClick} />
+        <IntelligenceCard key={event.id} event={event} onCardClick={onCardClick} currentUserId={currentUserId} />
       ))}
     </div>
   );
@@ -893,7 +894,7 @@ function getInitials(name: string): string {
   return (parts[0][0] + parts[1][0]).toUpperCase();
 }
 
-function IntelligenceCard({ event, onCardClick }: { event: MergedFeedItem; onCardClick: (memberId: string) => void }) {
+function IntelligenceCard({ event, onCardClick, currentUserId }: { event: MergedFeedItem; onCardClick: (memberId: string) => void; currentUserId?: string }) {
   const category = FEED_CATEGORIES[event.event_type] ?? DEFAULT_CATEGORY;
   const { icon: Icon, label, iconColor, ringColor, labelColor } = category;
   const clickable = event.member_id !== null;
@@ -949,6 +950,21 @@ function IntelligenceCard({ event, onCardClick }: { event: MergedFeedItem; onCar
         )}
         {event.city_name && (
           <p className="text-[10px] text-stone mt-0.5">{event.city_name}</p>
+        )}
+        {event.is_council_news && (
+          <div onClick={(e) => e.stopPropagation()} className="mt-1">
+            <EngagementBar
+              postType="news"
+              postId={event.id}
+              likeCount={0}
+              commentCount={0}
+              saveCount={0}
+              boostCount={0}
+              authorId={event.member_id ?? undefined}
+              authorName={event.display_name ?? undefined}
+              currentUserId={currentUserId}
+            />
+          </div>
         )}
       </div>
 

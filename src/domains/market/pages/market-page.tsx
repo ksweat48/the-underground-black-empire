@@ -37,6 +37,8 @@ import {
 } from '@/domains/market/services';
 import { ORG_TYPE_LABELS } from '@/domains/market/types';
 import { ErrorBanner } from '@/shared/components/error-banner';
+import { EngagementBar } from '@/shared/components/engagement-bar';
+import type { FeedPostType } from '@/domains/market/types';
 
 type CategoryFilter = 'feed' | 'market' | 'organizations';
 type ScopeFilter = 'local' | 'empire';
@@ -347,6 +349,7 @@ export function MarketPage() {
                     <FeedItemRow
                       key={item.id}
                       item={item}
+                      currentUserId={userId}
                       onClick={
                         item.feed_type === 'organization' && item.id
                           ? () => navigate(`/market/organization/${item.id}`)
@@ -407,6 +410,7 @@ export function MarketPage() {
                       <OrganizationCard
                         key={org.id}
                         org={org}
+                        currentUserId={userId}
                         onClick={() => navigate(`/market/organization/${org.id}`)}
                         onToggleSave={(orgId, currentlySaved) => {
                           setOrganizations((prev) =>
@@ -469,7 +473,7 @@ export function MarketPage() {
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {(listings.length >= 10 ? filteredListings.slice(5) : filteredListings).map((listing) => (
-                      <ListingCard key={listing.id} listing={listing} onClick={() => navigate(`/market/listing/${listing.id}`)} onToggleSave={handleToggleSave} />
+                      <ListingCard key={listing.id} listing={listing} currentUserId={userId} onClick={() => navigate(`/market/listing/${listing.id}`)} onToggleSave={handleToggleSave} />
                     ))}
                   </div>
                 </section>
@@ -524,7 +528,7 @@ function FeaturedListingCard({ listing, onClick }: { listing: MarketListing; onC
 
 // ==================== Listing Card (grid) ====================
 
-function ListingCard({ listing, onClick, onToggleSave }: { listing: MarketListing; onClick: () => void; onToggleSave?: (listingId: string, currentlySaved: boolean) => void }) {
+function ListingCard({ listing, onClick, onToggleSave, currentUserId }: { listing: MarketListing; onClick: () => void; onToggleSave?: (listingId: string, currentlySaved: boolean) => void; currentUserId?: string }) {
   const actions = getListingActions(listing);
 
   return (
@@ -581,32 +585,28 @@ function ListingCard({ listing, onClick, onToggleSave }: { listing: MarketListin
         </p>
         <div className="flex items-center gap-3 pt-1">
           {listing.city_name && <span className="flex items-center gap-1 text-[10px] text-empire-text-muted"><MapPin className="w-2.5 h-2.5" />{listing.city_state ? `${listing.city_name}, ${listing.city_state}` : listing.city_name}</span>}
-          <span className="flex items-center gap-1 text-[10px] text-empire-text-muted"><Heart className="w-2.5 h-2.5" />{listing.like_count}</span>
-          <span className="flex items-center gap-1 text-[10px] text-empire-text-muted"><MessageCircle className="w-2.5 h-2.5" />{listing.comment_count}</span>
         </div>
         <ContactActions actions={actions} />
-        <FavoriteButton listing={listing} onToggleSave={onToggleSave} />
+        <div onClick={(event) => event.stopPropagation()}>
+          <EngagementBar
+            postType="listing"
+            postId={listing.id}
+            likeCount={listing.like_count}
+            commentCount={listing.comment_count}
+            saveCount={listing.save_count}
+            boostCount={0}
+            isLiked={listing.is_liked}
+            isSaved={listing.is_saved}
+            currentUserId={currentUserId}
+          />
+        </div>
       </div>
     </div>
   );
 }
 
-function FavoriteButton({ listing, onToggleSave }: { listing: MarketListing; onToggleSave?: (listingId: string, currentlySaved: boolean) => void }) {
-  return (
-    <button
-      onClick={(event) => { event.stopPropagation(); onToggleSave?.(listing.id, listing.is_saved ?? false); }}
-      className={cn(
-        'absolute bottom-2.5 right-2.5 flex items-center gap-1.5 rounded-full border px-2 py-1.5 text-[10px] transition-all',
-        listing.is_saved
-          ? 'border-empire-gold/40 bg-empire-gold/15 text-empire-gold'
-          : 'border-empire-gold/20 bg-ink-900/40 text-empire-text-muted hover:border-empire-gold/35 hover:bg-empire-gold/10 hover:text-empire-ivory'
-      )}
-      aria-label={listing.is_saved ? 'Remove from favorites' : 'Add to favorites'}
-    >
-      <Heart className={cn('h-3.5 w-3.5 transition-transform', listing.is_saved && 'fill-current scale-110')} />
-      <span>{listing.save_count}</span>
-    </button>
-  );
+function FavoriteButton(_unused: { listing: MarketListing; onToggleSave?: (listingId: string, currentlySaved: boolean) => void }) {
+  return null;
 }
 
 // ==================== Event Card (horizontal) ====================
@@ -702,7 +702,7 @@ function ContactActions({ actions }: { actions: { website: string | null; phone:
 
 // ==================== Feed Item Row ====================
 
-function FeedItemRow({ item, onClick }: { item: CommunityFeedItem; onClick?: () => void }) {
+function FeedItemRow({ item, onClick, currentUserId }: { item: CommunityFeedItem; onClick?: () => void; currentUserId?: string }) {
   const updateTypeConfig: Record<string, { label: string; color: string; bg: string }> = {
     offer: { label: 'Offer', color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
     update: { label: 'Update', color: 'text-gold-400', bg: 'bg-gold-500/10 border-gold-500/20' },
@@ -792,6 +792,22 @@ function FeedItemRow({ item, onClick }: { item: CommunityFeedItem; onClick?: () 
           <Clock className="w-2.5 h-2.5 text-empire-text-muted" />
           <span className="text-[10px] text-empire-text-muted">{formatTimeAgo(item.created_at)}</span>
         </div>
+        <div onClick={(e) => e.stopPropagation()}>
+          <EngagementBar
+            postType={item.feed_type as FeedPostType}
+            postId={item.id}
+            likeCount={item.like_count ?? 0}
+            commentCount={item.comment_count ?? 0}
+            saveCount={item.save_count ?? 0}
+            boostCount={item.boost_count ?? 0}
+            isLiked={item.is_liked}
+            isSaved={item.is_saved}
+            isBoosted={item.is_boosted}
+            authorId={item.author_id}
+            authorName={item.listing_name ?? undefined}
+            currentUserId={currentUserId}
+          />
+        </div>
       </div>
     </div>
   );
@@ -879,7 +895,7 @@ function FeaturedOrganizationCard({ org, onClick }: { org: Organization; onClick
 
 // ==================== Organization Card ====================
 
-function OrganizationCard({ org, onClick, onToggleSave }: { org: Organization; onClick: () => void; onToggleSave?: (orgId: string, currentlySaved: boolean) => void }) {
+function OrganizationCard({ org, onClick, onToggleSave, currentUserId }: { org: Organization; onClick: () => void; onToggleSave?: (orgId: string, currentlySaved: boolean) => void; currentUserId?: string }) {
   const goalNum = org.funding_goal || 0;
   const raisedNum = org.total_raised || 0;
   const progressPct = goalNum > 0 ? Math.min(100, (raisedNum / goalNum) * 100) : 0;
@@ -940,35 +956,25 @@ function OrganizationCard({ org, onClick, onToggleSave }: { org: Organization; o
 
         {/* Footer */}
         <div className="flex items-center justify-between pt-1">
-          <div className="flex items-center gap-2 text-[10px] text-empire-text-muted">
-            {org.city_name && (
-              <span className="flex items-center gap-0.5">
-                <MapPin className="w-2.5 h-2.5" />
-                {org.city_state ? `${org.city_name}, ${org.city_state}` : org.city_name}
-              </span>
-            )}
-            <span className="flex items-center gap-0.5">
-              <Heart className="w-2.5 h-2.5" />
-              {org.like_count}
+          {org.city_name && (
+            <span className="flex items-center gap-0.5 text-[10px] text-empire-text-muted">
+              <MapPin className="w-2.5 h-2.5" />
+              {org.city_state ? `${org.city_name}, ${org.city_state}` : org.city_name}
             </span>
-          </div>
-          {onToggleSave && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onToggleSave(org.id, org.is_saved ?? false);
-              }}
-              className={cn(
-                'flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium transition-all',
-                org.is_saved
-                  ? 'bg-empire-gold/10 text-empire-gold border border-empire-gold/20'
-                  : 'frame-utility text-empire-text-muted hover:text-empire-ivory'
-              )}
-            >
-              <HeartHandshake className="w-3 h-3" />
-              {org.is_saved ? 'Saved' : 'Save'}
-            </button>
           )}
+        </div>
+        <div onClick={(event) => event.stopPropagation()}>
+          <EngagementBar
+            postType="organization"
+            postId={org.id}
+            likeCount={org.like_count}
+            commentCount={org.comment_count}
+            saveCount={org.save_count}
+            boostCount={0}
+            isLiked={org.is_liked}
+            isSaved={org.is_saved}
+            currentUserId={currentUserId}
+          />
         </div>
       </div>
     </div>
