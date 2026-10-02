@@ -172,6 +172,18 @@ export async function fetchListingById(id: string, currentUserId?: string): Prom
   if (error) throw error;
   if (!data) return null;
 
+  let is_saved = false;
+  let is_liked = false;
+
+  if (currentUserId) {
+    const [saveRes, likeRes] = await Promise.all([
+      supabase.from('listing_saves').select('id').eq('listing_id', id).eq('member_id', currentUserId).maybeSingle(),
+      supabase.from('listing_likes').select('id').eq('listing_id', id).eq('member_id', currentUserId).maybeSingle(),
+    ]);
+    is_saved = !!saveRes.data;
+    is_liked = !!likeRes.data;
+  }
+
   return mapListingRow(data as ListingRow, { is_saved, is_liked });
 }
 
@@ -1221,6 +1233,7 @@ export async function toggleNewsLike(
 
 export async function toggleNewsSave(
   newsId: string,
+  userId: string,
   currentlySaved: boolean
 ): Promise<boolean> {
   if (currentlySaved) {
@@ -1228,13 +1241,13 @@ export async function toggleNewsSave(
       .from('news_saves')
       .delete()
       .eq('news_id', newsId)
-      .eq('member_id', supabase.auth.getUser().data.user?.id ?? '');
+      .eq('member_id', userId);
     if (error) throw error;
     return false;
   } else {
     const { error } = await supabase
       .from('news_saves')
-      .insert({ news_id: newsId });
+      .insert({ news_id: newsId, member_id: userId });
     if (error) throw error;
     return true;
   }

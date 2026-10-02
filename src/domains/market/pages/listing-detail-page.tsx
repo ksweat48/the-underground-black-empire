@@ -51,7 +51,7 @@ export function ListingDetailPage() {
       const data = await fetchListingById(id, userId);
       setListing(data);
       if (data) {
-        const [ups, evs, coms] = await Promise.all([
+        const [ups, evs] = await Promise.all([
           fetchListingUpdates(id),
           fetchEvents({ listingId: id, limit: 5 }),
         ]);

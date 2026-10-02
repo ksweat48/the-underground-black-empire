@@ -71,11 +71,12 @@ export const MEMBERSHIP_MONTHLY_CREDITS = {
   white: 0,
   black: 10,
   black_plus: 25,
-  emerald: 50,
-  plum: 100,
+  black_pro: 25,
+  arch: 0,
+  arch_pro: 0,
 } as const;
 
-export type MembershipTierId = 'white' | 'black' | 'black_plus' | 'emerald' | 'plum';
+export type MembershipTierId = 'white' | 'black' | 'black_plus' | 'black_pro' | 'arch' | 'arch_pro';
 
 // ============================================================
 // YOUR LEVEL THRESHOLDS (Influence required to reach each Your Level)

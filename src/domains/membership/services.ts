@@ -239,7 +239,7 @@ export const TIER_DETAILS: Record<MembershipTierId, TierDetails> = {
   black_pro: {
     benefits: [
       { text: 'Everything in Black+, plus:' },
-      { text: '50 Voting Credits every month' },
+      { text: '25 Voting Credits every month' },
       { text: 'Family & Legacy Fund eligibility' },
       { text: 'Priority leadership consideration' },
     ],
@@ -275,7 +275,7 @@ export const VOTING_CREDIT_AMOUNTS: Record<MembershipTierId, number> = {
   white: 0,
   black: 10,
   black_plus: 25,
-  black_pro: 50,
-  arch: 50,
-  arch_pro: 50,
+  black_pro: 25,
+  arch: 0,
+  arch_pro: 0,
 };

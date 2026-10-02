@@ -1652,8 +1652,9 @@ export default ProfilePage;
 
 const CARD_LABELS: Record<MembershipTierId, string> = {
   white: 'Free White Card',
-  black: '$2 Black Card',
-  black_plus: '$5 Black+ Card',
-  emerald: '$10 Emerald Card',
-  plum: '$20 Plum Card',
+  black: '$5 Black Card',
+  black_plus: '$10 Black+ Card',
+  black_pro: '$20 Black Pro Card',
+  arch: '$50 Arch Card',
+  arch_pro: '$100 Arch Pro Card',
 };

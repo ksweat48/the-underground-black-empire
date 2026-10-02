@@ -49,7 +49,7 @@ export async function fetchLeadershipEligibility(memberId: string): Promise<Lead
   const influence = Number(influenceData ?? 0);
   const hasCity = !!member.city_id;
   const tier = member.membership_tier as string | null;
-  const hasValidTier = tier !== null && ['black', 'black_plus', 'emerald', 'plum'].includes(tier);
+  const hasValidTier = tier !== null && ['black', 'black_plus', 'black_pro', 'arch', 'arch_pro'].includes(tier);
   const hasInfluence = influence >= 250;
 
   const reasons: string[] = [];
@@ -146,7 +146,7 @@ export async function fetchNominationCandidates(metroId: string | null, currentU
 
     // Check eligibility directly
     const tier = member.membership_tier as string | null;
-    const hasValidTier = tier !== null && ['black', 'black_plus', 'emerald', 'plum'].includes(tier);
+    const hasValidTier = tier !== null && ['black', 'black_plus', 'black_pro', 'arch', 'arch_pro'].includes(tier);
     const isEligible = hasValidTier && influenceValue >= 250;
 
     const { count: nomCount } = await supabase

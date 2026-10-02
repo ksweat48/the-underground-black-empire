@@ -123,9 +123,10 @@ const GENDER_LABELS: Record<string, string> = {
 const TIER_LABELS: Record<string, string> = {
   white: 'White (Free)',
   black: 'Black',
-  'black-plus': 'Black+',
-  emerald: 'Emerald',
-  plum: 'Plum',
+  black_plus: 'Black+',
+  black_pro: 'Black Pro',
+  arch: 'Arch',
+  arch_pro: 'Arch Pro',
 };
 
 export function AdminPage() {
