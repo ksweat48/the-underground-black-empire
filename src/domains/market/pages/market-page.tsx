@@ -15,8 +15,6 @@ import {
   Loader2,
   Image as ImageIcon,
   ShieldAlert,
-  ExternalLink,
-  Phone,
 } from 'lucide-react';
 import { Layout } from '@/shared/components/layout';
 import { cn } from '@/shared/cn';
@@ -36,6 +34,7 @@ import {
 import { ORG_TYPE_LABELS } from '@/domains/market/types';
 import { ErrorBanner } from '@/shared/components/error-banner';
 import { EngagementBar } from '@/shared/components/engagement-bar';
+import { ContactActions, getPhoneHref, getSafeHttpUrl } from '@/shared/components/contact-actions';
 import type { FeedPostType } from '@/domains/market/types';
 
 type CategoryFilter = 'feed' | 'market' | 'organizations';
@@ -550,19 +549,22 @@ function ListingCard({ listing, onClick, currentUserId }: { listing: MarketListi
         <div className="flex items-center gap-3 pt-1">
           {listing.city_name && <span className="flex items-center gap-1 text-[10px] text-empire-text-muted"><MapPin className="w-2.5 h-2.5" />{listing.city_state ? `${listing.city_name}, ${listing.city_state}` : listing.city_name}</span>}
         </div>
-        <ContactActions actions={actions} />
-        <div onClick={(event) => event.stopPropagation()}>
-          <EngagementBar
-            postType="listing"
-            postId={listing.id}
-            likeCount={listing.like_count}
-            commentCount={listing.comment_count}
-            isLiked={listing.is_liked}
-            authorId={listing.owner_id}
-            authorName={listing.owner_name ?? undefined}
-            authorAvatarUrl={listing.owner_avatar_url}
-            currentUserId={currentUserId}
-          />
+        <div className="flex items-center justify-between gap-2 mt-2">
+          <ContactActions {...actions} />
+          <div onClick={(event) => event.stopPropagation()} className="ml-auto shrink-0">
+            <EngagementBar
+              postType="listing"
+              postId={listing.id}
+              likeCount={listing.like_count}
+              commentCount={listing.comment_count}
+              isLiked={listing.is_liked}
+              authorId={listing.owner_id}
+              authorName={listing.owner_name ?? undefined}
+              authorAvatarUrl={listing.owner_avatar_url}
+              currentUserId={currentUserId}
+              className="mt-0"
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -598,7 +600,7 @@ function EventCard({ event, onClick }: { event: MarketEvent; onClick: () => void
         {event.event_time && `${event.event_time} · `}{event.location_text || 'Location TBA'}
       </p>
       {event.listing_name && <p className="text-[10px] text-empire-text-muted/70 line-clamp-1">{event.listing_name}</p>}
-      <ContactActions actions={actions} />
+      <ContactActions {...actions} className="mt-2" />
     </div>
   );
 }
@@ -607,57 +609,12 @@ function getListingActions(listing: MarketListing): { website: string | null; ph
   return { website: getSafeHttpUrl(listing.external_url), phone: getPhoneHref(listing.contact_info) };
 }
 
+function getOrganizationActions(org: Organization): { website: string | null; phone: string | null } {
+  return { website: getSafeHttpUrl(org.external_url), phone: getPhoneHref(org.contact_info) };
+}
+
 function getEventActions(event: MarketEvent): { website: string | null; phone: string | null } {
   return { website: getSafeHttpUrl(event.external_url), phone: null };
-}
-
-function getSafeHttpUrl(value: string | null | undefined): string | null {
-  if (!value?.trim()) return null;
-  try {
-    const url = new URL(value.trim());
-    return url.protocol === 'http:' || url.protocol === 'https:' ? url.toString() : null;
-  } catch {
-    return null;
-  }
-}
-
-function getPhoneHref(value: string | null | undefined): string | null {
-  if (!value?.trim()) return null;
-  const match = value.match(/(?:\+?\d[\d\s().-]{6,}\d)/);
-  if (!match) return null;
-  const digits = match[0].replace(/[^\d+]/g, '');
-  return digits.length >= 7 ? `tel:${digits}` : null;
-}
-
-function ContactActions({ actions }: { actions: { website: string | null; phone: string | null } }) {
-  if (!actions.website && !actions.phone) return null;
-
-  return (
-    <div className="flex items-center gap-1.5 mt-2">
-      {actions.website && (
-        <a
-          href={actions.website}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={(event) => event.stopPropagation()}
-          aria-label="Visit website"
-          className="flex items-center justify-center w-8 h-8 rounded-lg border border-empire-gold/20 bg-empire-gold/8 text-empire-gold transition-colors hover:bg-empire-gold/15 hover:border-empire-gold/35"
-        >
-          <ExternalLink className="w-3.5 h-3.5" />
-        </a>
-      )}
-      {actions.phone && (
-        <a
-          href={actions.phone}
-          onClick={(event) => event.stopPropagation()}
-          aria-label="Call now"
-          className="flex items-center justify-center w-8 h-8 rounded-lg border border-empire-gold/20 bg-empire-gold/8 text-empire-gold transition-colors hover:bg-empire-gold/15 hover:border-empire-gold/35"
-        >
-          <Phone className="w-3.5 h-3.5" />
-        </a>
-      )}
-    </div>
-  );
 }
 
 // ==================== Feed Item Row ====================
@@ -862,6 +819,7 @@ function FeaturedOrganizationCard({ org, onClick }: { org: Organization; onClick
 // ==================== Organization Card ====================
 
 function OrganizationCard({ org, onClick, currentUserId }: { org: Organization; onClick: () => void; currentUserId?: string }) {
+  const actions = getOrganizationActions(org);
   const goalNum = org.funding_goal || 0;
   const raisedNum = org.total_raised || 0;
   const progressPct = goalNum > 0 ? Math.min(100, (raisedNum / goalNum) * 100) : 0;
@@ -929,18 +887,22 @@ function OrganizationCard({ org, onClick, currentUserId }: { org: Organization; 
             </span>
           )}
         </div>
-        <div onClick={(event) => event.stopPropagation()}>
-          <EngagementBar
-            postType="organization"
-            postId={org.id}
-            likeCount={org.like_count}
-            commentCount={org.comment_count}
-            isLiked={org.is_liked}
-            authorId={org.owner_id}
-            authorName={org.owner_name ?? undefined}
-            authorAvatarUrl={org.owner_avatar_url}
-            currentUserId={currentUserId}
-          />
+        <div className="flex items-center justify-between gap-2 mt-1">
+          <ContactActions {...actions} />
+          <div onClick={(event) => event.stopPropagation()} className="ml-auto shrink-0">
+            <EngagementBar
+              postType="organization"
+              postId={org.id}
+              likeCount={org.like_count}
+              commentCount={org.comment_count}
+              isLiked={org.is_liked}
+              authorId={org.owner_id}
+              authorName={org.owner_name ?? undefined}
+              authorAvatarUrl={org.owner_avatar_url}
+              currentUserId={currentUserId}
+              className="mt-0"
+            />
+          </div>
         </div>
       </div>
     </div>

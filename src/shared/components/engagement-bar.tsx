@@ -35,6 +35,7 @@ export interface EngagementBarProps {
     commentCount?: number;
     isLiked?: boolean;
   }) => void;
+  className?: string;
 }
 
 interface CommentData {
@@ -59,6 +60,7 @@ export function EngagementBar({
   hasNominated = false,
   currentUserId,
   onEngagementChange,
+  className,
 }: EngagementBarProps) {
   const [likeCount, setLikeCount] = useState(initialLikeCount);
   const [commentCount, setCommentCount] = useState(initialCommentCount);
@@ -209,7 +211,7 @@ export function EngagementBar({
     'flex items-center gap-1.5 px-1.5 py-1 rounded-md transition-all duration-150 text-xs font-medium';
 
   return (
-    <div className="mt-2">
+    <div className={cn('mt-2', className)}>
       <div className="flex items-center gap-0.5 flex-wrap">
         {/* Like */}
         <button

@@ -2,13 +2,11 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
-  Heart,
   MessageCircle,
   MapPin,
   ExternalLink,
   BadgeCheck,
   CalendarDays,
-  Send,
   Flag,
   Loader2,
   Image as ImageIcon,
@@ -20,19 +18,17 @@ import {
 import { Layout } from '@/shared/components/layout';
 import { GlassModal } from '@/shared/components/glass-modal';
 import { cn } from '@/shared/cn';
+import { ContactActions, getPhoneHref, getSafeHttpUrl } from '@/shared/components/contact-actions';
+import { EngagementBar } from '@/shared/components/engagement-bar';
 import { useAuth } from '@/domains/identity/auth-context';
 import {
   fetchListingById,
   fetchListingUpdates,
   fetchEvents,
-  fetchListingComments,
-  createListingComment,
-  toggleListingLike,
   createContentReport,
   type MarketListing,
   type ListingUpdate,
   type MarketEvent,
-  type ListingComment,
 } from '@/domains/market/services';
 
 export function ListingDetailPage() {
@@ -44,12 +40,8 @@ export function ListingDetailPage() {
   const [listing, setListing] = useState<MarketListing | null>(null);
   const [updates, setUpdates] = useState<ListingUpdate[]>([]);
   const [events, setEvents] = useState<MarketEvent[]>([]);
-  const [comments, setComments] = useState<ListingComment[]>([]);
   const [loading, setLoading] = useState(true);
-  const [commentText, setCommentText] = useState('');
-  const [commentSubmitting, setCommentSubmitting] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
-  const [showComments, setShowComments] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
   const loadListing = useCallback(async () => {
@@ -62,11 +54,9 @@ export function ListingDetailPage() {
         const [ups, evs, coms] = await Promise.all([
           fetchListingUpdates(id),
           fetchEvents({ listingId: id, limit: 5 }),
-          fetchListingComments(id),
         ]);
         setUpdates(ups);
         setEvents(evs);
-        setComments(coms);
       }
     } catch (err) {
       console.error('Failed to load listing:', err);
@@ -77,40 +67,6 @@ export function ListingDetailPage() {
   }, [id, userId]);
 
   useEffect(() => { loadListing(); }, [loadListing]);
-
-  const handleLike = async () => {
-    if (!listing || !userId) return;
-    setActionError(null);
-    try {
-      const newLiked = await toggleListingLike(listing.id, userId, listing.is_liked ?? false);
-      setListing({
-        ...listing,
-        is_liked: newLiked,
-        like_count: newLiked ? listing.like_count + 1 : Math.max(0, listing.like_count - 1),
-      });
-    } catch (err) {
-      console.error('Like failed:', err);
-      setActionError('Unable to like this listing. Please try again.');
-    }
-  };
-
-  const handleComment = async () => {
-    if (!listing || !commentText.trim()) return;
-    setCommentSubmitting(true);
-    setActionError(null);
-    try {
-      await createListingComment(listing.id, commentText.trim());
-      setCommentText('');
-      const coms = await fetchListingComments(listing.id);
-      setComments(coms);
-      setListing({ ...listing, comment_count: listing.comment_count + 1 });
-    } catch (err) {
-      console.error('Comment failed:', err);
-      setActionError('Unable to post your comment. Please try again.');
-    } finally {
-      setCommentSubmitting(false);
-    }
-  };
 
   if (loading) {
     return (
@@ -251,85 +207,36 @@ export function ListingDetailPage() {
               </div>
             )}
 
-            {/* External link */}
-            {listing.external_url && (
-              <a
-                href={listing.external_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn-primary w-full text-sm py-2.5"
-              >
-                <ExternalLink className="w-4 h-4" />
-                Visit Website / Purchase
-              </a>
-            )}
-
-            {/* Engagement bar */}
             <div className="flex items-center gap-2 pt-2 border-t border-ink-700/15">
-              <button
-                onClick={handleLike}
-                className={cn(
-                  'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all',
-                  listing.is_liked
-                    ? 'bg-empire-danger/10 text-empire-danger border border-empire-danger/20'
-                    : 'frame-utility text-empire-text-muted hover:text-empire-ivory'
-                )}
-              >
-                <Heart className={cn('w-3.5 h-3.5', listing.is_liked && 'fill-current')} />
-                {listing.like_count}
-              </button>
-              <button
-                onClick={() => setShowComments(!showComments)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium frame-utility text-empire-text-muted hover:text-empire-ivory transition-all"
-              >
-                <MessageCircle className="w-3.5 h-3.5" />
-                {listing.comment_count}
-              </button>
-              <button
-                onClick={() => setShowReportModal(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium frame-utility text-empire-text-muted hover:text-empire-danger transition-all ml-auto"
-              >
-                <Flag className="w-3.5 h-3.5" />
-              </button>
+              <ContactActions
+                website={getSafeHttpUrl(listing.external_url)}
+                phone={getPhoneHref(listing.contact_info)}
+              />
+              <div className="flex items-center gap-1.5 ml-auto min-w-0">
+                <EngagementBar
+                  postType="listing"
+                  postId={listing.id}
+                  likeCount={listing.like_count}
+                  commentCount={listing.comment_count}
+                  isLiked={listing.is_liked}
+                  authorId={listing.owner_id}
+                  authorName={listing.owner_name ?? undefined}
+                  authorAvatarUrl={listing.owner_avatar_url}
+                  currentUserId={userId}
+                  onEngagementChange={(updates) => setListing((current) => current ? { ...current, ...updates } : current)}
+                  className="mt-0"
+                />
+                <button
+                  onClick={() => setShowReportModal(true)}
+                  className="flex items-center justify-center w-8 h-8 rounded-lg text-ink-400 hover:bg-ink-100 hover:text-crimson-600 transition-all shrink-0"
+                  aria-label="Report listing"
+                >
+                  <Flag className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
           </div>
         </div>
-
-        {/* Comments section */}
-        {showComments && (
-          <div className="space-y-3 animate-fade-up">
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={commentText}
-                onChange={(e) => setCommentText(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleComment()}
-                placeholder="Write a comment..."
-                className="input-field flex-1 text-sm"
-              />
-              <button
-                onClick={handleComment}
-                disabled={!commentText.trim() || commentSubmitting}
-                className="btn-primary px-4 py-3 text-sm disabled:opacity-50"
-              >
-                {commentSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-              </button>
-            </div>
-            {comments.length === 0 ? (
-              <p className="text-xs text-empire-text-muted text-center py-2">No comments yet.</p>
-            ) : (
-              <div className="space-y-2">
-                {comments.map((comment) => (
-                  <div key={comment.id} className="frame-intel p-3">
-                    <p className="text-xs font-semibold text-empire-ivory mb-1">{comment.author_name}</p>
-                    <p className="text-sm text-empire-text-secondary">{comment.body}</p>
-                    <p className="text-[10px] text-empire-text-muted mt-1">{formatTimeAgo(comment.created_at)}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
 
         {/* Related events */}
         {events.length > 0 && (

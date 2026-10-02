@@ -87,7 +87,22 @@ A daily pg_cron job at midnight UTC grants credits to members whose anniversary 
 - Tier changes go through the `change_membership_tier` SECURITY DEFINER function, which validates the target tier and only modifies the calling user's own row.
 - Stripe subscription lifecycle is managed entirely by edge functions using the service role key.
 
-## Future Extension Points
+## Current Extension Points
 
-- Post-launch domains (organizations, market, voting, treasury, elections, legacy) are clean extension points — not built, not stubbed with fake behavior.
-- Each new domain follows the same structure: types, services, queries, UI.
+The application now includes active Market, organization, voting, and leadership nomination flows. These domains follow the same modular structure as the founder campaign and remain separated by business responsibility.
+
+- `src/domains/market/` owns listings, organizations, events, updates, comments, likes/favorites, contact actions, ranking inputs, and Market detail views.
+- `src/domains/leadership/` owns nomination eligibility, nomination submission, nomination counts, and election acceptance rules.
+- `src/shared/components/` owns reusable presentation behavior such as the contact action row, engagement controls, nomination dialog, and modal primitives.
+- `supabase/migrations/` remains the authoritative history for Market engagement, ranking, and leadership rules.
+
+### Market Engagement Invariants
+
+- The visible post actions are Like/Favorite, Comment, and Nominate.
+- Like/Favorite is one action and one engagement signal; separate Save and Boost controls are retired from the product interface.
+- Contact actions remain separate from engagement actions, with phone and website links aligned to the left and engagement controls aligned to the right on the same row.
+- Nominations target the member who authored or owns the post, never the business or organization name.
+- Leadership nomination acceptance is available only after the member satisfies the server-enforced eligibility requirements.
+- Ranking uses likes, recent likes, freshness, and verification. Comments and check-ins remain visible counters but do not overpower likes in ranking.
+
+Each new domain follows the same structure: types, services, queries, UI, and documentation of its authoritative rules.

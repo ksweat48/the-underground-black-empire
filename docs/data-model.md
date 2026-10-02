@@ -168,3 +168,33 @@
 - Status fields use text enums, not Postgres enum types (for migration flexibility).
 - Soft deletion is NOT used by default; append-only ledgers handle history.
 - RLS is enabled on every table with real ownership predicates.
+
+## Market and Engagement Tables
+
+### market_listings
+Listings represent member-owned businesses, services, products, and events surfaced in the Market. Each listing stores its owner, city, category, description, contact information, external website, image, review status, verification status, and engagement counters.
+
+### organizations
+Organizations represent member-owned community and mission-based groups. They use the same member, city, review, verification, contact, image, and engagement concepts as listings, with additional fundraising and organization-type fields.
+
+### listing_likes and organization_likes
+Likes are the single visible favorite action. A member can have one like per listing or organization. The application reads the like relationship for the signed-in member and the aggregate like count for ranking and display.
+
+Separate Save and Boost actions are retired from the product interface. Existing historical records are retained for data safety and are not used to create new visible actions.
+
+### listing_comments and organization_comments
+Comments remain visible engagement records attached to a listing or organization. They contribute to displayed comment counts and remain available through the expandable engagement control, but they do not overpower likes in Market ranking.
+
+### market_ranking_cache
+The ranking cache stores recent and lifetime engagement totals, freshness, verification, computed score, city, and computation time for approved listings. The current score prioritizes lifetime likes and recent likes, then adds freshness and verification support. Comments and check-ins remain stored as counters but do not add ranking weight.
+
+## Leadership Nomination Data
+
+Leadership nominations are member-to-member records tied to the active nomination cycle. Posts nominate the author or owner member, never the business or organization name. Member profiles expose nomination totals even when leadership is locked. Acceptance and decline are allowed only when the server-side leadership eligibility rules permit the member to participate in the election.
+
+## Market UI Invariants
+
+- Contact actions use validated website and phone links.
+- Listing and organization cards place phone and website actions on the left of the same bottom row as Like, Comment, and Nominate actions on the right.
+- Detail pages use the same action-row behavior as cards.
+- Zero-count engagement numbers remain hidden; counts appear once they are greater than zero.

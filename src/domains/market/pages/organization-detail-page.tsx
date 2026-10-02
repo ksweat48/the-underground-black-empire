@@ -2,12 +2,8 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
-  Heart,
-  MessageCircle,
   MapPin,
-  ExternalLink,
   BadgeCheck,
-  Send,
   Flag,
   Loader2,
   Image as ImageIcon,
@@ -18,15 +14,12 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import { Layout } from '@/shared/components/layout';
-import { cn } from '@/shared/cn';
+import { ContactActions, getPhoneHref, getSafeHttpUrl } from '@/shared/components/contact-actions';
+import { EngagementBar } from '@/shared/components/engagement-bar';
 import { useAuth } from '@/domains/identity/auth-context';
 import {
   fetchOrganizationById,
-  fetchOrganizationComments,
-  createOrganizationComment,
-  toggleOrganizationLike,
   type Organization,
-  type OrganizationComment,
 } from '@/domains/market/services';
 import { ORG_TYPE_LABELS } from '@/domains/market/types';
 
@@ -37,11 +30,7 @@ export function OrganizationDetailPage() {
   const userId = session?.user.id ?? '';
 
   const [org, setOrg] = useState<Organization | null>(null);
-  const [comments, setComments] = useState<OrganizationComment[]>([]);
   const [loading, setLoading] = useState(true);
-  const [commentText, setCommentText] = useState('');
-  const [commentSubmitting, setCommentSubmitting] = useState(false);
-  const [showComments, setShowComments] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
   const loadOrg = useCallback(async () => {
@@ -51,8 +40,6 @@ export function OrganizationDetailPage() {
       const data = await fetchOrganizationById(id, userId);
       setOrg(data);
       if (data) {
-        const coms = await fetchOrganizationComments(id);
-        setComments(coms);
       }
     } catch {
       setOrg(null);
@@ -62,38 +49,6 @@ export function OrganizationDetailPage() {
   }, [id, userId]);
 
   useEffect(() => { loadOrg(); }, [loadOrg]);
-
-  const handleLike = async () => {
-    if (!org || !userId) return;
-    setActionError(null);
-    try {
-      const newLiked = await toggleOrganizationLike(org.id, userId, org.is_liked ?? false);
-      setOrg({
-        ...org,
-        is_liked: newLiked,
-        like_count: newLiked ? org.like_count + 1 : Math.max(0, org.like_count - 1),
-      });
-    } catch {
-      setActionError('Unable to like this organization. Please try again.');
-    }
-  };
-
-  const handleComment = async () => {
-    if (!org || !commentText.trim()) return;
-    setCommentSubmitting(true);
-    setActionError(null);
-    try {
-      await createOrganizationComment(org.id, commentText.trim());
-      setCommentText('');
-      const coms = await fetchOrganizationComments(org.id);
-      setComments(coms);
-      setOrg({ ...org, comment_count: org.comment_count + 1 });
-    } catch {
-      setActionError('Unable to post your comment. Please try again.');
-    } finally {
-      setCommentSubmitting(false);
-    }
-  };
 
   if (loading) {
     return (
@@ -250,19 +205,6 @@ export function OrganizationDetailPage() {
               </div>
             )}
 
-            {/* External link */}
-            {org.external_url && (
-              <a
-                href={org.external_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn-primary w-full text-sm py-2.5"
-              >
-                <ExternalLink className="w-4 h-4" />
-                Visit Website / Donate
-              </a>
-            )}
-
             {/* Voting info callout */}
             <div className="flex items-start gap-2 p-3 rounded-lg bg-plum-500/5 border border-plum-500/15">
               <HeartHandshake className="w-4 h-4 text-plum-400 shrink-0 mt-0.5" />
@@ -271,84 +213,30 @@ export function OrganizationDetailPage() {
               </p>
             </div>
 
-            {/* Engagement bar */}
             <div className="flex items-center gap-2 pt-2 border-t border-ink-700/15">
-              <button
-                onClick={handleLike}
-                className={cn(
-                  'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all',
-                  org.is_liked
-                    ? 'bg-empire-danger/10 text-empire-danger border border-empire-danger/20'
-                    : 'frame-utility text-empire-text-muted hover:text-empire-ivory'
-                )}
-              >
-                <Heart className={cn('w-3.5 h-3.5', org.is_liked && 'fill-current')} />
-                {org.like_count}
-              </button>
-              <button
-                onClick={() => setShowComments(!showComments)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium frame-utility text-empire-text-muted hover:text-empire-ivory transition-all"
-              >
-                <MessageCircle className="w-3.5 h-3.5" />
-                {org.comment_count}
-              </button>
+              <ContactActions
+                website={getSafeHttpUrl(org.external_url)}
+                phone={getPhoneHref(org.contact_info)}
+              />
+              <div className="ml-auto min-w-0">
+                <EngagementBar
+                  postType="organization"
+                  postId={org.id}
+                  likeCount={org.like_count}
+                  commentCount={org.comment_count}
+                  isLiked={org.is_liked}
+                  authorId={org.owner_id}
+                  authorName={org.owner_name ?? undefined}
+                  authorAvatarUrl={org.owner_avatar_url}
+                  currentUserId={userId}
+                  onEngagementChange={(updates) => setOrg((current) => current ? { ...current, ...updates } : current)}
+                  className="mt-0"
+                />
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Comments section */}
-        {showComments && (
-          <div className="frame-utility p-4 space-y-3 animate-fade-up">
-            <div className="flex items-center gap-2">
-              <MessageCircle className="w-4 h-4 text-empire-gold" />
-              <h3 className="font-display text-sm font-semibold text-empire-ivory uppercase tracking-wider">
-                Comments ({comments.length})
-              </h3>
-            </div>
-
-            {/* Comment input */}
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={commentText}
-                onChange={(e) => setCommentText(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleComment()}
-                placeholder="Write a comment..."
-                className="input-field flex-1 text-sm"
-              />
-              <button
-                onClick={handleComment}
-                disabled={commentSubmitting || !commentText.trim()}
-                className="btn-primary px-3 py-2 disabled:opacity-50"
-              >
-                {commentSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-              </button>
-            </div>
-
-            {/* Comment list */}
-            {comments.length === 0 ? (
-              <p className="text-xs text-empire-text-muted text-center py-4">
-                No comments yet. Be the first to show support.
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {comments.map((comment) => (
-                  <div key={comment.id} className="frame-utility p-3">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-semibold text-empire-ivory">
-                        {comment.author_name ?? 'Member'}
-                      </span>
-                      <span className="text-[10px] text-empire-text-muted">
-                        {new Date(comment.created_at).toLocaleDateString()}
-                      </span>
-                    </div>
-                    <p className="text-sm text-empire-text-secondary">{comment.body}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
       </div>
     </Layout>
   );
