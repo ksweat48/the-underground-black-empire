@@ -1395,36 +1395,35 @@
 
   .membership-card-black {
     background: linear-gradient(135deg, #111111 0%, #000000 82%);
-    border-color: rgba(255,255,255,0.16);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), 0 24px 50px rgba(0,0,0,0.32);
+    border-color: transparent;
+    box-shadow: 0 24px 50px rgba(0,0,0,0.32);
   }
 
   .membership-card-black-plus {
     background: linear-gradient(135deg, #090909 0%, #000000 86%);
-    border-color: rgba(214,218,224,0.72);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.16), 0 24px 50px rgba(0,0,0,0.34);
+    border-color: rgba(192,197,206,0.50);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 24px 50px rgba(0,0,0,0.34);
   }
 
   .membership-card-black-pro {
     background: linear-gradient(135deg, #0a0a0a 0%, #000000 60%, #0d1117 100%);
-    border-color: rgba(180,190,210,0.32);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.14), 0 24px 50px rgba(0,0,0,0.36);
+    border-color: rgba(191,155,48,0.55);
+    box-shadow: inset 0 1px 0 rgba(212,175,55,0.12), 0 24px 50px rgba(0,0,0,0.36);
   }
 
   .membership-card-arch {
     background: radial-gradient(circle at 75% 10%, rgba(100,178,139,0.35), transparent 38%), linear-gradient(135deg, #1d5943 0%, #09271d 88%);
-    border-color: rgba(151,218,180,0.28);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 24px 50px rgba(7,36,25,0.28);
+    border-color: rgba(191,155,48,0.50);
+    box-shadow: inset 0 1px 0 rgba(212,175,55,0.10), 0 24px 50px rgba(7,36,25,0.28);
   }
 
   .membership-card-arch-pro {
     background: radial-gradient(circle at 50% 0%, rgba(191,124,191,0.3), transparent 45%), linear-gradient(135deg, #5b285a 0%, #241025 88%);
-    border-color: rgba(224,177,224,0.28);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 24px 50px rgba(42,15,42,0.28);
+    border-color: rgba(191,155,48,0.50);
+    box-shadow: inset 0 1px 0 rgba(212,175,55,0.10), 0 24px 50px rgba(42,15,42,0.28);
   }
 
   .membership-card-white::after,
-  .membership-card-black::after,
   .membership-card-black-plus::after,
   .membership-card-black-pro::after,
   .membership-card-arch::after,
@@ -1438,8 +1437,24 @@
     pointer-events: none;
   }
 
+  .membership-card-black::after {
+    content: none;
+  }
+
   .membership-card-black-plus::after {
-    border-color: rgba(214,218,224,0.55);
+    border-color: rgba(192,197,206,0.45);
+  }
+
+  .membership-card-black-pro::after {
+    border-color: rgba(212,175,55,0.40);
+  }
+
+  .membership-card-arch::after {
+    border-color: rgba(212,175,55,0.35);
+  }
+
+  .membership-card-arch-pro::after {
+    border-color: rgba(212,175,55,0.35);
   }
 
   @media (min-width: 1280px) {
