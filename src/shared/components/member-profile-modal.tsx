@@ -35,18 +35,12 @@ import {
 import {
   SUPPORT_ROLE_LABELS,
 } from '@/shared/components/support-role-selector';
+import { getInitials } from '@/shared/utils';
 
 interface MemberProfileModalProps {
   memberId: string | null;
   onClose: () => void;
   currentUserId?: string | null;
-}
-
-function getInitials(name: string): string {
-  const parts = name.split(/[\s@._-]/).filter(Boolean);
-  if (parts.length === 0) return 'F';
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[1][0]).toUpperCase();
 }
 
 function formatJoinDate(dateStr: string | null): string {

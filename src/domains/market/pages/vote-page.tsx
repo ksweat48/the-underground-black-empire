@@ -1103,12 +1103,7 @@ function Avatar({ member }: { member: { avatar_url: string | null; display_name:
   );
 }
 
-function getInitials(name: string): string {
-  const parts = name.split(/[\s@._-]/).filter(Boolean);
-  if (parts.length === 0) return '?';
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[1][0]).toUpperCase();
-}
+import { getInitials } from '@/shared/utils';
 
 function getPhaseDescription(phase: string): string {
   switch (phase) {

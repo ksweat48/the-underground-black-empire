@@ -1,8 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
-import type { CSSProperties } from 'react';
 import {
   Trophy,
-  Copy,
   Check,
   CheckCircle2,
   Lock,
@@ -18,6 +16,14 @@ import {
   Settings,
   TrendingUp,
   Camera,
+  Store,
+  Heart,
+  ChevronRight,
+  Pencil,
+  MessageSquarePlus,
+  Scale,
+  XCircle,
+  Clock,
 } from 'lucide-react';
 import { Layout } from '@/shared/components/layout';
 import { GlassModal } from '@/shared/components/glass-modal';
@@ -44,11 +50,10 @@ import { fetchVotingPower } from '@/domains/market/services';
 import { APP_CONFIG } from '@/config/app';
 import { Link, useNavigate } from 'react-router-dom';
 import { cn } from '@/shared/cn';
-import { Store, Heart, ChevronRight, Pencil, MessageSquarePlus } from 'lucide-react';
 import { fetchMyListings, fetchSavedListings, type MarketListing } from '@/domains/market/services';
 import { fetchMyMembership, type MemberMembership } from '@/domains/membership/services';
 import { PartnerDashboardSection } from '@/domains/membership/components/partner-dashboard';
-import type { MembershipTierId, CardColor } from '@/domains/membership/types';
+import type { MembershipTierId } from '@/domains/membership/types';
 import {
   EthnicIdentitySelector,
   ETHNIC_IDENTITY_LABELS,
@@ -66,7 +71,7 @@ import {
 } from '@/shared/components/support-role-selector';
 import { ProfessionAutocomplete } from '@/shared/components/profession-autocomplete';
 import { parseSupabaseError } from '@/shared/errors';
-import { Scale, Lock as LockIcon, XCircle, Clock } from 'lucide-react';
+import { getInitials } from '@/shared/utils';
 import {
   fetchLeadershipEligibility,
   fetchMyNominationStatus,
@@ -214,33 +219,34 @@ export function ProfilePage() {
   // Fetch metro data
   useEffect(() => {
     if (!memberId || !member?.city_name) return;
-    supabase
-      .from('members')
-      .select('city_id')
-      .eq('id', memberId)
-      .maybeSingle()
-      .then(({ data: memberRow, error }) => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data: memberRow, error } = await supabase
+          .from('members')
+          .select('city_id')
+          .eq('id', memberId)
+          .maybeSingle();
         if (error || !memberRow?.city_id) return;
-        supabase
+        const { data: cityData, error: cityError } = await supabase
           .from('cities')
           .select('id, metro_id')
           .eq('id', memberRow.city_id)
-          .maybeSingle()
-          .then(({ data: cityData, error: cityError }) => {
-            if (cityError || !cityData?.id) return;
-            fetchCityWithMetro(cityData.id).then((metro) => {
-              if (metro) {
-                setMetroData({
-                  name: metro.metro_name ?? 'Unassigned',
-                  rank: metro.metro_rank,
-                  populationCount: metro.metro_population_count,
-                  cityCount: metro.metro_city_count,
-                  metroId: cityData.metro_id,
-                });
-              }
-            });
+          .maybeSingle();
+        if (cityError || !cityData?.id) return;
+        const metro = await fetchCityWithMetro(cityData.id);
+        if (!cancelled && metro) {
+          setMetroData({
+            name: metro.metro_name ?? 'Unassigned',
+            rank: metro.metro_rank,
+            populationCount: metro.metro_population_count,
+            cityCount: metro.metro_city_count,
+            metroId: cityData.metro_id,
           });
-      });
+        }
+      } catch { /* ignore metro fetch errors */ }
+    })();
+    return () => { cancelled = true; };
   }, [memberId, member?.city_name, sessionVersion]);
 
   // Fetch referral data
@@ -373,8 +379,6 @@ export function ProfilePage() {
   const influenceToGo = founderLevel.nextThreshold !== null ? Math.max(0, founderLevel.nextThreshold - influence) : 0;
 
   const membershipTier: MembershipTierId = myMembership?.membership_tier ?? 'white';
-  const profileCardColor = MEMBERSHIP_CARD_COLOR[membershipTier];
-  const profileCardConfig = PROFILE_CARD_STYLE[profileCardColor];
   const cardLabel = CARD_LABELS[membershipTier];
 
   const achievements = getAchievements(member, cityTier);
@@ -688,7 +692,7 @@ export function ProfilePage() {
           ) : !leadershipEligibility.eligible ? (
             <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <LockIcon className="w-4 h-4 text-ink-500" />
+                <Lock className="w-4 h-4 text-ink-500" />
                 <p className="text-sm font-medium text-ink-300">Locked</p>
               </div>
               <p className="text-xs text-ink-400">
@@ -1595,13 +1599,6 @@ function getAchievements(member: MemberProfile, cityTier: CityTierName): Achieve
 
 /* ---------- Helpers ---------- */
 
-function getInitials(name: string): string {
-  const parts = name.split(/[\s@._-]/).filter(Boolean);
-  if (parts.length === 0) return 'F';
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[1][0]).toUpperCase();
-}
-
 async function fetchMemberProfile(memberId: string): Promise<MemberProfile | null> {
   const { data: member, error: memberError } = await supabase
     .from('members')
@@ -1653,16 +1650,6 @@ async function fetchMemberProfile(memberId: string): Promise<MemberProfile | nul
 
 export default ProfilePage;
 
-// ==================== Profile Membership Card ====================
-
-const MEMBERSHIP_CARD_COLOR: Record<MembershipTierId, CardColor> = {
-  white: 'white',
-  black: 'black',
-  black_plus: 'black',
-  emerald: 'emerald',
-  plum: 'plum',
-};
-
 const CARD_LABELS: Record<MembershipTierId, string> = {
   white: 'Free White Card',
   black: '$2 Black Card',
@@ -1670,110 +1657,3 @@ const CARD_LABELS: Record<MembershipTierId, string> = {
   emerald: '$10 Emerald Card',
   plum: '$20 Plum Card',
 };
-
-interface ProfileCardStyle {
-  card: string;
-  inset: string;
-  textBold: string;
-  textMuted: string;
-  iconColor: string;
-  gearButton: string;
-  divider: string;
-  statDivider: string;
-  statVariant: 'emerald' | 'white' | 'black' | 'plum';
-  progressTrack: string;
-  avatarStyle: CSSProperties;
-  initialsStyle: CSSProperties;
-  badgeBg: string;
-  badgeBorder: string;
-  badgeIcon: string;
-}
-
-const PROFILE_CARD_STYLE: Record<CardColor, ProfileCardStyle> = {
-  white: {
-    card: 'card-white-member',
-    inset: 'card-white-inset',
-    textBold: 'text-stone-900',
-    textMuted: 'text-stone-500',
-    iconColor: 'text-stone-700',
-    gearButton: 'text-stone-600 hover:text-stone-900 hover:bg-stone-200/60',
-    divider: 'divider-gold-soft',
-    statDivider: 'stat-divider-white',
-    statVariant: 'white',
-    progressTrack: 'progress-track',
-    avatarStyle: {
-      background: 'linear-gradient(160deg, #F0F0F0, #D8D8D8)',
-      border: '2px solid rgba(26,24,21,0.15)',
-      boxShadow: '0 0 0 3px rgba(26,24,21,0.06), inset 0 1px 0 rgba(255,255,255,0.8), 0 6px 18px rgba(26,24,21,0.12)',
-    },
-    initialsStyle: { color: '#1a1815', textShadow: '0 1px 2px rgba(255,255,255,0.6)' },
-    badgeBg: 'bg-stone-100',
-    badgeBorder: 'border-stone-300',
-    badgeIcon: 'text-stone-700',
-  },
-  black: {
-    card: 'card-black-member',
-    inset: 'card-black-inset',
-    textBold: 'text-white',
-    textMuted: 'text-neutral-400',
-    iconColor: 'text-white',
-    gearButton: 'text-neutral-400 hover:text-white hover:bg-white/10',
-    divider: 'divider-gold-soft',
-    statDivider: 'stat-divider-black',
-    statVariant: 'black',
-    progressTrack: 'progress-track-dark',
-    avatarStyle: {
-      background: 'linear-gradient(160deg, #2A2A2A, #0A0A0A)',
-      border: '2px solid rgba(255,255,255,0.10)',
-      boxShadow: '0 0 0 3px rgba(255,255,255,0.04), inset 0 1px 0 rgba(255,255,255,0.06), 0 6px 18px rgba(0,0,0,0.50)',
-    },
-    initialsStyle: { color: '#ffffff', textShadow: '0 1px 3px rgba(0,0,0,0.65)' },
-    badgeBg: 'bg-black',
-    badgeBorder: 'border-white/30',
-    badgeIcon: 'text-white',
-  },
-  emerald: {
-    card: 'card-emerald',
-    inset: 'card-emerald-inset',
-    textBold: 'text-emerald-50',
-    textMuted: 'text-emerald-100/80',
-    iconColor: 'text-white',
-    gearButton: 'text-emerald-50/80 hover:text-white hover:bg-emerald-900/40',
-    divider: 'divider-gold-soft',
-    statDivider: 'emerald-stat-divider',
-    statVariant: 'emerald',
-    progressTrack: 'progress-track-dark',
-    avatarStyle: {
-      background: 'linear-gradient(160deg, #174B36, #08291C)',
-      border: '2px solid rgba(51,51,51,0.82)',
-      boxShadow: '0 0 0 3px rgba(51,51,51,0.12), inset 0 1px 0 rgba(255,255,255,0.08), 0 6px 18px rgba(0,0,0,0.40)',
-    },
-    initialsStyle: { color: '#ffffff', textShadow: '0 1px 3px rgba(0,0,0,0.65)' },
-    badgeBg: 'bg-emerald-950',
-    badgeBorder: 'border-white/70',
-    badgeIcon: 'text-white',
-  },
-  plum: {
-    card: 'card-plum',
-    inset: 'card-plum-inset',
-    textBold: 'text-white',
-    textMuted: 'text-purple-200/70',
-    iconColor: 'text-white',
-    gearButton: 'text-purple-200/70 hover:text-white hover:bg-purple-900/40',
-    divider: 'divider-gold-soft',
-    statDivider: 'stat-divider-plum',
-    statVariant: 'plum',
-    progressTrack: 'progress-track-dark',
-    avatarStyle: {
-      background: 'linear-gradient(160deg, #4A1F4A, #2A0F2A)',
-      border: '2px solid rgba(255,255,255,0.08)',
-      boxShadow: '0 0 0 3px rgba(255,255,255,0.04), inset 0 1px 0 rgba(255,255,255,0.06), 0 6px 18px rgba(42,15,42,0.40)',
-    },
-    initialsStyle: { color: '#ffffff', textShadow: '0 1px 3px rgba(0,0,0,0.65)' },
-    badgeBg: 'bg-purple-950',
-    badgeBorder: 'border-white/50',
-    badgeIcon: 'text-white',
-  },
-};
-
-
