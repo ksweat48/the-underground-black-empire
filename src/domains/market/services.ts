@@ -252,7 +252,7 @@ export async function fetchApprovedListingsByOwner(userId: string): Promise<Mark
 
 export async function fetchSavedListings(userId: string): Promise<MarketListing[]> {
   const { data, error } = await supabase
-    .from('listing_saves')
+    .from('listing_likes')
     .select(`
       listing:listing_id (
         *,
@@ -291,7 +291,7 @@ export async function fetchSavedListings(userId: string): Promise<MarketListing[
         updated_at: listing.updated_at,
         city_name: cityData?.name ?? undefined,
         city_state: cityData?.state ?? undefined,
-        is_saved: true,
+        is_liked: true,
       } as MarketListing;
     })
     .filter((l): l is MarketListing => l !== null);
@@ -636,14 +636,14 @@ export async function createListingComment(listingId: string, body: string): Pro
 // COMMUNITY FEED
 // ============================================================
 
-export async function fetchCommunityFeed(cityId?: string, metroCityIds?: string[], limit: number = 30): Promise<CommunityFeedItem[]> {
+export async function fetchCommunityFeed(cityId?: string, metroCityIds?: string[], limit: number = 30, currentUserId?: string): Promise<CommunityFeedItem[]> {
   const cityIds = cityId && metroCityIds && metroCityIds.length > 0 ? [cityId, ...metroCityIds] : cityId ? [cityId] : null;
 
   let updatesQuery = supabase
     .from('listing_updates')
     .select(`
       id, listing_id, body, image_url, author_id, update_type, created_at,
-      listing:listing_id ( name, city_id )
+      listing:listing_id ( name, city_id, like_count, comment_count )
     `)
     .eq('status', 'approved')
     .order('created_at', { ascending: false })
@@ -652,7 +652,10 @@ export async function fetchCommunityFeed(cityId?: string, metroCityIds?: string[
 
   let eventsQuery = supabase
     .from('market_events')
-    .select('id, listing_id, name, description, image_url, author_id, city_id, created_at')
+    .select(`
+      id, listing_id, name, description, image_url, author_id, city_id, created_at,
+      listing:listing_id ( name, like_count, comment_count )
+    `)
     .eq('status', 'approved')
     .order('created_at', { ascending: false })
     .limit(limit);
@@ -660,7 +663,7 @@ export async function fetchCommunityFeed(cityId?: string, metroCityIds?: string[
 
   let listingsQuery = supabase
     .from('market_listings')
-    .select('id, owner_id, city_id, name, category, description, image_url, created_at')
+    .select('id, owner_id, city_id, name, category, description, image_url, like_count, comment_count, created_at')
     .in('status', ['approved', 'in_review'])
     .order('created_at', { ascending: false })
     .limit(limit);
@@ -668,7 +671,7 @@ export async function fetchCommunityFeed(cityId?: string, metroCityIds?: string[
 
   let orgsQuery = supabase
     .from('organizations')
-    .select('id, owner_id, city_id, name, org_type, description, image_url, created_at')
+    .select('id, owner_id, city_id, name, org_type, description, image_url, like_count, comment_count, created_at')
     .in('status', ['approved', 'in_review'])
     .order('created_at', { ascending: false })
     .limit(limit);
@@ -677,9 +680,35 @@ export async function fetchCommunityFeed(cityId?: string, metroCityIds?: string[
   const [updatesRes, eventsRes, listingsRes, orgsRes] = await Promise.all([updatesQuery, eventsQuery, listingsQuery, orgsQuery]);
 
   const items: CommunityFeedItem[] = [];
+  const authorIds = new Set<string>();
+  for (const row of updatesRes.data ?? []) authorIds.add(row.author_id);
+  for (const row of eventsRes.data ?? []) authorIds.add(row.author_id);
+  for (const row of listingsRes.data ?? []) authorIds.add(row.owner_id);
+  for (const row of orgsRes.data ?? []) authorIds.add(row.owner_id);
+
+  const { data: authors } = authorIds.size > 0
+    ? await supabase.from('members').select('id, display_name, avatar_url').in('id', Array.from(authorIds))
+    : { data: [] };
+  const authorMap = new Map((authors ?? []).map((author) => [author.id, author]));
+
+  const listingTargetIds = new Set<string>();
+  for (const row of listingsRes.data ?? []) listingTargetIds.add(row.id);
+  for (const row of updatesRes.data ?? []) listingTargetIds.add(row.listing_id);
+  for (const row of eventsRes.data ?? []) if (row.listing_id) listingTargetIds.add(row.listing_id);
+  const { data: likedListings } = currentUserId && listingTargetIds.size > 0
+    ? await supabase.from('listing_likes').select('listing_id').eq('member_id', currentUserId).in('listing_id', Array.from(listingTargetIds))
+    : { data: [] };
+  const likedListingIds = new Set((likedListings ?? []).map((row) => row.listing_id as string));
+
+  const orgIds = (orgsRes.data ?? []).map((row) => row.id);
+  const { data: likedOrganizations } = currentUserId && orgIds.length > 0
+    ? await supabase.from('organization_likes').select('organization_id').eq('member_id', currentUserId).in('organization_id', orgIds)
+    : { data: [] };
+  const likedOrganizationIds = new Set((likedOrganizations ?? []).map((row) => row.organization_id as string));
 
   for (const row of updatesRes.data ?? []) {
-    const listingData = (Array.isArray(row.listing) ? row.listing[0] : row.listing) as { name: string; city_id: string } | null;
+    const listingData = (Array.isArray(row.listing) ? row.listing[0] : row.listing) as { name: string; city_id: string; like_count?: number; comment_count?: number } | null;
+    const author = authorMap.get(row.author_id);
     items.push({
       id: row.id,
       feed_type: 'update',
@@ -689,29 +718,42 @@ export async function fetchCommunityFeed(cityId?: string, metroCityIds?: string[
       body: row.body,
       image_url: row.image_url,
       author_id: row.author_id,
+      author_name: author?.display_name ?? null,
+      author_avatar_url: author?.avatar_url ?? null,
       update_type: (row as { update_type?: string }).update_type ?? null,
       created_at: row.created_at,
-      rank_score: 0,
+      rank_score: row.created_at ? (listingData?.like_count ?? 0) : 0,
+      like_count: listingData?.like_count ?? 0,
+      comment_count: listingData?.comment_count ?? 0,
+      is_liked: likedListingIds.has(row.listing_id),
     });
   }
 
   for (const row of eventsRes.data ?? []) {
+    const listingData = (Array.isArray(row.listing) ? row.listing[0] : row.listing) as { name: string; like_count?: number; comment_count?: number } | null;
+    const author = authorMap.get(row.author_id);
     items.push({
       id: row.id,
       feed_type: 'event',
       listing_id: row.listing_id,
-      listing_name: row.name,
+      listing_name: listingData?.name ?? row.name,
       city_id: row.city_id,
       body: row.description,
       image_url: row.image_url,
       author_id: row.author_id,
+      author_name: author?.display_name ?? null,
+      author_avatar_url: author?.avatar_url ?? null,
       update_type: null,
       created_at: row.created_at,
-      rank_score: 0,
+      rank_score: listingData?.like_count ?? 0,
+      like_count: listingData?.like_count ?? 0,
+      comment_count: listingData?.comment_count ?? 0,
+      is_liked: row.listing_id ? likedListingIds.has(row.listing_id) : false,
     });
   }
 
   for (const row of listingsRes.data ?? []) {
+    const author = authorMap.get(row.owner_id);
     items.push({
       id: row.id,
       feed_type: 'listing',
@@ -721,14 +763,20 @@ export async function fetchCommunityFeed(cityId?: string, metroCityIds?: string[
       body: row.description ?? '',
       image_url: row.image_url,
       author_id: row.owner_id,
+      author_name: author?.display_name ?? null,
+      author_avatar_url: author?.avatar_url ?? null,
       update_type: null,
       created_at: row.created_at,
-      rank_score: 0,
+      rank_score: row.like_count ?? 0,
+      like_count: row.like_count ?? 0,
+      comment_count: row.comment_count ?? 0,
+      is_liked: likedListingIds.has(row.id),
       category: (row as { category?: string }).category ?? null,
     });
   }
 
   for (const row of orgsRes.data ?? []) {
+    const author = authorMap.get(row.owner_id);
     items.push({
       id: row.id,
       feed_type: 'organization',
@@ -738,14 +786,24 @@ export async function fetchCommunityFeed(cityId?: string, metroCityIds?: string[
       body: row.description ?? '',
       image_url: row.image_url,
       author_id: row.owner_id,
+      author_name: author?.display_name ?? null,
+      author_avatar_url: author?.avatar_url ?? null,
       update_type: null,
       created_at: row.created_at,
-      rank_score: 0,
+      rank_score: row.like_count ?? 0,
+      like_count: row.like_count ?? 0,
+      comment_count: row.comment_count ?? 0,
+      is_liked: likedOrganizationIds.has(row.id),
       org_type: (row as { org_type?: string }).org_type ?? null,
     });
   }
 
-  return items.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, limit);
+  return items
+    .sort((a, b) => {
+      if (b.rank_score !== a.rank_score) return b.rank_score - a.rank_score;
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    })
+    .slice(0, limit);
 }
 
 // ============================================================

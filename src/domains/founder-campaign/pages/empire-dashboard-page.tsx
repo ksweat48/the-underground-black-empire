@@ -958,8 +958,6 @@ function IntelligenceCard({ event, onCardClick, currentUserId }: { event: Merged
               postId={event.id}
               likeCount={0}
               commentCount={0}
-              saveCount={0}
-              boostCount={0}
               authorId={event.member_id ?? undefined}
               authorName={event.display_name ?? undefined}
               currentUserId={currentUserId}

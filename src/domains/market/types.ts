@@ -26,6 +26,8 @@ export interface MarketListing {
   rank_score?: number;
   city_name?: string;
   city_state?: string;
+  owner_name?: string | null;
+  owner_avatar_url?: string | null;
   is_saved?: boolean;
   is_liked?: boolean;
   review_reason?: string;
@@ -117,6 +119,8 @@ export interface CommunityFeedItem {
   body: string;
   image_url: string | null;
   author_id: string;
+  author_name?: string | null;
+  author_avatar_url?: string | null;
   update_type: string | null;
   created_at: string;
   rank_score: number;
@@ -270,6 +274,8 @@ export interface Organization {
   updated_at: string;
   city_name?: string;
   city_state?: string;
+  owner_name?: string | null;
+  owner_avatar_url?: string | null;
   is_saved?: boolean;
   is_liked?: boolean;
   engagement_score?: number;

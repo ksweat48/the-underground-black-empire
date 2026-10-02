@@ -25,7 +25,6 @@ import {
   fetchOrganizationComments,
   createOrganizationComment,
   toggleOrganizationLike,
-  toggleOrganizationSave,
   type Organization,
   type OrganizationComment,
 } from '@/domains/market/services';
@@ -76,17 +75,6 @@ export function OrganizationDetailPage() {
       });
     } catch {
       setActionError('Unable to like this organization. Please try again.');
-    }
-  };
-
-  const handleSave = async () => {
-    if (!org || !userId) return;
-    setActionError(null);
-    try {
-      const newSaved = await toggleOrganizationSave(org.id, userId, org.is_saved ?? false);
-      setOrg({ ...org, is_saved: newSaved });
-    } catch {
-      setActionError('Unable to save this organization. Please try again.');
     }
   };
 
@@ -303,18 +291,6 @@ export function OrganizationDetailPage() {
               >
                 <MessageCircle className="w-3.5 h-3.5" />
                 {org.comment_count}
-              </button>
-              <button
-                onClick={handleSave}
-                className={cn(
-                  'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all',
-                  org.is_saved
-                    ? 'bg-empire-gold/10 text-empire-gold border border-empire-gold/20'
-                    : 'frame-utility text-empire-text-muted hover:text-empire-ivory'
-                )}
-              >
-                <HeartHandshake className="w-3.5 h-3.5" />
-                {org.is_saved ? 'Saved' : 'Save'}
               </button>
             </div>
           </div>

@@ -28,8 +28,6 @@ import {
   fetchMemberCityInfo,
   fetchCityIdsInMetro,
   fetchOrganizations,
-  toggleListingSave,
-  toggleOrganizationSave,
   type MarketListing,
   type CommunityFeedItem,
   type MarketEvent,
@@ -105,7 +103,7 @@ export function MarketPage() {
     } finally {
       setLoading(false);
     }
-  }, [cityInfo.cityId, cityInfo.metroId, scope, category, search]);
+  }, [cityInfo.cityId, cityInfo.metroId, scope, category, search, userId]);
 
   const loadFeed = useCallback(async () => {
     if (!cityInfo.cityId) { setFeedLoading(false); return; }
@@ -117,8 +115,8 @@ export function MarketPage() {
         metroIds = await fetchCityIdsInMetro(cityInfo.metroId);
       }
       const data = scope === 'local'
-        ? await fetchCommunityFeed(cityInfo.cityId, metroIds, 20)
-        : await fetchCommunityFeed(undefined, undefined, 20);
+        ? await fetchCommunityFeed(cityInfo.cityId, metroIds, 20, userId)
+        : await fetchCommunityFeed(undefined, undefined, 20, userId);
       setFeed(data);
     } catch {
       setFeed([]);
@@ -126,7 +124,7 @@ export function MarketPage() {
     } finally {
       setFeedLoading(false);
     }
-  }, [cityInfo.cityId, cityInfo.metroId, scope]);
+  }, [cityInfo.cityId, cityInfo.metroId, scope, userId]);
 
   const loadEvents = useCallback(async () => {
     if (!cityInfo.cityId) return;
@@ -180,30 +178,6 @@ export function MarketPage() {
 
   const handleSearch = () => {
     setSearch(searchInput.trim());
-  };
-
-  const handleToggleSave = async (listingId: string, currentlySaved: boolean) => {
-    if (!userId) return;
-    // Optimistic update
-    setListings((prev) =>
-      prev.map((l) =>
-        l.id === listingId
-          ? { ...l, is_saved: !currentlySaved, save_count: Math.max(0, l.save_count + (currentlySaved ? -1 : 1)) }
-          : l
-      )
-    );
-    try {
-      await toggleListingSave(listingId, userId, currentlySaved);
-    } catch {
-      // Revert on error
-      setListings((prev) =>
-        prev.map((l) =>
-          l.id === listingId
-            ? { ...l, is_saved: currentlySaved, save_count: Math.max(0, l.save_count + (currentlySaved ? 1 : -1)) }
-            : l
-        )
-      );
-    }
   };
 
   useEffect(() => {
@@ -412,16 +386,6 @@ export function MarketPage() {
                         org={org}
                         currentUserId={userId}
                         onClick={() => navigate(`/market/organization/${org.id}`)}
-                        onToggleSave={(orgId, currentlySaved) => {
-                          setOrganizations((prev) =>
-                            prev.map((o) =>
-                              o.id === orgId
-                                ? { ...o, is_saved: !currentlySaved, save_count: Math.max(0, o.save_count + (currentlySaved ? -1 : 1)) }
-                                : o
-                            )
-                          );
-                          if (userId) toggleOrganizationSave(orgId, userId, currentlySaved).catch(() => {});
-                        }}
                       />
                     ))}
                   </div>
@@ -473,7 +437,7 @@ export function MarketPage() {
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {(listings.length >= 10 ? filteredListings.slice(5) : filteredListings).map((listing) => (
-                      <ListingCard key={listing.id} listing={listing} currentUserId={userId} onClick={() => navigate(`/market/listing/${listing.id}`)} onToggleSave={handleToggleSave} />
+                      <ListingCard key={listing.id} listing={listing} currentUserId={userId} onClick={() => navigate(`/market/listing/${listing.id}`)} />
                     ))}
                   </div>
                 </section>
@@ -528,7 +492,7 @@ function FeaturedListingCard({ listing, onClick }: { listing: MarketListing; onC
 
 // ==================== Listing Card (grid) ====================
 
-function ListingCard({ listing, onClick, onToggleSave, currentUserId }: { listing: MarketListing; onClick: () => void; onToggleSave?: (listingId: string, currentlySaved: boolean) => void; currentUserId?: string }) {
+function ListingCard({ listing, onClick, currentUserId }: { listing: MarketListing; onClick: () => void; currentUserId?: string }) {
   const actions = getListingActions(listing);
 
   return (
@@ -593,20 +557,16 @@ function ListingCard({ listing, onClick, onToggleSave, currentUserId }: { listin
             postId={listing.id}
             likeCount={listing.like_count}
             commentCount={listing.comment_count}
-            saveCount={listing.save_count}
-            boostCount={0}
             isLiked={listing.is_liked}
-            isSaved={listing.is_saved}
+            authorId={listing.owner_id}
+            authorName={listing.owner_name ?? undefined}
+            authorAvatarUrl={listing.owner_avatar_url}
             currentUserId={currentUserId}
           />
         </div>
       </div>
     </div>
   );
-}
-
-function FavoriteButton(_unused: { listing: MarketListing; onToggleSave?: (listingId: string, currentlySaved: boolean) => void }) {
-  return null;
 }
 
 // ==================== Event Card (horizontal) ====================
@@ -716,6 +676,13 @@ function FeedItemRow({ item, onClick, currentUserId }: { item: CommunityFeedItem
   };
   const config = feedTypeConfig[item.feed_type];
   const Icon = config.icon;
+  const engagementPostType: FeedPostType | null =
+    item.feed_type === 'update' || item.feed_type === 'event'
+      ? item.listing_id ? 'listing' : null
+      : item.feed_type;
+  const engagementPostId = engagementPostType === 'listing' && (item.feed_type === 'update' || item.feed_type === 'event')
+    ? item.listing_id
+    : item.id;
   const typeBadge = item.feed_type === 'update' && item.update_type ? updateTypeConfig[item.update_type] ?? updateTypeConfig.update : null;
   const interactive = !!onClick;
   const categoryBadge = item.feed_type === 'listing' && item.category
@@ -792,22 +759,21 @@ function FeedItemRow({ item, onClick, currentUserId }: { item: CommunityFeedItem
           <Clock className="w-2.5 h-2.5 text-empire-text-muted" />
           <span className="text-[10px] text-empire-text-muted">{formatTimeAgo(item.created_at)}</span>
         </div>
-        <div onClick={(e) => e.stopPropagation()}>
-          <EngagementBar
-            postType={item.feed_type as FeedPostType}
-            postId={item.id}
-            likeCount={item.like_count ?? 0}
-            commentCount={item.comment_count ?? 0}
-            saveCount={item.save_count ?? 0}
-            boostCount={item.boost_count ?? 0}
-            isLiked={item.is_liked}
-            isSaved={item.is_saved}
-            isBoosted={item.is_boosted}
-            authorId={item.author_id}
-            authorName={item.listing_name ?? undefined}
-            currentUserId={currentUserId}
-          />
-        </div>
+        {engagementPostType && engagementPostId && (
+          <div onClick={(e) => e.stopPropagation()}>
+            <EngagementBar
+              postType={engagementPostType}
+              postId={engagementPostId}
+              likeCount={item.like_count ?? 0}
+              commentCount={item.comment_count ?? 0}
+              isLiked={item.is_liked}
+              authorId={item.author_id}
+              authorName={item.author_name ?? undefined}
+              authorAvatarUrl={item.author_avatar_url}
+              currentUserId={currentUserId}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
@@ -895,7 +861,7 @@ function FeaturedOrganizationCard({ org, onClick }: { org: Organization; onClick
 
 // ==================== Organization Card ====================
 
-function OrganizationCard({ org, onClick, onToggleSave, currentUserId }: { org: Organization; onClick: () => void; onToggleSave?: (orgId: string, currentlySaved: boolean) => void; currentUserId?: string }) {
+function OrganizationCard({ org, onClick, currentUserId }: { org: Organization; onClick: () => void; currentUserId?: string }) {
   const goalNum = org.funding_goal || 0;
   const raisedNum = org.total_raised || 0;
   const progressPct = goalNum > 0 ? Math.min(100, (raisedNum / goalNum) * 100) : 0;
@@ -969,10 +935,10 @@ function OrganizationCard({ org, onClick, onToggleSave, currentUserId }: { org: 
             postId={org.id}
             likeCount={org.like_count}
             commentCount={org.comment_count}
-            saveCount={org.save_count}
-            boostCount={0}
             isLiked={org.is_liked}
-            isSaved={org.is_saved}
+            authorId={org.owner_id}
+            authorName={org.owner_name ?? undefined}
+            authorAvatarUrl={org.owner_avatar_url}
             currentUserId={currentUserId}
           />
         </div>

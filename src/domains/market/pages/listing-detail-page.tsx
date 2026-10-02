@@ -4,7 +4,6 @@ import {
   ArrowLeft,
   Heart,
   MessageCircle,
-  Bookmark,
   MapPin,
   ExternalLink,
   BadgeCheck,
@@ -29,7 +28,6 @@ import {
   fetchListingComments,
   createListingComment,
   toggleListingLike,
-  toggleListingSave,
   createContentReport,
   type MarketListing,
   type ListingUpdate,
@@ -93,18 +91,6 @@ export function ListingDetailPage() {
     } catch (err) {
       console.error('Like failed:', err);
       setActionError('Unable to like this listing. Please try again.');
-    }
-  };
-
-  const handleSave = async () => {
-    if (!listing || !userId) return;
-    setActionError(null);
-    try {
-      const newSaved = await toggleListingSave(listing.id, userId, listing.is_saved ?? false);
-      setListing({ ...listing, is_saved: newSaved });
-    } catch (err) {
-      console.error('Save failed:', err);
-      setActionError('Unable to save this listing. Please try again.');
     }
   };
 
@@ -298,18 +284,6 @@ export function ListingDetailPage() {
               >
                 <MessageCircle className="w-3.5 h-3.5" />
                 {listing.comment_count}
-              </button>
-              <button
-                onClick={handleSave}
-                className={cn(
-                  'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all',
-                  listing.is_saved
-                    ? 'bg-empire-gold/10 text-empire-gold border border-empire-gold/20'
-                    : 'frame-utility text-empire-text-muted hover:text-empire-ivory'
-                )}
-              >
-                <Bookmark className="w-3.5 h-3.5" />
-                {listing.is_saved ? 'Saved' : 'Save'}
               </button>
               <button
                 onClick={() => setShowReportModal(true)}

@@ -1,4 +1,5 @@
 import { type ReactNode, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 
 interface GlassModalProps {
@@ -24,7 +25,7 @@ export function GlassModal({ open, onClose, title, children }: GlassModalProps) 
 
   if (!open) return null;
 
-  return (
+  return createPortal(
     <div className="glass-overlay animate-fade-in" onClick={onClose}>
       <div className="flex items-start justify-center min-h-full px-4 pt-[calc(env(safe-area-inset-top)+5rem)] pb-[calc(env(safe-area-inset-bottom)+7rem)]">
         <div className="glass-modal" onClick={(e) => e.stopPropagation()}>
@@ -41,6 +42,7 @@ export function GlassModal({ open, onClose, title, children }: GlassModalProps) 
           {children}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

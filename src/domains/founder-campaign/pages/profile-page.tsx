@@ -690,6 +690,14 @@ export function ProfilePage() {
               <p className="text-xs text-ink-400">
                 Reach the required Level, verification, membership status, and good standing to become eligible.
               </p>
+              <div className="rounded-xl border border-ink-700/30 bg-ink-800/30 p-3">
+                <p className="text-sm font-medium text-ink-100">
+                  Nominations received: {myNominationStatus?.nomination_count ?? 0}
+                </p>
+                <p className="text-xs text-ink-500 mt-1">
+                  Nominations are tracked now, but you can only accept an election nomination after meeting every leadership requirement.
+                </p>
+              </div>
               {leadershipEligibility.reasons.length > 0 && (
                 <ul className="text-xs text-ink-500 space-y-1 mt-2">
                   {leadershipEligibility.reasons.map((reason) => (
@@ -711,9 +719,13 @@ export function ProfilePage() {
                 Members in your Metro can nominate you for leadership. If nominated, you must accept the nomination before the nomination period closes to appear on the election ballot.
               </p>
 
-              {myNominationStatus && myNominationStatus.nomination_count > 0 && (
-                <div className="rounded-xl border border-ink-700/30 bg-ink-800/30 p-3 space-y-2">
-                  <div className="flex items-center gap-2">
+              <div className="rounded-xl border border-ink-700/30 bg-ink-800/30 p-3 space-y-2">
+                <p className="text-sm font-medium text-ink-100">
+                  Nominations received: {myNominationStatus?.nomination_count ?? 0}
+                </p>
+                {myNominationStatus && myNominationStatus.nomination_count > 0 && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
                     <Scale className="w-4 h-4 text-empire-gold" />
                     <p className="text-sm font-medium text-ink-100">
                       You have {myNominationStatus.nomination_count} nomination{myNominationStatus.nomination_count !== 1 ? 's' : ''}
@@ -798,8 +810,9 @@ export function ProfilePage() {
                   {acceptanceError && (
                     <p className="text-xs text-crimson-300">{acceptanceError}</p>
                   )}
-                </div>
-              )}
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </section>

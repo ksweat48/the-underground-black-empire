@@ -1,18 +1,14 @@
-import { useState, useCallback } from 'react';
-import { Heart, MessageCircle, Bookmark, Zap, Scale, Loader2 } from 'lucide-react';
+import { useState, useCallback, useEffect } from 'react';
+import { Heart, MessageCircle, Scale, Loader2 } from 'lucide-react';
 import { cn } from '@/shared/cn';
+import { supabase } from '@/shared/supabase-client';
 import { NominateButton } from '@/shared/components/nominate-button';
-import { GlassModal } from '@/shared/components/glass-modal';
 import { Avatar } from '@/shared/components/avatar';
 import type { FeedPostType } from '@/domains/market/types';
 import {
   toggleListingLike,
-  toggleListingSave,
   toggleOrganizationLike,
-  toggleOrganizationSave,
   toggleNewsLike,
-  toggleNewsSave,
-  toggleBoost,
   createListingComment,
   createOrganizationComment,
   createNewsComment,
@@ -26,11 +22,7 @@ export interface EngagementBarProps {
   postId: string;
   likeCount: number;
   commentCount: number;
-  saveCount: number;
-  boostCount: number;
   isLiked?: boolean;
-  isSaved?: boolean;
-  isBoosted?: boolean;
   authorId?: string;
   authorName?: string;
   authorAvatarUrl?: string | null;
@@ -41,11 +33,7 @@ export interface EngagementBarProps {
   onEngagementChange?: (updates: {
     likeCount?: number;
     commentCount?: number;
-    saveCount?: number;
-    boostCount?: number;
     isLiked?: boolean;
-    isSaved?: boolean;
-    isBoosted?: boolean;
   }) => void;
 }
 
@@ -62,11 +50,7 @@ export function EngagementBar({
   postId,
   likeCount: initialLikeCount,
   commentCount: initialCommentCount,
-  saveCount: initialSaveCount,
-  boostCount: initialBoostCount,
   isLiked: initialIsLiked = false,
-  isSaved: initialIsSaved = false,
-  isBoosted: initialIsBoosted = false,
   authorId,
   authorName,
   authorAvatarUrl,
@@ -78,20 +62,40 @@ export function EngagementBar({
 }: EngagementBarProps) {
   const [likeCount, setLikeCount] = useState(initialLikeCount);
   const [commentCount, setCommentCount] = useState(initialCommentCount);
-  const [saveCount, setSaveCount] = useState(initialSaveCount);
-  const [boostCount, setBoostCount] = useState(initialBoostCount);
   const [isLiked, setIsLiked] = useState(initialIsLiked);
-  const [isSaved, setIsSaved] = useState(initialIsSaved);
-  const [isBoosted, setIsBoosted] = useState(initialIsBoosted);
 
   const [likeLoading, setLikeLoading] = useState(false);
-  const [saveLoading, setSaveLoading] = useState(false);
-  const [boostLoading, setBoostLoading] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState<CommentData[]>([]);
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [commentSubmitting, setCommentSubmitting] = useState(false);
+  const [resolvedAuthorName, setResolvedAuthorName] = useState(authorName ?? '');
+  const [resolvedAuthorAvatarUrl, setResolvedAuthorAvatarUrl] = useState<string | null>(authorAvatarUrl ?? null);
+
+  useEffect(() => {
+    setResolvedAuthorName(authorName ?? '');
+    setResolvedAuthorAvatarUrl(authorAvatarUrl ?? null);
+  }, [authorName, authorAvatarUrl]);
+
+  useEffect(() => {
+    if (!authorId || resolvedAuthorName) return;
+    let cancelled = false;
+    supabase
+      .from('members')
+      .select('display_name, avatar_url')
+      .eq('id', authorId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!cancelled && data) {
+          setResolvedAuthorName(data.display_name ?? 'Member');
+          setResolvedAuthorAvatarUrl(data.avatar_url ?? null);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [authorId, resolvedAuthorName]);
 
   const emit = useCallback(
     (updates: Parameters<NonNullable<EngagementBarProps['onEngagementChange']>>[0]) => {
@@ -122,50 +126,6 @@ export function EngagementBar({
       emit({ likeCount, isLiked: !newLiked });
     } finally {
       setLikeLoading(false);
-    }
-  };
-
-  const handleSave = async () => {
-    if (saveLoading) return;
-    setSaveLoading(true);
-    const newSaved = !isSaved;
-    const newCount = Math.max(0, saveCount + (newSaved ? 1 : -1));
-    setIsSaved(newSaved);
-    setSaveCount(newCount);
-    emit({ saveCount: newCount, isSaved: newSaved });
-    try {
-      if (postType === 'listing') {
-        await toggleListingSave(postId, currentUserId ?? '', !newSaved);
-      } else if (postType === 'organization') {
-        await toggleOrganizationSave(postId, currentUserId ?? '', !newSaved);
-      } else if (postType === 'news') {
-        await toggleNewsSave(postId, !newSaved);
-      }
-    } catch {
-      setIsSaved(!newSaved);
-      setSaveCount(saveCount);
-      emit({ saveCount, isSaved: !newSaved });
-    } finally {
-      setSaveLoading(false);
-    }
-  };
-
-  const handleBoost = async () => {
-    if (boostLoading) return;
-    setBoostLoading(true);
-    const newBoosted = !isBoosted;
-    const newCount = Math.max(0, boostCount + (newBoosted ? 1 : -1));
-    setIsBoosted(newBoosted);
-    setBoostCount(newCount);
-    emit({ boostCount: newCount, isBoosted: newBoosted });
-    try {
-      await toggleBoost(postType, postId, !newBoosted);
-    } catch {
-      setIsBoosted(!newBoosted);
-      setBoostCount(boostCount);
-      emit({ boostCount, isBoosted: !newBoosted });
-    } finally {
-      setBoostLoading(false);
     }
   };
 
@@ -243,7 +203,7 @@ export function EngagementBar({
     !!authorId &&
     !!currentUserId &&
     authorId !== currentUserId &&
-    !!authorName;
+    !!resolvedAuthorName;
 
   const btnBase =
     'flex items-center gap-1.5 px-1.5 py-1 rounded-md transition-all duration-150 text-xs font-medium';
@@ -287,55 +247,12 @@ export function EngagementBar({
           {commentCount > 0 && <span>{commentCount}</span>}
         </button>
 
-        {/* Save */}
-        <button
-          onClick={handleSave}
-          disabled={saveLoading}
-          className={cn(
-            btnBase,
-            isSaved
-              ? 'text-plum-400'
-              : 'text-ink-400 hover:text-ink-200 hover:bg-ink-200/10',
-            saveLoading && 'opacity-50'
-          )}
-          aria-label={isSaved ? 'Unsave' : 'Save'}
-        >
-          {saveLoading ? (
-            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-          ) : (
-            <Bookmark className={cn('w-3.5 h-3.5', isSaved && 'fill-current')} />
-          )}
-          {saveCount > 0 && <span>{saveCount}</span>}
-        </button>
-
-        {/* Boost */}
-        <button
-          onClick={handleBoost}
-          disabled={boostLoading}
-          className={cn(
-            btnBase,
-            isBoosted
-              ? 'text-emerald-500 bg-emerald-500/10'
-              : 'text-ink-400 hover:text-emerald-500 hover:bg-emerald-500/5',
-            boostLoading && 'opacity-50'
-          )}
-          aria-label={isBoosted ? 'Remove boost' : 'Boost'}
-          title={isBoosted ? 'Boosted' : 'Boost this post (earns 2 Influence)'}
-        >
-          {boostLoading ? (
-            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-          ) : (
-            <Zap className={cn('w-3.5 h-3.5', isBoosted && 'fill-current')} />
-          )}
-          {boostCount > 0 && <span>{boostCount}</span>}
-        </button>
-
         {/* Nominate (only for posts by other users) */}
         {canNominate && (
           <NominateButton
             candidateId={authorId}
-            candidateName={authorName}
-            candidateAvatarUrl={authorAvatarUrl}
+            candidateName={resolvedAuthorName}
+            candidateAvatarUrl={resolvedAuthorAvatarUrl}
             candidateLevel={authorLevel}
             candidateInfluence={authorInfluence}
             hasNominated={hasNominated}
