@@ -8,6 +8,8 @@ import type {
   MemberMembership,
   BenefitItem,
   TierDetails,
+  PartnerDashboard,
+  PartnerInfo,
 } from './types';
 
 export type {
@@ -19,6 +21,8 @@ export type {
   MemberMembership,
   BenefitItem,
   TierDetails,
+  PartnerDashboard,
+  PartnerInfo,
 };
 
 export async function fetchMembershipTiers(): Promise<MembershipTier[]> {
@@ -40,11 +44,6 @@ export async function fetchMyMembership(userId: string): Promise<MemberMembershi
   return data as MemberMembership | null;
 }
 
-/**
- * Downgrade to the free White tier. Cancels the Stripe subscription
- * immediately and sets the membership tier to white via the server-side
- * change_membership_tier function.
- */
 export async function downgradeToWhite(): Promise<void> {
   const { error } = await supabase.functions.invoke('stripe-cancel', {
     headers: {
@@ -57,12 +56,6 @@ export async function downgradeToWhite(): Promise<void> {
   }
 }
 
-/**
- * Start a Stripe checkout or tier switch for a paid tier.
- * - If the member has no active subscription, redirects to Stripe checkout.
- * - If the member already has an active subscription on a different paid tier,
- *   switches the subscription price at the next billing cycle.
- */
 export async function startStripeCheckout(tierId: MembershipTierId): Promise<string | null> {
   const { data: sessionData, error: sessionError } = await supabase.auth.refreshSession();
   const accessToken = sessionData.session?.access_token;
@@ -86,11 +79,6 @@ export async function startStripeCheckout(tierId: MembershipTierId): Promise<str
   return data?.url ?? null;
 }
 
-/**
- * Switch from one paid tier to another paid tier. Takes effect at the
- * next billing cycle. Returns the redirect URL (membership page with
- * a "scheduled" query param).
- */
 export async function switchPaidTier(tierId: MembershipTierId): Promise<string | null> {
   return startStripeCheckout(tierId);
 }
@@ -137,6 +125,69 @@ export async function fetchLegacyFund(): Promise<LegacyFund> {
 }
 
 // ============================================================
+// Partner program functions
+// ============================================================
+
+export async function joinPartnerProgram(): Promise<PartnerInfo | null> {
+  const { data, error } = await supabase.rpc('join_partner_program');
+  if (error) throw error;
+  return data as PartnerInfo | null;
+}
+
+export async function fetchPartnerDashboard(): Promise<PartnerDashboard> {
+  const { data, error } = await supabase.rpc('get_partner_dashboard');
+  if (error) throw error;
+  return (data ?? { is_partner: false }) as PartnerDashboard;
+}
+
+async function getAccessToken(): Promise<string | null> {
+  const { data } = await supabase.auth.refreshSession();
+  return data.session?.access_token ?? null;
+}
+
+export async function startStripeConnectOnboarding(): Promise<string | null> {
+  const accessToken = await getAccessToken();
+  if (!accessToken) return null;
+
+  const { data, error } = await supabase.functions.invoke('stripe-connect', {
+    body: { action: 'onboard' },
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+
+  if (error || data?.error) {
+    console.error('Connect onboarding failed:', error ?? data?.error);
+    return null;
+  }
+  return data?.url ?? null;
+}
+
+export async function checkConnectStatus(): Promise<string> {
+  const accessToken = await getAccessToken();
+  if (!accessToken) return 'not_connected';
+
+  const { data, error } = await supabase.functions.invoke('stripe-connect', {
+    body: { action: 'check_status' },
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+
+  if (error || data?.error) return 'not_connected';
+  return data?.status ?? 'not_connected';
+}
+
+export async function requestPartnerPayout(): Promise<{ success: boolean; net_cents?: number; error?: string }> {
+  const accessToken = await getAccessToken();
+  if (!accessToken) return { success: false, error: 'Not signed in' };
+
+  const { data, error } = await supabase.functions.invoke('partner-payout', {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+
+  if (error) return { success: false, error: error.message };
+  if (data?.error) return { success: false, error: data.error };
+  return { success: true, net_cents: data?.net_cents };
+}
+
+// ============================================================
 // Static tier details (benefits, CTA labels, learn-more content)
 // ============================================================
 
@@ -168,29 +219,40 @@ export const TIER_DETAILS: Record<MembershipTierId, TierDetails> = {
     ],
     ctaLabel: 'Become an Active Member',
     learnMoreTitle: 'Black+ Eligibility',
-    learnMoreBody: 'The $5 membership does NOT automatically make someone a leader. It only makes the member eligible to qualify. Actual eligibility can still require: Required Empire Level, Verification, Good standing, Participation requirements, Election or appointment where applicable.',
+    learnMoreBody: 'The $10 membership does NOT automatically make someone a leader. It only makes the member eligible to qualify. Actual eligibility can still require: Required Empire Level, Verification, Good standing, Participation requirements, Election or appointment where applicable.',
   },
-  emerald: {
+  black_pro: {
     benefits: [
       { text: 'Everything in Black+, plus:' },
       { text: '50 Voting Credits every month' },
-      { text: 'Education Grants eligibility' },
-      { text: 'Minimum Family Support eligibility' },
+      { text: 'Family & Legacy Fund eligibility' },
+      { text: 'Priority leadership consideration' },
     ],
-    ctaLabel: 'Become a Family Member',
-    learnMoreTitle: 'Family Benefits',
-    learnMoreBody: 'These are NOT insurance policies. Benefits are NOT guaranteed payouts simply because someone pays the monthly membership. Members become eligible for approved benefits, subject to membership duration, good standing, Empire Level where applicable, verification, documentation, program rules, and available Legacy Fund reserves.',
+    ctaLabel: 'Become a Pro Member',
+    learnMoreTitle: 'Black Pro Benefits',
+    learnMoreBody: 'These are NOT insurance policies. Benefits are NOT guaranteed payouts simply because someone pays the monthly membership. Members become eligible for approved benefits, subject to membership duration, good standing, Empire Level where applicable, verification, documentation, program rules, and available fund reserves.',
   },
-  plum: {
+  arch: {
     benefits: [
-      { text: 'Everything in Emerald, plus:' },
-      { text: '100 Voting Credits every month' },
-      { text: 'Maximum Family support eligibility' },
-      { text: 'Death-support eligibility' },
+      { text: 'All Black Pro benefits included' },
+      { text: 'Zero additional voting credits' },
+      { text: 'Arch Member recognition badge & frame' },
+      { text: 'VIP prestige status' },
     ],
-    ctaLabel: 'Become a Legacy Member',
-    learnMoreTitle: 'Legacy Benefits',
-    learnMoreBody: 'These are NOT insurance policies. Benefits are NOT guaranteed payouts simply because someone pays the monthly membership. Members become eligible for approved benefits, subject to membership duration, good standing, Empire Level where applicable, verification, documentation, program rules, and available Legacy Fund reserves.',
+    ctaLabel: 'Become an Arch Member',
+    learnMoreTitle: 'Arch Member Recognition',
+    learnMoreBody: 'Arch Member is a VIP prestige tier. It carries all the functional benefits of Black Pro (including Family & Legacy eligibility) plus exclusive recognition. Arch Members receive zero additional voting credits beyond what Black Pro provides — this tier is about distinguished status, not voting power.',
+  },
+  arch_pro: {
+    benefits: [
+      { text: 'All Arch Member benefits included' },
+      { text: 'Zero additional voting credits' },
+      { text: 'Arch Pro recognition badge & frame' },
+      { text: 'Highest prestige designation' },
+    ],
+    ctaLabel: 'Become an Arch Pro',
+    learnMoreTitle: 'Arch Pro Recognition',
+    learnMoreBody: 'Arch Pro is the highest prestige designation in the Empire. It carries all Black Pro functional benefits plus the most exclusive recognition. Like Arch Member, there are zero additional voting credits — this tier represents the pinnacle of distinguished status and commitment.',
   },
 };
 
@@ -198,6 +260,7 @@ export const VOTING_CREDIT_AMOUNTS: Record<MembershipTierId, number> = {
   white: 0,
   black: 10,
   black_plus: 25,
-  emerald: 50,
-  plum: 100,
+  black_pro: 50,
+  arch: 50,
+  arch_pro: 50,
 };

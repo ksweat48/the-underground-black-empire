@@ -26,66 +26,80 @@ import {
   startStripeCheckout,
   TIER_DETAILS,
 } from '@/domains/membership/services';
-import type { MembershipTier, MembershipTierId, MemberMembership, VotingCredits, CreditLedgerEntry, CardColor, TierDetails as TierDetailsType } from '@/domains/membership/types';
+import type { MembershipTier, MembershipTierId, MemberMembership, VotingCredits, CreditLedgerEntry, TierDetails as TierDetailsType } from '@/domains/membership/types';
 
-const COLOR_DOT: Record<CardColor, string> = {
-  white: 'bg-white border border-stone-300',
-  black: 'bg-white/10 border border-white/30',
-  emerald: 'bg-emerald-700',
-  plum: 'bg-purple-800',
-};
+type TierSurfaceKey = MembershipTierId;
 
-const CARD_EMBLEM: Record<CardColor, 'light' | 'dark'> = {
-  white: 'light',
-  black: 'dark',
-  emerald: 'dark',
-  plum: 'dark',
-};
-
-const CARD_SURFACE: Record<MembershipTierId, string> = {
+const CARD_SURFACE: Record<TierSurfaceKey, string> = {
   white: 'membership-card-white',
   black: 'membership-card-black',
   black_plus: 'membership-card-black-plus',
-  emerald: 'membership-card-emerald',
-  plum: 'membership-card-plum',
+  black_pro: 'membership-card-black-pro',
+  arch: 'membership-card-arch',
+  arch_pro: 'membership-card-arch-pro',
 };
 
-const CARD_TEXT: Record<CardColor, string> = {
+const CARD_TEXT: Record<TierSurfaceKey, string> = {
   white: 'text-stone-900',
   black: 'text-white',
-  emerald: 'text-white',
-  plum: 'text-white',
+  black_plus: 'text-white',
+  black_pro: 'text-white',
+  arch: 'text-white',
+  arch_pro: 'text-white',
 };
 
-const CARD_MUTED: Record<CardColor, string> = {
+const CARD_MUTED: Record<TierSurfaceKey, string> = {
   white: 'text-stone-500',
   black: 'text-white/75',
-  emerald: 'text-emerald-100/80',
-  plum: 'text-fuchsia-100/80',
+  black_plus: 'text-white/75',
+  black_pro: 'text-white/75',
+  arch: 'text-emerald-100/80',
+  arch_pro: 'text-fuchsia-100/80',
 };
 
 const CARD_STATUS: Record<MembershipTierId, string> = {
   white: 'Participate',
   black: 'Contribute',
   black_plus: 'Serve',
-  emerald: 'Family',
-  plum: 'Legacy',
+  black_pro: 'Protect',
+  arch: 'Prestige',
+  arch_pro: 'Supreme',
 };
 
 const CARD_COLOR_LABEL: Record<MembershipTierId, string> = {
   white: 'White Card',
   black: 'Black Card',
   black_plus: 'Black+',
-  emerald: 'Emerald',
-  plum: 'Plum',
+  black_pro: 'Black Pro',
+  arch: 'Arch Member',
+  arch_pro: 'Arch Pro',
 };
 
 const TIER_SORT: Record<MembershipTierId, number> = {
   white: 1,
   black: 2,
   black_plus: 3,
-  emerald: 4,
-  plum: 5,
+  black_pro: 4,
+  arch: 5,
+  arch_pro: 6,
+};
+
+const CARD_EMBLEM_VARIANT: Record<TierSurfaceKey, 'light' | 'dark'> = {
+  white: 'light',
+  black: 'dark',
+  black_plus: 'dark',
+  black_pro: 'dark',
+  arch: 'dark',
+  arch_pro: 'dark',
+};
+
+const COLOR_DOT: Record<TierSurfaceKey, string> = {
+  white: 'bg-white border border-stone-300',
+  black: 'bg-white/10 border border-white/30',
+  black_plus: 'bg-white/10 border border-white/30',
+  black_pro: 'bg-white/10 border border-white/30',
+  arch: 'bg-emerald-700',
+  arch_pro: 'bg-purple-800',
 };
 
 type ChangeDirection = 'upgrade' | 'downgrade' | 'switch';
@@ -376,8 +390,8 @@ export function MembershipPage() {
 }
 
 function TierCard({ tier, active, memberName }: { tier: MembershipTier; active: boolean; memberName: string }) {
-  const textClass = CARD_TEXT[tier.card_color];
-  const mutedClass = CARD_MUTED[tier.card_color];
+  const textClass = CARD_TEXT[tier.id];
+  const mutedClass = CARD_MUTED[tier.id];
   const isFree = tier.price_monthly === 0;
   return (
     <div className={cn(CARD_SURFACE[tier.id], 'relative aspect-[1.72/1] w-full overflow-hidden rounded-[22px] p-5 text-left shadow-2xl transition-all duration-300 sm:p-8', active ? 'ring-2 ring-stone-900/10' : '')}>
@@ -387,8 +401,8 @@ function TierCard({ tier, active, memberName }: { tier: MembershipTier; active: 
             <p className={cn('text-[10px] font-bold uppercase tracking-[0.28em]', mutedClass)}>The Underground</p>
             <p className={cn('mt-1 text-[10px] uppercase tracking-[0.18em]', mutedClass)}>Black Empire</p>
           </div>
-          <span className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded-full', COLOR_DOT[tier.card_color])}>
-            <EmpireEmblem variant={CARD_EMBLEM[tier.card_color]} className="h-5 w-5" />
+          <span className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded-full', COLOR_DOT[tier.id])}>
+            <EmpireEmblem variant={CARD_EMBLEM_VARIANT[tier.id]} className="h-5 w-5" />
           </span>
         </div>
         <div className="flex items-end justify-between gap-4">

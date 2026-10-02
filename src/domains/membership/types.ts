@@ -1,4 +1,4 @@
-export type MembershipTierId = 'white' | 'black' | 'black_plus' | 'emerald' | 'plum';
+export type MembershipTierId = 'white' | 'black' | 'black_plus' | 'black_pro' | 'arch' | 'arch_pro';
 export type CardColor = 'white' | 'black' | 'emerald' | 'plum';
 
 export interface MembershipTier {
@@ -10,6 +10,7 @@ export interface MembershipTier {
   card_color: CardColor;
   purpose: string;
   sort_order: number;
+  commission_amount_cents: number;
 }
 
 export interface VotingCredits {
@@ -48,4 +49,21 @@ export interface TierDetails {
   ctaLabel: string;
   learnMoreTitle?: string;
   learnMoreBody?: string;
+}
+
+export interface PartnerDashboard {
+  is_partner: boolean;
+  active_referrals?: number;
+  pending_cents?: number;
+  available_cents?: number;
+  paid_cents?: number;
+  lifetime_cents?: number;
+}
+
+export interface PartnerInfo {
+  member_id: string;
+  stripe_connect_account_id: string | null;
+  stripe_connect_status: string;
+  is_active: boolean;
+  joined_at: string;
 }

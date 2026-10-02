@@ -47,6 +47,7 @@ import { cn } from '@/shared/cn';
 import { Store, Heart, ChevronRight, Pencil, MessageSquarePlus } from 'lucide-react';
 import { fetchMyListings, fetchSavedListings, type MarketListing } from '@/domains/market/services';
 import { fetchMyMembership, type MemberMembership } from '@/domains/membership/services';
+import { PartnerDashboardSection } from '@/domains/membership/components/partner-dashboard';
 import type { MembershipTierId, CardColor } from '@/domains/membership/types';
 import {
   EthnicIdentitySelector,
@@ -600,6 +601,9 @@ export function ProfilePage() {
             <span><strong className="tabular-nums text-white">{referralStats.pending}</strong> Pending</span>
           </div>
         </section>
+
+        {/* Empire Partner Dashboard */}
+        <PartnerDashboardSection referralCode={referralCode} />
 
         {/* Leaderboard Avatar Strip */}
         <section className="glass-card p-4 animate-fade-up" style={{ animationDelay: '100ms' }}>

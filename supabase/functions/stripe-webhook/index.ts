@@ -8,8 +8,6 @@ const corsHeaders = {
 
 async function verifyStripeSignature(payload: string, signature: string, secret: string): Promise<boolean> {
   try {
-    // Stripe signature verification using WebCrypto API
-    // signature format: t=<timestamp>,v1=<signature>
     const parts = signature.split(",");
     const timestampPart = parts.find((p) => p.startsWith("t="));
     const signaturePart = parts.find((p) => p.startsWith("v1="));
@@ -45,13 +43,6 @@ async function verifyStripeSignature(payload: string, signature: string, secret:
   }
 }
 
-const TIER_MAP: Record<string, string> = {
-  price_1UHTtEP3p25EmYAKBK54T3gP: "black",
-  price_1UHTtEP3p25EmYAKS3s5mYZQ: "black_plus",
-  price_1UHTtFP3p25EmYAKzOzMjR38: "emerald",
-  price_1UHTtFP3p25EmYAKmfTBM6ek: "plum",
-};
-
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
@@ -73,7 +64,6 @@ Deno.serve(async (req: Request) => {
       auth: { persistSession: false },
     });
 
-    // Read webhook secret from database (stored securely, only service role can access)
     const { data: secretRow } = await adminClient
       .from("app_secrets")
       .select("value")
@@ -101,11 +91,21 @@ Deno.serve(async (req: Request) => {
 
     const event = JSON.parse(payload);
 
-    // Record the event for audit
     const extractUserId = (obj: Record<string, unknown>): string | null => {
       const metadata = obj?.metadata as Record<string, unknown> | undefined;
       return (metadata?.supabase_user_id as string) ?? null;
     };
+
+    // Resolve tier ID from a Stripe price ID by looking up the membership_tiers table
+    async function resolveTierFromPrice(priceId: string): Promise<string | null> {
+      if (!priceId) return null;
+      const { data } = await adminClient
+        .from("membership_tiers")
+        .select("id")
+        .eq("stripe_price_id", priceId)
+        .maybeSingle();
+      return data?.id ?? null;
+    }
 
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Record<string, unknown>;
@@ -114,13 +114,12 @@ Deno.serve(async (req: Request) => {
       const customerId = session.customer as string;
 
       if (userId) {
-        // Retrieve subscription to get the price
         const subResponse = await fetch(`https://api.stripe.com/v1/subscriptions/${subscriptionId}`, {
           headers: { "Authorization": `Bearer ${stripeSecretKey}` },
         });
         const subscription = await subResponse.json();
         const priceId = subscription?.items?.data?.[0]?.price?.id;
-        const tierId = TIER_MAP[priceId] ?? null;
+        const tierId = await resolveTierFromPrice(priceId);
 
         if (tierId) {
           await adminClient.from("members").update({
@@ -131,7 +130,6 @@ Deno.serve(async (req: Request) => {
             stripe_subscription_status: "active",
           }).eq("id", userId);
 
-          // Grant initial voting credits immediately on first paid checkout
           await adminClient.rpc("grant_initial_voting_credits", { p_member_id: userId });
         }
 
@@ -146,6 +144,100 @@ Deno.serve(async (req: Request) => {
           tier_id: tierId,
         });
       }
+    } else if (event.type === "invoice.paid") {
+      // Recurring payment — generate commission and treasury allocation
+      const invoice = event.data.object as Record<string, unknown>;
+      const subscriptionId = invoice.subscription as string;
+      const customerId = invoice.customer as string;
+
+      // Skip the first invoice (handled by checkout.session.completed)
+      const billingReason = invoice.billing_reason as string;
+      if (billingReason === "subscription_create") {
+        // First invoice — still generate commission for the initial payment
+        // Look up member by subscription ID
+        const { data: member } = await adminClient
+          .from("members")
+          .select("id, membership_tier")
+          .eq("stripe_subscription_id", subscriptionId)
+          .maybeSingle();
+
+        if (member?.id && member.membership_tier !== "white") {
+          await adminClient.rpc("generate_partner_commission", {
+            p_referred_member_id: member.id,
+            p_stripe_event_id: event.id,
+            p_tier_id: member.membership_tier,
+          });
+        }
+
+        await adminClient.from("stripe_payment_events").insert({
+          member_id: member?.id ?? null,
+          stripe_event_id: event.id,
+          event_type: event.type,
+          subscription_id: subscriptionId,
+          customer_id: customerId,
+          amount_total: invoice.amount_paid ?? null,
+          currency: invoice.currency ?? null,
+          tier_id: member?.membership_tier ?? null,
+        });
+      } else {
+        // Renewal payment — generate commission
+        const { data: member } = await adminClient
+          .from("members")
+          .select("id, membership_tier")
+          .eq("stripe_subscription_id", subscriptionId)
+          .maybeSingle();
+
+        if (member?.id && member.membership_tier !== "white") {
+          await adminClient.rpc("generate_partner_commission", {
+            p_referred_member_id: member.id,
+            p_stripe_event_id: event.id,
+            p_tier_id: member.membership_tier,
+          });
+        }
+
+        await adminClient.from("stripe_payment_events").insert({
+          member_id: member?.id ?? null,
+          stripe_event_id: event.id,
+          event_type: event.type,
+          subscription_id: subscriptionId,
+          customer_id: customerId,
+          amount_total: invoice.amount_paid ?? null,
+          currency: invoice.currency ?? null,
+          tier_id: member?.membership_tier ?? null,
+        });
+      }
+    } else if (event.type === "charge.refunded" || event.type === "charge.dispute.created") {
+      // Refund or chargeback — reverse commission
+      const charge = event.data.object as Record<string, unknown>;
+      const invoiceId = charge.invoice as string;
+
+      // Find the original invoice.paid event to get its stripe_event_id
+      if (invoiceId) {
+        const { data: originalEvents } = await adminClient
+          .from("stripe_payment_events")
+          .select("stripe_event_id")
+          .eq("subscription_id", (charge as Record<string, unknown>).subscription as string ?? "")
+          .eq("event_type", "invoice.paid")
+          .order("created_at", { ascending: false })
+          .limit(1);
+
+        if (originalEvents?.[0]?.stripe_event_id) {
+          await adminClient.rpc("reverse_partner_commission", {
+            p_stripe_event_id: originalEvents[0].stripe_event_id,
+          });
+        }
+      }
+
+      const userId = extractUserId(charge);
+      await adminClient.from("stripe_payment_events").insert({
+        member_id: userId,
+        stripe_event_id: event.id,
+        event_type: event.type,
+        subscription_id: (charge as Record<string, unknown>).subscription as string ?? null,
+        customer_id: charge.customer as string ?? null,
+        amount_total: charge.amount_refunded ?? charge.amount ?? null,
+        currency: charge.currency ?? null,
+      });
     } else if (event.type === "customer.subscription.deleted" || event.type === "customer.subscription.updated") {
       const subscription = event.data.object as Record<string, unknown>;
       const userId = extractUserId(subscription);
@@ -159,6 +251,28 @@ Deno.serve(async (req: Request) => {
             membership_started_at: null,
             stripe_subscription_status: status,
           }).eq("id", userId);
+        } else if (status === "active") {
+          // Subscription updated with active status — check if price changed
+          const priceId = (subscription as Record<string, unknown>).items
+            ? ((subscription as Record<string, unknown>).items as Record<string, unknown>)?.data
+              ? (((subscription as Record<string, unknown>).items as Record<string, unknown>).data as Array<Record<string, unknown>>)?.[0]?.price
+                ? ((((subscription as Record<string, unknown>).items as Record<string, unknown>).data as Array<Record<string, unknown>>)?.[0]?.price as Record<string, unknown>)?.id as string
+                : null
+              : null
+            : null;
+
+          const newTierId = priceId ? await resolveTierFromPrice(priceId) : null;
+
+          if (newTierId) {
+            await adminClient.from("members").update({
+              membership_tier: newTierId,
+              stripe_subscription_status: status,
+            }).eq("id", userId);
+          } else {
+            await adminClient.from("members").update({
+              stripe_subscription_status: status,
+            }).eq("id", userId);
+          }
         } else {
           await adminClient.from("members").update({
             stripe_subscription_status: status,
@@ -175,7 +289,6 @@ Deno.serve(async (req: Request) => {
         tier_id: null,
       });
     } else {
-      // Log unhandled events
       const data = event.data?.object as Record<string, unknown> | undefined;
       const userId = data ? extractUserId(data) : null;
       await adminClient.from("stripe_payment_events").insert({
