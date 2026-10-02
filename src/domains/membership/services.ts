@@ -71,9 +71,24 @@ export async function startStripeCheckout(tierId: MembershipTierId): Promise<str
     },
   });
 
-  if (error || data?.error) {
-    console.error('Stripe checkout failed:', error ?? data?.error);
-    return null;
+  if (error) {
+    let message = error.message || 'Unable to start checkout';
+    const context = 'context' in error ? error.context : null;
+    if (context instanceof Response) {
+      try {
+        const payload = await context.clone().json() as { error?: string };
+        if (payload.error) message = payload.error;
+      } catch {
+        // Keep the function error message when the response is not JSON.
+      }
+    }
+    console.error('Stripe checkout failed:', message);
+    throw new Error(message);
+  }
+
+  if (data?.error) {
+    console.error('Stripe checkout failed:', data.error);
+    throw new Error(data.error);
   }
 
   return data?.url ?? null;
