@@ -12,26 +12,29 @@ import { GlassModal } from '@/shared/components/glass-modal';
 import { EmpireEmblem } from '@/shared/components/empire-emblem';
 import { NotificationBell } from '@/shared/components/notification-bell';
 import type { EmpireProgressData } from '@/domains/founder-campaign/services';
-import type { EmpireCivilizationName } from '@/config/progression-rules';
-import { PROGRESSION_RULES } from '@/config/progression-rules';
+import {
+  EMPIRE_STAGES,
+  EMPIRE_STAGE_ORDER,
+  getEmpireStageIndex,
+  getEmpireStageRequirement,
+  getNextEmpireStage,
+} from '@/config/progression-rules';
 import { useCreateSheet } from '@/shared/components/create-sheet';
 
 interface HudNavigationProps {
   empire: EmpireProgressData;
-  civLevel: EmpireCivilizationName;
 }
-
-const CIVILIZATION_ORDER: EmpireCivilizationName[] = [
-  'outpost', 'settlement', 'village', 'province', 'kingdom', 'dominion', 'empire',
-];
 
 /* ===================== TOP HUD ===================== */
 
-export function HudTopBar({ civLevel }: HudNavigationProps) {
+export function HudTopBar({ empire }: HudNavigationProps) {
   const navigate = useNavigate();
   const [showCivModal, setShowCivModal] = useState(false);
 
-  const civLabel = civLevel.charAt(0).toUpperCase() + civLevel.slice(1);
+  const stage = empire.highest_stage;
+  const civLabel = EMPIRE_STAGES[stage].label;
+  const nextStage = getNextEmpireStage(stage);
+  const currentIdx = getEmpireStageIndex(stage);
 
   return (
     <>
@@ -81,14 +84,18 @@ export function HudTopBar({ civLevel }: HudNavigationProps) {
 
       {/* Civilization levels modal */}
       <GlassModal open={showCivModal} onClose={() => setShowCivModal(false)} title="Empire Levels">
-        <p className="text-sm text-stone mb-4">
-          As more cities reach Tribe status, the Empire advances through seven stages.
+        <p className="text-sm text-stone mb-2">
+          The Empire advances as Metros qualify. A Metro qualifies when it reaches 100 active members, and stays qualified for good. Stages never go backward.
+        </p>
+        <p className="text-xs font-semibold text-stone-700 mb-4 tabular-nums">
+          {nextStage
+            ? `Qualified Metros: ${empire.qualified_metro_count} of ${nextStage.requiredQualifiedMetros} toward ${EMPIRE_STAGES[nextStage.name].label}`
+            : `Qualified Metros: ${empire.qualified_metro_count} — the Empire is complete`}
         </p>
         <div className="space-y-2">
-          {CIVILIZATION_ORDER.map((key, idx) => {
-            const level = PROGRESSION_RULES.empire.civilization[key];
-            const isCurrent = civLevel === key;
-            const currentIdx = CIVILIZATION_ORDER.indexOf(civLevel);
+          {EMPIRE_STAGE_ORDER.map((key, idx) => {
+            const level = EMPIRE_STAGES[key];
+            const isCurrent = stage === key;
             const isPast = idx < currentIdx;
             return (
               <div
@@ -119,7 +126,7 @@ export function HudTopBar({ civLevel }: HudNavigationProps) {
                   {isPast && <span className="badge-emerald text-[10px] py-0.5 px-1.5 inline-block">Done</span>}
                 </div>
                 <p className="text-xs text-stone mt-2">{level.description}</p>
-                <p className="text-[10px] text-stone/70 mt-1 font-medium uppercase tracking-wide">{level.requirementShort}</p>
+                <p className="text-[10px] text-stone/70 mt-1 font-medium uppercase tracking-wide">{getEmpireStageRequirement(key)}</p>
               </div>
             );
           })}
@@ -158,7 +165,7 @@ export function HudDesktopRail() {
             className={cn('desktop-nav-link', active && 'desktop-nav-link-active')}
             aria-current={active ? 'page' : undefined}
           >
-            {isEmpire ? (
+            {isEmpire || !Icon ? (
               <EmpireEmblem variant="light" className="w-[18px] h-[18px] object-contain" />
             ) : (
               <Icon className="w-[18px] h-[18px]" />

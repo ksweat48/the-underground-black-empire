@@ -5,7 +5,7 @@ import { OnboardingStep } from '@/shared/components/onboarding-step';
 import { EmpireEmblem } from '@/shared/components/empire-emblem';
 import { useAuth } from '@/domains/identity/auth-context';
 import { fetchCityWithMetro, type CityWithMetro } from '@/domains/founder-campaign/services';
-import { PROGRESSION_RULES, getCityTier, getCityTierProgress } from '@/config/progression-rules';
+import { QUALIFIED_METRO_MIN_MEMBERS } from '@/config/progression-rules';
 
 export function OnboardingConfirmPage() {
   const navigate = useNavigate();
@@ -41,10 +41,9 @@ export function OnboardingConfirmPage() {
     );
   }
 
-  const tier = getCityTier(city.population_count);
-  const tierLabel = PROGRESSION_RULES.city[tier].label;
   const isFirstFounder = city.population_count === 0;
-  const progress = getCityTierProgress(city.population_count);
+  const metroPercent = Math.min(100, Math.round((city.metro_population_count / QUALIFIED_METRO_MIN_MEMBERS) * 100));
+  const metroQualified = city.metro_population_count >= QUALIFIED_METRO_MIN_MEMBERS;
 
   return (
     <OnboardingStep
@@ -97,10 +96,6 @@ export function OnboardingConfirmPage() {
               </div>
               <div className="h-px bg-stone-200" />
               <div className="flex items-center justify-between text-sm">
-                <span className="text-stone-500">Current Tier</span>
-                <span className="text-stone-900 font-medium">{tierLabel}</span>
-              </div>
-              <div className="flex items-center justify-between text-sm">
                 <span className="text-stone-500">Your Pioneer Number</span>
                 <span className="text-gold-300 font-semibold">#1</span>
               </div>
@@ -116,7 +111,7 @@ export function OnboardingConfirmPage() {
                     {city.population_count} {city.population_count === 1 ? 'Member' : 'Members'} Already Here
                   </p>
                   <p className="text-xs text-stone-500 mt-0.5">
-                    Join them and help {city.name} grow to the next tier.
+                    Join them and help {city.name} grow.
                   </p>
                 </div>
               </div>
@@ -125,22 +120,24 @@ export function OnboardingConfirmPage() {
                 <span className="text-stone-500">Your Pioneer Number</span>
                 <span className="text-gold-300 font-semibold">Next available</span>
               </div>
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-xs text-stone-500">{tierLabel}</span>
-                  <span className="text-xs text-stone-500">
-                    {city.population_count} / {progress.next ? PROGRESSION_RULES.city[progress.next].minPopulation : PROGRESSION_RULES.city.tribe.minPopulation} to {progress.next ? PROGRESSION_RULES.city[progress.next].label : 'Tribe'}
-                  </span>
+              {city.metro_name && (
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-xs text-stone-500">{city.metro_name}</span>
+                    <span className="text-xs text-stone-500 tabular-nums">
+                      {metroQualified
+                        ? 'Qualified Metro'
+                        : `${city.metro_population_count} / ${QUALIFIED_METRO_MIN_MEMBERS} to qualify`}
+                    </span>
+                  </div>
+                  <div className="h-1.5 rounded-full bg-stone-200 overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-emerald-700 to-emerald-500 transition-all duration-500"
+                      style={{ width: `${metroPercent}%` }}
+                    />
+                  </div>
                 </div>
-                <div className="h-1.5 rounded-full bg-stone-200 overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-gradient-to-r from-gold-500 to-gold-300 transition-all duration-500"
-                    style={{
-                      width: `${progress.percent}%`,
-                    }}
-                  />
-                </div>
-              </div>
+              )}
             </div>
           )}
         </div>

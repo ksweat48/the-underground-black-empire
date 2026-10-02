@@ -1,9 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { MapPin, Users, Building2, X } from 'lucide-react';
 import { US_STATES, US_MAP_VIEWBOX, US_MAP_FRAMES, type USStateData } from '@/config/us-states-data';
-import { getCityTier } from '@/config/progression-rules';
 import type { StateMapData } from '@/domains/founder-campaign/services';
-import { EmpireEmblem } from '@/shared/components/empire-emblem';
 import { cn } from '@/shared/cn';
 
 interface USMapCardProps {
@@ -19,9 +17,9 @@ function getStateFill(state: string, mapData: Map<string, StateMapData> | null):
   if (!data || data.totalPopulation === 0) return '#E7E5E0';
 
   const population = data.totalPopulation;
-  if (population >= 1000) return '#D4AF37';
-  if (population >= 100) return '#7B3D7B';
-  return '#5FA886';
+  if (population >= 1000) return '#4A1F4A';
+  if (population >= 100) return '#3D8A6B';
+  return '#8FC4AC';
 }
 
 export function USMapCard({ mapData, loading, collapsed = false, className }: USMapCardProps) {
@@ -144,7 +142,7 @@ export function USMapCard({ mapData, loading, collapsed = false, className }: US
             )}
           </div>
 
-          {/* Legend removed — state colors now communicate population tiers */}
+          {/* Legend removed — state colors now communicate population */}
         </div>
       </div>
 
@@ -217,7 +215,7 @@ function StateDetailModal({
 
           {/* Stats overview */}
           <div className="px-5 pt-4 pb-3">
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-2">
               <div className="frame-utility p-2.5 text-center">
                 <Building2 className="w-4 h-4 text-empire-gold mx-auto mb-1" />
                 <p className="text-xl font-display font-bold text-empire-white tabular-nums">
@@ -232,13 +230,6 @@ function StateDetailModal({
                 </p>
                 <p className="text-[9px] text-empire-text-muted mt-0.5">Population</p>
               </div>
-              <div className="frame-utility p-2.5 text-center">
-                <EmpireEmblem variant="dark" className="w-4 h-4 mx-auto mb-1" />
-                <p className="text-xl font-display font-bold text-empire-white tabular-nums">
-                  {stateData?.tribeCityCount ?? 0}
-                </p>
-                <p className="text-[9px] text-empire-text-muted mt-0.5">Tribes</p>
-              </div>
             </div>
           </div>
 
@@ -250,16 +241,6 @@ function StateDetailModal({
             {stateData && stateData.cities.length > 0 ? (
               <div className="space-y-1.5 max-h-[40vh] overflow-y-auto scrollbar-thin pr-1">
                 {stateData.cities.map((city) => {
-                  const tier = getCityTier(city.population_count);
-                  const tierLabels: Record<string, string> = {
-                    group: 'Group',
-                    tribe: 'Tribe',
-                    organization: 'Organization',
-                    congregation: 'Congregation',
-                    coalition: 'Coalition',
-                    powerhouse: 'Powerhouse',
-                    legacy_city: 'Legacy City',
-                  };
                   return (
                     <div key={city.id} className="frame-intel p-2.5 flex items-center gap-2.5">
                       <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-empire-gold/5 border border-empire-gold/15 shrink-0">
@@ -267,7 +248,6 @@ function StateDetailModal({
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-empire-white truncate">{city.name}</p>
-                        <p className="text-[10px] text-empire-text-muted">{tierLabels[tier] ?? tier}</p>
                       </div>
                       <div className="text-right shrink-0">
                         <p className="text-sm font-display font-bold text-empire-gold tabular-nums">

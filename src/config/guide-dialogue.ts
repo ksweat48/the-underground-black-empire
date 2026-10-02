@@ -1,4 +1,4 @@
-import type { EmpireCivilizationName } from '@/config/progression-rules';
+import type { EmpireStageName } from '@/config/progression-rules';
 
 export type GuideDialogueTier = {
   threshold: number;
@@ -6,7 +6,7 @@ export type GuideDialogueTier = {
 };
 
 export type GuideMissionConfig = {
-  level: EmpireCivilizationName;
+  level: EmpireStageName;
   levelNumber: number;
   levelLabel: string;
   guideIntro: string;
@@ -15,32 +15,28 @@ export type GuideMissionConfig = {
   missionShort: string;
   reward: string[];
   closingLine: string;
-  progressTarget: number;
-  progressLabel: string;
+  qualifiedMetroTarget: number;
   dialogue: GuideDialogueTier[];
 };
 
-export const GUIDE_MISSIONS: Record<EmpireCivilizationName, GuideMissionConfig> = {
+const QUALIFY_DETAIL = 'A Metro qualifies when its cities together reach 100 active members. Once qualified, it counts forever.';
+
+export const GUIDE_MISSIONS: Record<EmpireStageName, GuideMissionConfig> = {
   outpost: {
     level: 'outpost',
     levelNumber: 1,
     levelLabel: 'Outpost',
     guideIntro:
-      'We have arrived. Set up the tents and send word to every community. We must gather our people and establish our first Tribe Cities. The foundation of this civilization begins with us.',
-    mission: 'Reach 1,000 members and form 10 Tribe Cities.',
-    missionDetail: 'A city becomes a Tribe when its population reaches 100 people.',
-    missionShort: '1K members + 10 Tribe Cities',
-    reward: ['Organizations', 'Marketplace'],
-    closingLine: 'Gather our people. Raise the first 10 Tribes. Do not let the mission fail.',
-    progressTarget: 1000,
-    progressLabel: 'Members',
+      'We have arrived. Set up the tents and send word to every community. Our first task is to raise one Metro to 100 members.',
+    mission: 'Qualify our first Metro.',
+    missionDetail: QUALIFY_DETAIL,
+    missionShort: '1 Qualified Metro',
+    reward: ['Settlement Stage', 'First Metro Treasury unlocked'],
+    closingLine: 'Gather our people. Raise the first Metro. Do not let the mission fail.',
+    qualifiedMetroTarget: 1,
     dialogue: [
-      { threshold: 0, message: 'We have arrived. Set up the tents and send word to every community. We must gather our people and establish our first Tribe Cities.' },
-      { threshold: 100, message: 'The first members are arriving. The Outpost is stirring to life.' },
-      { threshold: 500, message: 'Five hundred strong. The first Tribes are beginning to rise.' },
-      { threshold: 800, message: 'We are close now. Keep sending word to every community.' },
-      { threshold: 950, message: 'Fifty remain. Finish what we started.' },
-      { threshold: 1000, message: 'One thousand members. The foundation is complete. Prepare the Settlement.' },
+      { threshold: 0, message: 'We have arrived. Send word to every community. One Metro must reach 100 members.' },
+      { threshold: 1, message: 'The first Metro stands. The Outpost becomes a Settlement.' },
     ],
   },
   settlement: {
@@ -48,21 +44,17 @@ export const GUIDE_MISSIONS: Record<EmpireCivilizationName, GuideMissionConfig> 
     levelNumber: 2,
     levelLabel: 'Settlement',
     guideIntro:
-      'The Outpost has become a Settlement. Now we must grow our numbers and our geography. More members, more Tribe Cities — that is how we advance.',
-    mission: 'Reach 5,000 members and form 20 Tribe Cities.',
-    missionDetail: 'Every new member strengthens the Empire. Every city that reaches 100 people becomes a Tribe.',
-    missionShort: '5K members + 20 Tribe Cities',
-    reward: ['City Treasuries', 'Local Voting'],
-    closingLine: 'Grow the Settlement. More people, more Tribes. The Empire depends on it.',
-    progressTarget: 5000,
-    progressLabel: 'Members',
+      'The first Metro has qualified. Now we spread — three Metros standing together make a Village.',
+    mission: 'Reach 3 Qualified Metros.',
+    missionDetail: QUALIFY_DETAIL,
+    missionShort: '3 Qualified Metros',
+    reward: ['Village Stage', 'More Metro Treasuries unlocked'],
+    closingLine: 'Grow the Settlement. Three Metros. The Empire depends on it.',
+    qualifiedMetroTarget: 3,
     dialogue: [
-      { threshold: 0, message: 'The Outpost has become a Settlement. Now we must grow our numbers and our geography.' },
-      { threshold: 1000, message: 'One thousand members. The Settlement is taking root.' },
-      { threshold: 2500, message: 'Halfway to our goal. The Tribes are multiplying.' },
-      { threshold: 4000, message: 'Four thousand members. We are close now.' },
-      { threshold: 4800, message: 'Two hundred remain. The Settlement is nearly complete.' },
-      { threshold: 5000, message: 'The Settlement thrives. Prepare the Village.' },
+      { threshold: 1, message: 'One Metro stands. Two more and we become a Village.' },
+      { threshold: 2, message: 'Two Metros strong. One more and the Village rises.' },
+      { threshold: 3, message: 'Three Metros. The Settlement has become a Village.' },
     ],
   },
   village: {
@@ -70,21 +62,17 @@ export const GUIDE_MISSIONS: Record<EmpireCivilizationName, GuideMissionConfig> 
     levelNumber: 3,
     levelLabel: 'Village',
     guideIntro:
-      'The Settlement has grown into a Village. Our people are spreading across the land. We must keep growing — more members, more Tribe Cities — until the Village becomes a Province.',
-    mission: 'Reach 25,000 members and form 30 Tribe Cities.',
-    missionDetail: 'Population and geography are the only measures of our civilization.',
-    missionShort: '25K members + 30 Tribe Cities',
-    reward: ['Family', 'City Leadership and Elections'],
-    closingLine: 'Grow the Village. More people, more Tribes. This is how civilizations rise.',
-    progressTarget: 25000,
-    progressLabel: 'Members',
+      'Three Metros stand together. Our people are spreading across the land. Five Metros make a Province.',
+    mission: 'Reach 5 Qualified Metros.',
+    missionDetail: QUALIFY_DETAIL,
+    missionShort: '5 Qualified Metros',
+    reward: ['Province Stage'],
+    closingLine: 'Grow the Village. Five Metros. This is how civilizations rise.',
+    qualifiedMetroTarget: 5,
     dialogue: [
-      { threshold: 0, message: 'The Settlement has grown into a Village. Our people are spreading across the land.' },
-      { threshold: 5000, message: 'Five thousand members. The Village is finding its voice.' },
-      { threshold: 12000, message: 'Halfway to our goal. The Tribes are growing stronger.' },
-      { threshold: 20000, message: 'Twenty thousand members. We are close now.' },
-      { threshold: 24000, message: 'One thousand remain. The Village is nearly complete.' },
-      { threshold: 25000, message: 'The Village has proven itself. Prepare the Province.' },
+      { threshold: 3, message: 'Three Metros stand together. Two more for the Province.' },
+      { threshold: 4, message: 'Four Metros. The Province is within reach.' },
+      { threshold: 5, message: 'Five Metros. The Village has become a Province.' },
     ],
   },
   province: {
@@ -92,21 +80,17 @@ export const GUIDE_MISSIONS: Record<EmpireCivilizationName, GuideMissionConfig> 
     levelNumber: 4,
     levelLabel: 'Province',
     guideIntro:
-      'The Village has become a Province. We are a regional power now. But we must keep growing our population and our geography to reach the Kingdom.',
-    mission: 'Reach 50,000 members and form 40 Tribe Cities.',
-    missionDetail: 'Every member counts. Every city that reaches 100 people becomes a Tribe.',
-    missionShort: '50K members + 40 Tribe Cities',
-    reward: ['Legacy Program', 'Expanded Treasury Capacity'],
-    closingLine: 'Build the Province. More people, more Tribes. The Kingdom is within reach.',
-    progressTarget: 50000,
-    progressLabel: 'Members',
+      'We are a regional power now. Ten Qualified Metros will raise the Kingdom.',
+    mission: 'Reach 10 Qualified Metros.',
+    missionDetail: QUALIFY_DETAIL,
+    missionShort: '10 Qualified Metros',
+    reward: ['Kingdom Stage'],
+    closingLine: 'Build the Province. Ten Metros. The Kingdom is within reach.',
+    qualifiedMetroTarget: 10,
     dialogue: [
-      { threshold: 0, message: 'The Village has become a Province. We are a regional power now.' },
-      { threshold: 10000, message: 'Ten thousand members. The Province is taking shape.' },
-      { threshold: 25000, message: 'Halfway there. The Tribes are spreading across the land.' },
-      { threshold: 40000, message: 'Forty thousand members. We are nearly there.' },
-      { threshold: 49000, message: 'One thousand remain. The Province is almost complete.' },
-      { threshold: 50000, message: 'The Province stands strong. Prepare the Kingdom.' },
+      { threshold: 5, message: 'The Province stands. Ten Metros will make a Kingdom.' },
+      { threshold: 8, message: 'Eight Metros. We are close now.' },
+      { threshold: 10, message: 'Ten Metros. The Kingdom has risen.' },
     ],
   },
   kingdom: {
@@ -114,21 +98,17 @@ export const GUIDE_MISSIONS: Record<EmpireCivilizationName, GuideMissionConfig> 
     levelNumber: 5,
     levelLabel: 'Kingdom',
     guideIntro:
-      'The Province has risen to a Kingdom. We are a dominant force now. But the Dominion calls — we must reach one hundred thousand members and fifty Tribe Cities.',
-    mission: 'Reach 100,000 members and form 50 Tribe Cities.',
-    missionDetail: 'Population and geography. These are the only measures of our civilization.',
-    missionShort: '100K members + 50 Tribe Cities',
-    reward: ['Empire Council', 'Inter-City Initiatives'],
-    closingLine: 'The Kingdom must grow. One hundred thousand members. Fifty Tribes. Do not stop.',
-    progressTarget: 100000,
-    progressLabel: 'Members',
+      'The Kingdom has risen. The Dominion calls — twenty-five Qualified Metros acting as one.',
+    mission: 'Reach 25 Qualified Metros.',
+    missionDetail: QUALIFY_DETAIL,
+    missionShort: '25 Qualified Metros',
+    reward: ['Dominion Stage'],
+    closingLine: 'The Kingdom must grow. Twenty-five Metros. Do not stop.',
+    qualifiedMetroTarget: 25,
     dialogue: [
-      { threshold: 0, message: 'The Province has risen to a Kingdom. We are a dominant force now.' },
-      { threshold: 20000, message: 'Twenty thousand members. The Kingdom is growing.' },
-      { threshold: 50000, message: 'Halfway to our goal. The Tribes are multiplying.' },
-      { threshold: 80000, message: 'Eighty thousand members. We are close now.' },
-      { threshold: 99000, message: 'One thousand remain. The Kingdom is almost complete.' },
-      { threshold: 100000, message: 'The Kingdom has honored its people. Prepare the Dominion.' },
+      { threshold: 10, message: 'The Kingdom has risen. Twenty-five Metros for the Dominion.' },
+      { threshold: 18, message: 'Eighteen Metros. Keep uniting.' },
+      { threshold: 25, message: 'Twenty-five Metros. The Dominion is complete.' },
     ],
   },
   dominion: {
@@ -136,21 +116,17 @@ export const GUIDE_MISSIONS: Record<EmpireCivilizationName, GuideMissionConfig> 
     levelNumber: 6,
     levelLabel: 'Dominion',
     guideIntro:
-      'The Kingdom has expanded into a Dominion. Now we must unite half a million members and one hundred Tribe Cities. The final mission is upon us.',
-    mission: 'Reach 500,000 members and form 100 Tribe Cities.',
-    missionDetail: 'The Dominion must prove that many cities can act as one.',
-    missionShort: '500K members + 100 Tribe Cities',
-    reward: ['Final Empire Status', 'All approved core systems fully active'],
-    closingLine: 'Unite the Dominion. Half a million members. One hundred Tribes. This is the final mission.',
-    progressTarget: 500000,
-    progressLabel: 'Members',
+      'The Dominion stretches across the land. Fifty Qualified Metros will complete the Empire.',
+    mission: 'Reach 50 Qualified Metros.',
+    missionDetail: QUALIFY_DETAIL,
+    missionShort: '50 Qualified Metros',
+    reward: ['Final Empire Status'],
+    closingLine: 'Unite the Dominion. Fifty Metros. This is the final mission.',
+    qualifiedMetroTarget: 50,
     dialogue: [
-      { threshold: 0, message: 'The Kingdom has expanded into a Dominion. Now we must unite half a million members.' },
-      { threshold: 100000, message: 'One hundred thousand. The Dominion is growing. Keep uniting.' },
-      { threshold: 250000, message: 'Halfway to half a million. The Empire is within reach.' },
-      { threshold: 400000, message: 'Four hundred thousand. Do not lose momentum now.' },
-      { threshold: 490000, message: 'Ten thousand remain. One final push.' },
-      { threshold: 500000, message: 'The Dominion is complete. The Empire has risen.' },
+      { threshold: 25, message: 'The Dominion stands. Fifty Metros will complete the Empire.' },
+      { threshold: 40, message: 'Forty Metros. One final push.' },
+      { threshold: 50, message: 'Fifty Metros. The Empire has risen.' },
     ],
   },
   empire: {
@@ -158,32 +134,15 @@ export const GUIDE_MISSIONS: Record<EmpireCivilizationName, GuideMissionConfig> 
     levelNumber: 7,
     levelLabel: 'Empire',
     guideIntro:
-      'The Empire has risen. One million members. Two hundred Tribe Cities. One civilization. We have achieved what we set out to do. Now we build its legacy.',
-    mission: 'Continue growing the population and expanding Tribe Cities across the land.',
+      'The Empire has risen. Fifty Metros. One civilization. Now we build its legacy.',
+    mission: 'Continue growing every Metro and qualifying new ones.',
     missionDetail: 'The civilization ladder is complete. The Empire continues to evolve.',
     missionShort: 'Civilization achieved',
-    reward: ['Final Civilization Status', 'All approved core systems fully active'],
+    reward: ['Final Civilization Status'],
     closingLine: 'The Empire has risen. Now we build its legacy.',
-    progressTarget: 1000000,
-    progressLabel: 'Members',
+    qualifiedMetroTarget: 50,
     dialogue: [
-      { threshold: 0, message: 'The Empire has risen. One million members. Two hundred Tribe Cities. One civilization.' },
-      { threshold: 1000000, message: 'The Empire stands eternal. Continue building the legacy.' },
+      { threshold: 50, message: 'The Empire stands. Continue building the legacy.' },
     ],
   },
 };
-
-export function getGuideDialogue(
-  level: EmpireCivilizationName,
-  currentProgress: number,
-): string {
-  const config = GUIDE_MISSIONS[level];
-  if (!config) return '';
-  let message = config.dialogue[0]?.message ?? '';
-  for (const tier of config.dialogue) {
-    if (currentProgress >= tier.threshold) {
-      message = tier.message;
-    }
-  }
-  return message;
-}

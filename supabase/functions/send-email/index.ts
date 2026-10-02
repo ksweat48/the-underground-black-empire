@@ -216,7 +216,7 @@ const EMAIL_TYPES = [
   "listing_removed",
   "voting_window_opened",
   "vote_confirmation",
-  "city_upgrade",
+  "metro_capacity_unlocked",
   "empire_upgrade",
   "quest_notification",
   "leadership_nomination",
@@ -235,8 +235,8 @@ const SUBJECTS: Record<string, (p: EmailParams) => string> = {
   listing_removed: () => "Your listing has been removed",
   voting_window_opened: () => "Voting is now open",
   vote_confirmation: () => "Your vote has been recorded",
-  city_upgrade: () => "Your city has leveled up",
-  empire_upgrade: () => "The Empire has reached a new civilization level",
+  metro_capacity_unlocked: () => "Your Metro unlocked new Treasury capacity",
+  empire_upgrade: () => "The Empire has reached a new stage",
   quest_notification: () => "New quest available",
   leadership_nomination: () => "You have been nominated for a leadership role",
   leadership_election: () => "Leadership election is now open",
@@ -337,22 +337,22 @@ const BUILDERS: Record<string, (p: EmailParams) => EmailParams> = {
     buttonUrl: "https://theundergroundblackempire.com/vote",
     secondaryText: "You can change your vote at any time before the window closes.",
   }),
-  city_upgrade: () => ({
+  metro_capacity_unlocked: () => ({
     firstName: "",
-    emailTitle: "City Upgrade",
+    emailTitle: "Metro Treasury Capacity Unlocked",
     message:
-      "Congratulations! Your city has reached a new tier.\n\n" +
-      "This means more influence, more capabilities, and a stronger position in the Empire.\n\n" +
-      "Keep growing your population and contributing to unlock even higher tiers.",
-    buttonText: "View Your City",
-    buttonUrl: "https://theundergroundblackempire.com/empire",
-    secondaryText: "The next tier brings new opportunities for your community.",
+      "Your Metro has grown enough to unlock a higher Treasury capacity.\n\n" +
+      "This unlock is permanent. Reserved funds now move into Available up to the new limit, ready for approved local initiatives.\n\n" +
+      "Keep inviting members to reach the next level.",
+    buttonText: "View Metro Treasury",
+    buttonUrl: "https://theundergroundblackempire.com/treasury",
+    secondaryText: "Capacity only goes up. It never relocks.",
   }),
   empire_upgrade: () => ({
     firstName: "",
-    emailTitle: "Empire Civilization Upgrade",
+    emailTitle: "New Empire Stage Reached",
     message:
-      "The Underground Black Empire has reached a new civilization level!\n\n" +
+      "Another Metro has qualified, and The Underground Black Empire has reached a new stage!\n\n" +
       "This is a collective achievement made possible by every member who has built, contributed, and voted.\n\n" +
       "New features and capabilities are now unlocked for all members.",
     buttonText: "View Empire Dashboard",
@@ -426,7 +426,7 @@ const ADMIN_ONLY_TYPES = [
   "listing_needs_changes",
   "listing_removed",
   "voting_window_opened",
-  "city_upgrade",
+  "metro_capacity_unlocked",
   "empire_upgrade",
   "quest_notification",
   "leadership_nomination",

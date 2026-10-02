@@ -90,7 +90,7 @@ export function MarketPage() {
       const data = await fetchListings({
         cityId: scope === 'local' ? cityInfo.cityId : undefined,
         metroCityIds: scope === 'local' ? metroIds : undefined,
-        category,
+        category: category === 'organizations' ? 'all' : category,
         search,
         limit: 50,
         currentUserId: userId,

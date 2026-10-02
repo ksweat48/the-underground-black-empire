@@ -24,7 +24,7 @@ import {
   fetchPublicMemberProfile,
   type PublicMemberProfile,
 } from '@/domains/founder-campaign/services';
-import { getLevelFromInfluence, getCityTier } from '@/config/progression-rules';
+import { getLevelFromInfluence } from '@/config/progression-rules';
 import { fetchMyListings, fetchListingUpdates, type MarketListing, type ListingUpdate } from '@/domains/market/services';
 import {
   ETHNIC_IDENTITY_LABELS,
@@ -64,7 +64,7 @@ interface Achievement {
   description: string;
 }
 
-function getAchievements(profile: PublicMemberProfile, cityTier: string | null): Achievement[] {
+function getAchievements(profile: PublicMemberProfile): Achievement[] {
   return [
     { id: 'first_member', label: 'Pioneer', icon: Trophy, unlocked: !!profile.founder_number, description: 'One of the first 1,000 members' },
     { id: 'first_referral', label: 'First Referral', icon: Share2, unlocked: profile.referral_count > 0, description: 'Invited their first member' },
@@ -72,7 +72,6 @@ function getAchievements(profile: PublicMemberProfile, cityTier: string | null):
     { id: 'inf_100', label: '100 Influence', icon: TrendingUp, unlocked: profile.influence >= 100, description: 'Earned 100 Influence' },
     { id: 'inf_500', label: '500 Influence', icon: TrendingUp, unlocked: profile.influence >= 500, description: 'Earned 500 Influence' },
     { id: 'inf_1000', label: '1000 Influence', icon: Sparkles, unlocked: profile.influence >= 1000, description: 'Earned 1000 Influence' },
-    { id: 'tribe', label: 'Tribe Member', icon: Users, unlocked: cityTier !== null && cityTier !== 'group', description: 'City reached Tribe status' },
     { id: 'five_referrals', label: 'Recruiter', icon: Users, unlocked: profile.referral_count >= 5, description: '5 referrals' },
   ];
 }
@@ -171,11 +170,10 @@ function ProfileContent({
   const displayName = profile.display_name ?? 'Member';
   const initials = getInitials(displayName);
   const founderLevel = getLevelFromInfluence(profile.influence);
-  const cityTier = profile.city_population_count ? getCityTier(profile.city_population_count) : null;
   const isFounder = profile.founder_number !== null;
   const isOwnProfile = currentUserId === profile.id;
 
-  const achievements = getAchievements(profile, profile.city_tier);
+  const achievements = getAchievements(profile);
   const unlockedBadges = achievements.filter((a) => a.unlocked);
 
   const showNominate =
@@ -296,11 +294,6 @@ function ProfileContent({
                 {profile.state && <span className="text-gray-500">, {profile.state}</span>}
               </p>
             </div>
-            {cityTier && (
-              <span className="text-[10px] font-bold uppercase tracking-wider text-plum-600">
-                {cityTier}
-              </span>
-            )}
           </div>
         </EmpireFrame>
       )}

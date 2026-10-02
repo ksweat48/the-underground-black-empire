@@ -156,34 +156,34 @@ export const EMAIL_DEFINITIONS: Record<EmailType, EmailDefinition> = {
     }),
   },
 
-  city_upgrade: {
-    type: 'city_upgrade',
-    label: 'City Upgrade',
-    subject: () => 'Your city has leveled up',
-    previewText: () => 'Congratulations! Your city reached a new tier.',
+  metro_capacity_unlocked: {
+    type: 'metro_capacity_unlocked',
+    label: 'Metro Capacity Unlocked',
+    subject: () => 'Your Metro unlocked new Treasury capacity',
+    previewText: () => 'A permanent Treasury milestone for your Metro.',
     build: (p) => ({
       firstName: p.firstName,
-      emailTitle: 'City Upgrade',
+      emailTitle: 'Metro Treasury Capacity Unlocked',
       message:
-        `Congratulations! Your city has reached a new tier.\n\n` +
-        `This means more influence, more capabilities, and a stronger position in the Empire.\n\n` +
-        `Keep growing your population and contributing to unlock even higher tiers.`,
-      buttonText: 'View Your City',
-      buttonUrl: 'https://theundergroundblackempire.com/empire',
-      secondaryText: 'The next tier brings new opportunities for your community.',
+        `Your Metro has grown enough to unlock a higher Treasury capacity.\n\n` +
+        `This unlock is permanent. Reserved funds now move into Available up to the new limit, ready for approved local initiatives.\n\n` +
+        `Keep inviting members to reach the next level.`,
+      buttonText: 'View Metro Treasury',
+      buttonUrl: 'https://theundergroundblackempire.com/treasury',
+      secondaryText: 'Capacity only goes up. It never relocks.',
     }),
   },
 
   empire_upgrade: {
     type: 'empire_upgrade',
     label: 'Empire Upgrade',
-    subject: () => 'The Empire has reached a new civilization level',
+    subject: () => 'The Empire has reached a new stage',
     previewText: () => 'A new era for the Empire has begun.',
     build: (p) => ({
       firstName: p.firstName,
-      emailTitle: 'Empire Civilization Upgrade',
+      emailTitle: 'New Empire Stage Reached',
       message:
-        `The Underground Black Empire has reached a new civilization level!\n\n` +
+        `Another Metro has qualified, and The Underground Black Empire has reached a new stage!\n\n` +
         `This is a collective achievement made possible by every member who has built, contributed, and voted.\n\n` +
         `New features and capabilities are now unlocked for all members.`,
       buttonText: 'View Empire Dashboard',
@@ -316,7 +316,7 @@ export const SAMPLE_PARAMS: Record<EmailType, Partial<EmailParams>> = {
   listing_removed: { firstName: 'Marcus', secondaryText: 'Reason: Listing did not meet community safety guidelines.' },
   voting_window_opened: { firstName: 'Marcus' },
   vote_confirmation: { firstName: 'Marcus' },
-  city_upgrade: { firstName: 'Marcus' },
+  metro_capacity_unlocked: { firstName: 'Marcus' },
   empire_upgrade: { firstName: 'Marcus' },
   quest_notification: { firstName: 'Marcus', secondaryText: 'Quest: Recruit 3 new members. Reward: 50 Influence. Deadline: 7 days.' },
   leadership_nomination: { firstName: 'Marcus' },

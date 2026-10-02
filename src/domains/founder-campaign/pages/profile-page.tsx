@@ -34,11 +34,9 @@ import { MemberProfileModal } from '@/shared/components/member-profile-modal';
 import { useAuth } from '@/domains/identity/auth-context';
 import { supabase } from '@/shared/supabase-client';
 import {
-  getCityTier,
   getLevelFromInfluence,
   getLevelThreshold,
   getVotingPowerBreakdown,
-  type CityTierName,
 } from '@/config/progression-rules';
 import {
   fetchLeaderboard,
@@ -93,7 +91,7 @@ const STATUS_TIERS = [
 ] as const;
 
 function getStatusTitle(level: number): string {
-  let title = STATUS_TIERS[0].title;
+  let title: string = STATUS_TIERS[0].title;
   for (const tier of STATUS_TIERS) {
     if (level >= tier.minLevel) title = tier.title;
   }
@@ -115,7 +113,6 @@ interface MemberProfile {
   member_number: number | null;
   city_name: string | null;
   city_population_count: number | null;
-  city_tier: string | null;
   state: string | null;
   influence: number;
   referral_count: number;
@@ -363,7 +360,6 @@ export function ProfilePage() {
     );
   }
 
-  const cityTier: CityTierName = member.city_population_count ? getCityTier(member.city_population_count) : 'group';
   const founderLevel = getLevelFromInfluence(influence);
   const initials = getInitials(member.display_name || 'Member');
   const referralLink = `${window.location.origin}/auth/sign-up?ref=${referralCode || 'PENDING'}`;
@@ -381,7 +377,7 @@ export function ProfilePage() {
   const membershipTier: MembershipTierId = myMembership?.membership_tier ?? 'white';
   const cardLabel = CARD_LABELS[membershipTier];
 
-  const achievements = getAchievements(member, cityTier);
+  const achievements = getAchievements(member);
   const unlockedBadges = achievements.filter((a) => a.unlocked).length;
 
   const myRank = leaderboardEntries.findIndex((e) => e.member_id === memberId);
@@ -1584,7 +1580,7 @@ interface Achievement {
   description: string;
 }
 
-function getAchievements(member: MemberProfile, cityTier: CityTierName): Achievement[] {
+function getAchievements(member: MemberProfile): Achievement[] {
   return [
     { id: 'first_member', label: 'Pioneer', icon: Trophy, unlocked: !!member.founder_number, description: 'One of the first 1,000 members' },
     { id: 'first_referral', label: 'First Referral', icon: Share2, unlocked: member.referral_count > 0, description: 'Invited your first member' },
@@ -1592,7 +1588,6 @@ function getAchievements(member: MemberProfile, cityTier: CityTierName): Achieve
     { id: 'inf_100', label: '100 Influence', icon: TrendingUp, unlocked: member.influence >= 100, description: 'Earned 100 Influence' },
     { id: 'inf_500', label: '500 Influence', icon: TrendingUp, unlocked: member.influence >= 500, description: 'Earned 500 Influence' },
     { id: 'inf_1000', label: '1000 Influence', icon: Sparkles, unlocked: member.influence >= 1000, description: 'Earned 1000 Influence' },
-    { id: 'tribe', label: 'Tribe Member', icon: Users, unlocked: cityTier !== 'group', description: 'City reached Tribe status' },
     { id: 'five_referrals', label: 'Recruiter', icon: Users, unlocked: member.referral_count >= 5, description: '5 referrals' },
   ];
 }
@@ -1612,7 +1607,7 @@ async function fetchMemberProfile(memberId: string): Promise<MemberProfile | nul
     supabase.from('influence_ledger').select('amount').eq('member_id', memberId),
     supabase.from('referrals').select('status').eq('referring_member_id', memberId),
     member.city_id
-      ? supabase.from('cities').select('name, tier, population_count, state').eq('id', member.city_id).maybeSingle()
+      ? supabase.from('cities').select('name, population_count, state').eq('id', member.city_id).maybeSingle()
       : Promise.resolve({ data: null, error: null }),
   ]);
 
@@ -1629,7 +1624,6 @@ async function fetchMemberProfile(memberId: string): Promise<MemberProfile | nul
     member_number: (member as { member_number?: number | null }).member_number ?? null,
     city_name: cityData?.name ?? null,
     city_population_count: cityData?.population_count ?? null,
-    city_tier: cityData?.tier ?? null,
     state: cityData?.state ?? null,
     influence: totalInfluence,
     gender: (member as { gender?: GenderValue | null }).gender ?? null,

@@ -28,17 +28,12 @@ import { ErrorBanner } from '@/shared/components/error-banner';
 import { EngagementBar } from '@/shared/components/engagement-bar';
 
 import { useAuth } from '@/domains/identity/auth-context';
-import {
-  PROGRESSION_RULES,
-  getCityTier,
-  getCityTierLevel,
-  getEmpireCivilizationLevel,
-  type CityTierName,
-} from '@/config/progression-rules';
+import { useNavigate } from 'react-router-dom';
+import { type LeadingMetro } from '@/shared/components/guide-mission-card';
+import { fetchEmpireGrowth, fetchMetroTreasury, formatCents } from '@/domains/treasury/services';
 import { supabase } from '@/shared/supabase-client';
 import {
   fetchMemberDashboard,
-  fetchCities,
   fetchEmpireProgress,
   fetchCityWithMetro,
   fetchEmpireFeed,
@@ -133,20 +128,6 @@ const FEED_CATEGORIES: Record<string, FeedCategoryConfig> = {
     ringColor: 'bg-empire-success/10 border-empire-success/30',
     labelColor: 'text-empire-success',
   },
-  city_reached_tribe: {
-    label: 'City Milestone',
-    icon: Building2,
-    iconColor: 'text-empire-info',
-    ringColor: 'bg-empire-info/10 border-empire-info/30',
-    labelColor: 'text-empire-info',
-  },
-  city_tier_changed: {
-    label: 'City Milestone',
-    icon: Megaphone,
-    iconColor: 'text-empire-info',
-    ringColor: 'bg-empire-info/10 border-empire-info/30',
-    labelColor: 'text-empire-info',
-  },
   founder_number_assigned: {
     label: 'New Member',
     icon: Users,
@@ -188,7 +169,10 @@ export function EmpireDashboardPage() {
   const { session, sessionVersion } = useAuth();
   const [data, setData] = useState<MemberDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [empire, setEmpire] = useState<EmpireProgressData>({ tribe_city_count: 0, total_population: 0, total_cities: 0, total_states: 0 });
+  const [empire, setEmpire] = useState<EmpireProgressData>({ highest_stage: 'outpost', qualified_metro_count: 0, total_population: 0, total_cities: 0, total_states: 0 });
+  const [leadingMetro, setLeadingMetro] = useState<LeadingMetro | null>(null);
+  const [treasuryAvailable, setTreasuryAvailable] = useState<number | null>(null);
+  const navigate = useNavigate();
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
   const [showCityDrawer, setShowCityDrawer] = useState(false);
@@ -265,12 +249,24 @@ export function EmpireDashboardPage() {
   useEffect(() => { loadDashboard(); }, [loadDashboard]);
 
   useEffect(() => {
-    Promise.all([fetchCities(), fetchEmpireProgress()])
-      .then(([, progress]) => {
-        setEmpire(progress);
+    fetchEmpireProgress().then(setEmpire).catch(() => {});
+    fetchEmpireGrowth()
+      .then((growth) => {
+        const pending = growth.metros.filter((m) => !m.qualified);
+        const pool = pending.length > 0 ? pending : growth.metros;
+        const top = pool.reduce<typeof pool[number] | null>((best, m) => (!best || m.population > best.population ? m : best), null);
+        setLeadingMetro(top ? { name: top.name, population: top.population } : null);
       })
-      .catch(() => {});
+      .catch(() => setLeadingMetro(null));
   }, [sessionVersion]);
+
+  useEffect(() => {
+    const metroId = metroData?.metroId;
+    if (!metroId) { setTreasuryAvailable(null); return; }
+    fetchMetroTreasury(metroId)
+      .then((t) => setTreasuryAvailable(t ? t.available_cents : null))
+      .catch(() => setTreasuryAvailable(null));
+  }, [metroData?.metroId, sessionVersion]);
 
   useEffect(() => {
     fetchMapData()
@@ -429,10 +425,6 @@ export function EmpireDashboardPage() {
     );
   }
 
-  const civLevel = getEmpireCivilizationLevel(empire.tribe_city_count, empire.total_population);
-  const cityTier = data?.city_population_count ? getCityTier(data.city_population_count) : 'group';
-  const cityTierLevel = getCityTierLevel(cityTier);
-
   const tabs: DashboardTab[] = ['hq', 'local', 'empire'];
   const activeTabIndex = tabs.indexOf(activeTab);
 
@@ -488,9 +480,9 @@ export function EmpireDashboardPage() {
                             label: 'Mission',
                             node: (
                               <GuideMissionCard
-                                civLevel={civLevel}
-                                population={empire.total_population}
-                                tribeCityCount={empire.tribe_city_count}
+                                stage={empire.highest_stage}
+                                qualifiedMetroCount={empire.qualified_metro_count}
+                                leadingMetro={leadingMetro}
                               />
                             ),
                           },
@@ -513,9 +505,9 @@ export function EmpireDashboardPage() {
                       />
                       <StatTile
                         icon={Landmark}
-                        label="Treasury"
-                        value="Locked"
-                        locked
+                        label="Metro Treasury"
+                        value={treasuryAvailable != null ? formatCents(treasuryAvailable) : 'View'}
+                        onClick={metroData?.metroId ? () => navigate('/treasury') : undefined}
                       />
                     </div>
                   </div>
@@ -524,10 +516,8 @@ export function EmpireDashboardPage() {
                   <div className="hidden lg:block">
                     <LocationIntelligenceCards
                       metro={metroData}
-                      cityName={data?.city_name}
+                      cityName={data?.city_name ?? null}
                       cityPopulation={data?.city_population_count ?? 0}
-                      cityTier={cityTier}
-                      cityTierLevel={cityTierLevel}
                       onOpen={() => setShowCityDrawer(true)}
                     />
                   </div>
@@ -537,10 +527,8 @@ export function EmpireDashboardPage() {
                 <div className="lg:hidden">
                   <LocationIntelligenceCards
                     metro={metroData}
-                    cityName={data?.city_name}
+                    cityName={data?.city_name ?? null}
                     cityPopulation={data?.city_population_count ?? 0}
-                    cityTier={cityTier}
-                    cityTierLevel={cityTierLevel}
                     onOpen={() => setShowCityDrawer(true)}
                   />
                 </div>
@@ -552,8 +540,6 @@ export function EmpireDashboardPage() {
                   {data?.city_name && (
                     <CityCard
                       cityName={data.city_name}
-                      cityTier={cityTier}
-                      cityTierLevel={cityTierLevel}
                       populationCount={data?.city_population_count ?? 0}
                       onClick={() => setShowCityDrawer(true)}
                     />
@@ -594,7 +580,7 @@ export function EmpireDashboardPage() {
               <div>
                 <span className="badge-gold text-xs">
                   <EmpireEmblem variant="dark" className="w-3 h-3" />
-                  {PROGRESSION_RULES.city[cityTier].label} · City Level {cityTierLevel}
+                  {metroData ? `Contributes to ${metroData.name}` : 'Your City'}
                 </span>
               </div>
               <div className="text-right">
@@ -705,15 +691,11 @@ function LocationIntelligenceCards({
   metro,
   cityName,
   cityPopulation,
-  cityTier,
-  cityTierLevel,
   onOpen,
 }: {
   metro: { name: string; rank: number; populationCount: number; cityCount: number; metroId: string | null } | null;
   cityName: string | null;
   cityPopulation: number;
-  cityTier: CityTierName;
-  cityTierLevel: number;
   onOpen: () => void;
 }) {
   return (
@@ -760,7 +742,7 @@ function LocationIntelligenceCards({
               <p className="text-[9px] font-semibold text-empire-gold uppercase tracking-wider">Your City</p>
               <p className="text-sm font-display font-bold text-empire-white truncate">{cityName}</p>
               <p className="text-[10px] text-empire-text-muted mt-0.5">
-                {PROGRESSION_RULES.city[cityTier].label} · Level {cityTierLevel}
+                {metro ? `Part of ${metro.name}` : 'Home city'}
               </p>
             </div>
           </div>
@@ -786,14 +768,16 @@ function StatTile({
   label,
   value,
   locked,
+  onClick,
 }: {
   icon: typeof Users;
   label: string;
   value: string;
   locked?: boolean;
+  onClick?: () => void;
 }) {
-  return (
-    <div className="frame-utility p-2.5 sm:p-3 text-center">
+  const content = (
+    <>
       <Icon className={cn('w-4 h-4 mx-auto mb-1', locked ? 'text-empire-text-muted' : 'text-empire-gold')} />
       <p className={cn(
         'font-display font-bold tabular-nums leading-tight',
@@ -802,22 +786,29 @@ function StatTile({
         {value}
       </p>
       <p className="text-[8px] sm:text-[9px] text-empire-text-muted uppercase tracking-wider mt-0.5">{label}</p>
-    </div>
+    </>
   );
+  if (onClick) {
+    return (
+      <button
+        onClick={onClick}
+        className="frame-utility p-2.5 sm:p-3 text-center w-full transition-all duration-200 hover:border-plum-300/50 hover:-translate-y-0.5 active:scale-[0.98]"
+      >
+        {content}
+      </button>
+    );
+  }
+  return <div className="frame-utility p-2.5 sm:p-3 text-center">{content}</div>;
 }
 
 // ==================== City Card ====================
 
 function CityCard({
   cityName,
-  cityTier,
-  cityTierLevel,
   populationCount,
   onClick,
 }: {
   cityName: string;
-  cityTier: CityTierName;
-  cityTierLevel: number;
   populationCount: number;
   onClick: () => void;
 }) {
@@ -832,14 +823,12 @@ function CityCard({
         </div>
         <div className="min-w-0">
           <p className="text-base font-display font-semibold text-ink-100 truncate">{cityName}</p>
-          <p className="text-xs text-ink-400 mt-0.5">
-            {PROGRESSION_RULES.city[cityTier].label} · City Level {cityTierLevel}
-          </p>
+          <p className="text-xs text-ink-400 mt-0.5">Your city</p>
         </div>
       </div>
       <div className="text-right shrink-0">
         <p className="text-xl font-display font-bold text-ink-100 tabular-nums">
-          {populationCount}/100
+          {populationCount.toLocaleString()}
         </p>
         <p className="text-[10px] text-ink-500">population</p>
       </div>

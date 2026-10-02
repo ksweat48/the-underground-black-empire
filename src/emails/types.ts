@@ -8,7 +8,7 @@ export type EmailType =
   | 'listing_removed'
   | 'voting_window_opened'
   | 'vote_confirmation'
-  | 'city_upgrade'
+  | 'metro_capacity_unlocked'
   | 'empire_upgrade'
   | 'quest_notification'
   | 'leadership_nomination'

@@ -12,7 +12,7 @@ export interface WhitePaperBlock {
   heading?: string;
   bullets?: string[];
   paragraphs?: string[];
-  /** Highlighted callout (e.g. the 40/30/30 split). */
+  /** Highlighted callout (e.g. the treasury split). */
   highlight?: boolean;
 }
 
@@ -128,20 +128,28 @@ export const whitePaperSections: WhitePaperSection[] = [
     number: '5',
     title: 'Where Does the Money Go?',
     paragraphs: [
-      'Eligible revenue designated under the Empire Treasury system is divided into three major areas:',
+      'Eligible revenue designated under the Empire Treasury system is divided into four areas:',
     ],
     blocks: [
       {
-        heading: '40% — City Treasuries',
+        heading: '40% — Metro Treasuries',
         paragraphs: [
-          'Money stays connected to the communities where members participate. City Treasury funds are used to support qualified local initiatives.',
+          'Money stays connected to the communities where members participate. Each city\'s share pools into its Metro Treasury, and the Empire always shows exactly how much each city contributed.',
+          'How much a Metro can spend is set by its own membership: nothing until it reaches 100 active members, then $5,000, $10,000, $25,000, $50,000 and $100,000 at 100, 250, 500, 1,000 and 2,500 members, with no cap at 5,000. Funds above that limit are held as Reserved. Once a limit is unlocked it is permanent and never goes back down.',
         ],
         highlight: true,
       },
       {
-        heading: '30% — Empire Treasury',
+        heading: '20% — Empire Treasury',
         paragraphs: [
-          'The Empire Treasury supports larger initiatives that may benefit multiple cities or the broader Empire.',
+          'The Empire Treasury supports larger initiatives that may benefit multiple Metros or the broader Empire.',
+        ],
+        highlight: true,
+      },
+      {
+        heading: '10% — Family & Legacy',
+        paragraphs: [
+          'Family & Legacy funds support members and their families through programs designed to build long-term stability and generational wealth.',
         ],
         highlight: true,
       },
@@ -170,18 +178,18 @@ export const whitePaperSections: WhitePaperSection[] = [
       {
         highlight: true,
         paragraphs: [
-          'For a simplified $10 example: $4 → City Treasury · $3 → Empire Treasury · $3 → Empire Operations',
+          'For a simplified $10 example: $4 → Metro Treasury · $2 → Empire Treasury · $1 → Family & Legacy · $3 → Empire Operations',
         ],
       },
       {
         paragraphs: [
-          'If the member belongs to Atlanta, the City Treasury portion is credited to Atlanta\'s Treasury. Thousands of individual transactions can gradually create meaningful community resources.',
+          'If the member lives in Kennesaw, the Metro Treasury portion is credited to the Atlanta Metro Treasury and recorded as a Kennesaw contribution. Thousands of individual transactions can gradually create meaningful community resources.',
         ],
       },
       {
         highlight: true,
         paragraphs: [
-          'For example, 10,000 members generating $10 in eligible revenue ($100,000 total) could result in approximately $40,000 City Treasuries, $30,000 Empire Treasury, and $30,000 Operations.',
+          'For example, 10,000 members generating $10 in eligible revenue ($100,000 total) could result in approximately $40,000 Metro Treasuries, $30,000 Empire Treasury, and $30,000 Operations.',
         ],
       },
       {
@@ -195,7 +203,7 @@ export const whitePaperSections: WhitePaperSection[] = [
     title: 'Who Holds the Money?',
     paragraphs: [
       'The legal organization operating The Underground Black Empire holds and administers Empire funds. Empire money must never be held in the personal bank account of a founder, leader, administrator, or community member.',
-      'Organizational funds are held through authorized financial accounts. As the Empire grows, separate accounts or equivalent financial controls may be used for operating funds, City Treasury funds, Empire Treasury funds, charitable funds, and other restricted programs.',
+      'Organizational funds are held through authorized financial accounts. As the Empire grows, separate accounts or equivalent financial controls may be used for operating funds, Metro Treasury funds, Empire Treasury funds, charitable funds, and other restricted programs.',
       'The financial system must maintain clear records showing how much money belongs to each designated category.',
     ],
   },
@@ -289,7 +297,7 @@ export const whitePaperSections: WhitePaperSection[] = [
     blocks: [
       {
         paragraphs: [
-          'For example, Atlanta may have $75,000 available in its City Treasury. Several qualified initiatives may be presented to members.',
+          'For example, the Atlanta Metro may have $75,000 available in its Metro Treasury. Several qualified initiatives may be presented to members.',
         ],
       },
       {
@@ -494,12 +502,12 @@ export const whitePaperSections: WhitePaperSection[] = [
   {
     id: 'city-vs-empire',
     number: '18',
-    title: 'City Treasury vs. Empire Treasury',
+    title: 'Metro Treasury vs. Empire Treasury',
     paragraphs: ['The two Treasuries serve different purposes.'],
     blocks: [
       {
-        heading: 'City Treasury',
-        paragraphs: ['Designed primarily for local priorities. Examples:'],
+        heading: 'Metro Treasury',
+        paragraphs: ['Designed primarily for local priorities across the cities that make up a Metro. Examples:'],
         bullets: [
           'Youth programs',
           'Business development',
@@ -611,7 +619,7 @@ export const whitePaperSections: WhitePaperSection[] = [
     blocks: [
       {
         paragraphs: [
-          'Example: An Empire official owns a company seeking $30,000 from a City Treasury. That official should not secretly participate in approving their own funding.',
+          'Example: An Empire official owns a company seeking $30,000 from a Metro Treasury. That official should not secretly participate in approving their own funding.',
         ],
       },
       {
@@ -736,7 +744,7 @@ export const whitePaperSections: WhitePaperSection[] = [
       {
         highlight: true,
         paragraphs: [
-          'Member Participates → Money Enters the Empire → Eligible Revenue Is Divided (40% City Treasury · 30% Empire Treasury · 30% Operations) → Treasury Balances Are Recorded → Qualified Initiatives Are Submitted → Initiatives Are Verified → Members Participate and Vote → Winning Initiatives Receive Final Compliance Review → Authorized Officials Approve Release → Funds Are Distributed → Recipients Report Results → Members See What Was Accomplished → The City and Empire Continue to Grow',
+          'Member Participates → Money Enters the Empire → Eligible Revenue Is Divided (40% Metro Treasury · 20% Empire Treasury · 10% Family & Legacy · 30% Operations) → Treasury Balances Are Recorded → Qualified Initiatives Are Submitted → Initiatives Are Verified → Members Participate and Vote → Winning Initiatives Receive Final Compliance Review → Authorized Officials Approve Release → Funds Are Distributed → Recipients Report Results → Members See What Was Accomplished → The Metro and Empire Continue to Grow',
         ],
       },
     ],

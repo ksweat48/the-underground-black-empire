@@ -1,11 +1,11 @@
 import { supabase } from '@/shared/supabase-client';
+import { isEmpireStageName, type EmpireStageName } from '@/config/progression-rules';
 
 export interface CityWithProgress {
   id: string;
   name: string;
   slug: string;
   state: string;
-  tier: string;
   population_count: number;
   metro_id: string | null;
   metro_name: string | null;
@@ -24,7 +24,6 @@ export interface CitySearchResult {
   state: string;
   slug: string;
   population_count: number;
-  tier: string;
   metro_name: string | null;
   metro_id: string | null;
 }
@@ -35,7 +34,6 @@ export interface CityWithMetro {
   state: string;
   slug: string;
   population_count: number;
-  tier: string;
   metro_id: string | null;
   metro_name: string | null;
   metro_population_count: number;
@@ -44,7 +42,8 @@ export interface CityWithMetro {
 }
 
 export interface EmpireProgressData {
-  tribe_city_count: number;
+  highest_stage: EmpireStageName;
+  qualified_metro_count: number;
   total_population: number;
   total_cities: number;
   total_states: number;
@@ -70,7 +69,6 @@ export async function fetchCities(): Promise<CityWithProgress[]> {
       name,
       slug,
       state,
-      tier,
       population_count,
       metro_id,
       canonical_status,
@@ -87,7 +85,6 @@ export async function fetchCities(): Promise<CityWithProgress[]> {
       name: c.name,
       slug: c.slug,
       state: c.state,
-      tier: c.tier,
       population_count: c.population_count,
       metro_id: c.metro_id,
       metro_name: metro?.name ?? null,
@@ -121,7 +118,6 @@ export async function searchCitiesInState(
         state,
         slug,
         population_count,
-        tier,
         metro_id,
         metro:metro_id ( name )
       `)
@@ -135,7 +131,7 @@ export async function searchCitiesInState(
       const metro = (Array.isArray(c.metro) ? c.metro[0] : c.metro) as { name: string } | null;
       return {
         id: c.id, name: c.name, state: c.state, slug: c.slug,
-        population_count: c.population_count, tier: c.tier,
+        population_count: c.population_count,
         metro_name: metro?.name ?? null, metro_id: c.metro_id,
       } as CitySearchResult;
     });
@@ -149,7 +145,6 @@ export async function searchCitiesInState(
       state,
       slug,
       population_count,
-      tier,
       metro_id,
       metro:metro_id ( name )
     `)
@@ -165,7 +160,7 @@ export async function searchCitiesInState(
     const metro = (Array.isArray(c.metro) ? c.metro[0] : c.metro) as { name: string } | null;
     return {
       id: c.id, name: c.name, state: c.state, slug: c.slug,
-      population_count: c.population_count, tier: c.tier,
+      population_count: c.population_count,
       metro_name: metro?.name ?? null, metro_id: c.metro_id,
     } as CitySearchResult;
   });
@@ -180,7 +175,6 @@ export async function searchCitiesInState(
       state,
       slug,
       population_count,
-      tier,
       metro_id,
       metro:metro_id ( name )
     `)
@@ -198,7 +192,7 @@ export async function searchCitiesInState(
         const metro = (Array.isArray(c.metro) ? c.metro[0] : c.metro) as { name: string } | null;
         startsWith.push({
           id: c.id, name: c.name, state: c.state, slug: c.slug,
-          population_count: c.population_count, tier: c.tier,
+          population_count: c.population_count,
           metro_name: metro?.name ?? null, metro_id: c.metro_id,
         } as CitySearchResult);
       }
@@ -217,7 +211,6 @@ export async function fetchCityWithMetro(cityId: string): Promise<CityWithMetro 
       state,
       slug,
       population_count,
-      tier,
       metro_id,
       metro:metro_id ( name )
     `)
@@ -259,7 +252,6 @@ export async function fetchCityWithMetro(cityId: string): Promise<CityWithMetro 
     state: data.state,
     slug: data.slug,
     population_count: data.population_count,
-    tier: data.tier,
     metro_id: data.metro_id,
     metro_name: metro?.name ?? null,
     metro_population_count: metroPopulationCount,
@@ -269,33 +261,28 @@ export async function fetchCityWithMetro(cityId: string): Promise<CityWithMetro 
 }
 
 export async function fetchEmpireProgress(): Promise<EmpireProgressData> {
-  const [progressRes, statsRes, membersRes] = await Promise.all([
+  const [progressRes, statsRes] = await Promise.all([
     supabase
       .from('empire_progress')
-      .select('tribe_city_count, total_population')
+      .select('highest_stage, qualified_metro_count, total_population')
       .eq('id', 1)
       .maybeSingle(),
     supabase
       .from('cities')
-      .select('state, population_count'),
-    supabase
-      .from('members')
-      .select('id', { count: 'exact', head: true }),
+      .select('state, population_count')
+      .gt('population_count', 0),
   ]);
 
   if (progressRes.error) throw progressRes.error;
-  const progress = progressRes.data ?? { tribe_city_count: 0, total_population: 0 };
-  const cities = statsRes.data ?? [];
-
-  const activeCities = cities.filter((c) => c.population_count > 0);
-  const distinctStates = new Set(activeCities.map((c) => c.state)).size;
-  const totalPopulation = progress.total_population ?? (membersRes.count ?? 0);
+  const progress = progressRes.data;
+  const activeCities = statsRes.data ?? [];
 
   return {
-    ...progress,
+    highest_stage: isEmpireStageName(progress?.highest_stage) ? progress.highest_stage : 'outpost',
+    qualified_metro_count: progress?.qualified_metro_count ?? 0,
+    total_population: progress?.total_population ?? 0,
     total_cities: activeCities.length,
-    total_states: distinctStates,
-    total_population: totalPopulation,
+    total_states: new Set(activeCities.map((c) => c.state)).size,
   };
 }
 
@@ -405,7 +392,6 @@ export interface MemberDashboardData {
   display_name: string | null;
   city_name: string | null;
   city_slug: string | null;
-  city_tier: string | null;
   city_population_count: number | null;
   founder_number: number | null;
   member_number: number | null;
@@ -494,7 +480,7 @@ export async function fetchMemberDashboard(memberId: string): Promise<MemberDash
     supabase.from('influence_ledger').select('amount').eq('member_id', memberId),
     supabase.from('referrals').select('status').eq('referring_member_id', memberId),
     member.city_id
-      ? supabase.from('cities').select('name, slug, tier, population_count').eq('id', member.city_id).maybeSingle()
+      ? supabase.from('cities').select('name, slug, population_count').eq('id', member.city_id).maybeSingle()
       : Promise.resolve({ data: null, error: null }),
   ]);
 
@@ -506,14 +492,13 @@ export async function fetchMemberDashboard(memberId: string): Promise<MemberDash
   const referralCount = refData?.length ?? 0;
   const verifiedReferralCount = refData?.filter((r) => r.status === 'verified').length ?? 0;
 
-  const city = cityData as { name: string; slug: string; tier: string; population_count: number } | null;
+  const city = cityData as { name: string; slug: string; population_count: number } | null;
 
   return {
     referral_code: (member as { referral_code?: string }).referral_code ?? '',
     display_name: member.display_name,
     city_name: city?.name ?? null,
     city_slug: city?.slug ?? null,
-    city_tier: city?.tier ?? null,
     city_population_count: city?.population_count ?? null,
     founder_number: member.founder_number,
     member_number: (member as { member_number?: number | null }).member_number ?? null,
@@ -527,19 +512,17 @@ export interface StateMapData {
   state: string;
   cityCount: number;
   totalPopulation: number;
-  tribeCityCount: number;
   cities: {
     id: string;
     name: string;
     population_count: number;
-    tier: string;
   }[];
 }
 
 export async function fetchMapData(): Promise<Map<string, StateMapData>> {
   const { data, error } = await supabase
     .from('cities')
-    .select('id, name, state, population_count, tier')
+    .select('id, name, state, population_count')
     .eq('canonical_status', 'active')
     .gt('population_count', 0)
     .order('population_count', { ascending: false });
@@ -554,19 +537,16 @@ export async function fetchMapData(): Promise<Map<string, StateMapData>> {
         state: c.state,
         cityCount: 0,
         totalPopulation: 0,
-        tribeCityCount: 0,
         cities: [],
       };
       map.set(c.state, entry);
     }
     entry.cityCount++;
     entry.totalPopulation += c.population_count;
-    if (c.population_count >= 100) entry.tribeCityCount++;
     entry.cities.push({
       id: c.id,
       name: c.name,
       population_count: c.population_count,
-      tier: c.tier,
     });
   }
   return map;
@@ -580,7 +560,6 @@ export interface PublicMemberProfile {
   founder_number: number | null;
   member_number: number | null;
   city_name: string | null;
-  city_tier: string | null;
   city_population_count: number | null;
   state: string | null;
   influence: number;
@@ -640,7 +619,7 @@ export async function fetchPublicMemberProfile(memberId: string): Promise<Public
       .select('amount')
       .eq('member_id', memberId),
     member.city_id
-      ? supabase.from('cities').select('name, tier, population_count, state').eq('id', member.city_id).maybeSingle()
+      ? supabase.from('cities').select('name, population_count, state').eq('id', member.city_id).maybeSingle()
       : Promise.resolve({ data: null, error: null }),
   ]);
 
@@ -650,7 +629,7 @@ export async function fetchPublicMemberProfile(memberId: string): Promise<Public
 
   const totalInfluence = (influenceData ?? []).reduce((sum, e) => sum + e.amount, 0);
   const refList = refData ?? [];
-  const city = cityData as { name: string; tier: string; population_count: number; state: string } | null;
+  const city = cityData as { name: string; population_count: number; state: string } | null;
 
   return {
     id: member.id,
@@ -658,7 +637,6 @@ export async function fetchPublicMemberProfile(memberId: string): Promise<Public
     founder_number: member.founder_number,
     member_number: (member as { member_number?: number | null }).member_number ?? null,
     city_name: city?.name ?? null,
-    city_tier: city?.tier ?? null,
     city_population_count: city?.population_count ?? null,
     state: city?.state ?? null,
     influence: totalInfluence,

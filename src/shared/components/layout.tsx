@@ -8,7 +8,6 @@ import {
   fetchEmpireProgress,
   type EmpireProgressData,
 } from '@/domains/founder-campaign/services';
-import { getEmpireCivilizationLevel } from '@/config/progression-rules';
 
 interface LayoutProps {
   children: ReactNode;
@@ -44,7 +43,8 @@ function EmpireLayout({
   showTopBar: boolean;
 }) {
   const [empire, setEmpire] = useState<EmpireProgressData>({
-    tribe_city_count: 0,
+    highest_stage: 'outpost',
+    qualified_metro_count: 0,
     total_population: 0,
     total_cities: 0,
     total_states: 0,
@@ -55,16 +55,11 @@ function EmpireLayout({
       .catch(() => {});
   }, []);
 
-  const civLevel = getEmpireCivilizationLevel(
-    empire.tribe_city_count,
-    empire.total_population,
-  );
-
   return (
     <div className="relative h-screen flex flex-col overflow-hidden">
       <EmpireBackground />
       <HudDesktopRail />
-      {showTopBar && <HudTopBar empire={empire} civLevel={civLevel} />}
+      {showTopBar && <HudTopBar empire={empire} />}
       <main
         className={`relative z-10 flex-1 min-w-0 empire-layout-main overflow-y-auto scrollbar-thin ${showTopBar ? '' : 'empire-layout-main--no-topbar'} ${fullWidth ? 'flex flex-col' : 'container-empire'}`}
       >

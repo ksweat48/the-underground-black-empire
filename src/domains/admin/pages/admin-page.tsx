@@ -25,27 +25,20 @@ import { ErrorBanner } from '@/shared/components/error-banner';
 import { EmpireEmblemIcon } from '@/shared/components/empire-emblem-icon';
 import { supabase } from '@/shared/supabase-client';
 import { useAuth } from '@/domains/identity/auth-context';
-import { PROGRESSION_RULES, getCityTier } from '@/config/progression-rules';
+import { EMPIRE_STAGES, getNextEmpireStage, isEmpireStageName, type EmpireStageName } from '@/config/progression-rules';
 import { fetchListingsForReview, reviewListing, type ListingForReview, type ReviewAction } from '@/domains/market/services';
 
 interface AdminStats {
   totalPopulation: number;
   activeCities: number;
-  tribeCities: number;
-  empireProgress: number;
+  qualifiedMetros: number;
+  stage: EmpireStageName;
 }
 
 interface ReportData {
   signupsLast7Days: number;
   verifiedReferralsLast7Days: number;
   influenceAwardedLast7Days: number;
-  groupCities: number;
-  tribeCities: number;
-  organizationCities: number;
-  congregationCities: number;
-  coalitionCities: number;
-  powerhouseCities: number;
-  legacyCities: number;
 }
 
 interface FeatureFlagRow {
@@ -134,20 +127,13 @@ export function AdminPage() {
   const [stats, setStats] = useState<AdminStats>({
     totalPopulation: 0,
     activeCities: 0,
-    tribeCities: 0,
-    empireProgress: 0,
+    qualifiedMetros: 0,
+    stage: 'outpost',
   });
   const [reports, setReports] = useState<ReportData>({
     signupsLast7Days: 0,
     verifiedReferralsLast7Days: 0,
     influenceAwardedLast7Days: 0,
-    groupCities: 0,
-    tribeCities: 0,
-    organizationCities: 0,
-    congregationCities: 0,
-    coalitionCities: 0,
-    powerhouseCities: 0,
-    legacyCities: 0,
   });
   const [flags, setFlags] = useState<FeatureFlagRow[]>([]);
   const [auditLog, setAuditLog] = useState<AuditLogEntry[]>([]);
@@ -231,27 +217,11 @@ export function AdminPage() {
           const empire = empireRes.data;
           const cities = citiesRes.data ?? [];
 
-          const tierOf = (c: { population_count: number }) => getCityTier(c.population_count);
-          const groupCount = cities.filter((c) => tierOf(c) === 'group').length;
-          const tribeCount = cities.filter((c) => tierOf(c) === 'tribe').length;
-          const orgCount = cities.filter((c) => tierOf(c) === 'organization').length;
-          const congCount = cities.filter((c) => tierOf(c) === 'congregation').length;
-          const coalCount = cities.filter((c) => tierOf(c) === 'coalition').length;
-          const powCount = cities.filter((c) => tierOf(c) === 'powerhouse').length;
-          const legacyCount = cities.filter((c) => tierOf(c) === 'legacy_city').length;
-
           setStats({
             totalPopulation: empire?.total_population ?? 0,
             activeCities: cities.length,
-            tribeCities: tribeCount,
-            empireProgress: Math.min(
-              100,
-              Math.round(
-                ((empire?.tribe_city_count ?? 0) /
-                  PROGRESSION_RULES.empire.unlock.requiredTribeCities) *
-                  100,
-              ),
-            ),
+            qualifiedMetros: empire?.qualified_metro_count ?? 0,
+            stage: isEmpireStageName(empire?.highest_stage) ? empire.highest_stage : 'outpost',
           });
 
           setReports({
@@ -261,13 +231,6 @@ export function AdminPage() {
               (sum, entry) => sum + entry.amount,
               0,
             ),
-            groupCities: groupCount,
-            tribeCities: tribeCount,
-            organizationCities: orgCount,
-            congregationCities: congCount,
-            coalitionCities: coalCount,
-            powerhouseCities: powCount,
-            legacyCities: legacyCount,
           });
 
           setFlags((flagsRes.data ?? []) as FeatureFlagRow[]);
@@ -334,6 +297,7 @@ export function AdminPage() {
 
   const activeFlags = flags.filter((f) => f.status === 'active');
   const lockedFlags = flags.filter((f) => f.status === 'locked');
+  const nextStage = getNextEmpireStage(stats.stage);
 
   return (
     <Layout>
@@ -437,15 +401,19 @@ export function AdminPage() {
         stats={participation}
         loading={participationLoading}
         hasError={participationError}
-        onRetry={() => { setParticipationError(false); setParticipationLoading(true); supabase.rpc('get_admin_participation_stats').then(({ data, error }) => { if (!error && data) setParticipation(data as ParticipationStats); else setParticipationError(true); }).catch(() => setParticipationError(true)).finally(() => setParticipationLoading(false)); }}
+        onRetry={() => { setParticipationError(false); setParticipationLoading(true); Promise.resolve(supabase.rpc('get_admin_participation_stats')).then(({ data, error }) => { if (!error && data) setParticipation(data as ParticipationStats); else setParticipationError(true); }).catch(() => setParticipationError(true)).finally(() => setParticipationLoading(false)); }}
       />
 
       {/* Overview Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <StatCard icon={Users} label="Total Population" value={stats.totalPopulation.toLocaleString()} />
         <StatCard icon={Map} label="Active Cities" value={String(stats.activeCities)} />
-        <StatCard icon={EmpireEmblemIcon} label="Tribe Cities" value={String(stats.tribeCities)} />
-        <StatCard icon={TrendingUp} label="Empire Progress" value={`${stats.empireProgress}%`} />
+        <StatCard icon={EmpireEmblemIcon} label="Qualified Metros" value={String(stats.qualifiedMetros)} />
+        <StatCard
+          icon={TrendingUp}
+          label={nextStage ? `Stage · next ${EMPIRE_STAGES[nextStage.name].label} at ${nextStage.requiredQualifiedMetros}` : 'Stage'}
+          value={EMPIRE_STAGES[stats.stage].label}
+        />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
@@ -464,13 +432,6 @@ export function AdminPage() {
               label="Influence awarded (last 7 days)"
               value={String(reports.influenceAwardedLast7Days)}
             />
-            <ReportRow label="Cities at Group status" value={String(reports.groupCities)} />
-            <ReportRow label="Cities at Tribe status" value={String(reports.tribeCities)} />
-            <ReportRow label="Cities at Organization status" value={String(reports.organizationCities)} />
-            <ReportRow label="Cities at Congregation status" value={String(reports.congregationCities)} />
-            <ReportRow label="Cities at Coalition status" value={String(reports.coalitionCities)} />
-            <ReportRow label="Cities at Powerhouse status" value={String(reports.powerhouseCities)} />
-            <ReportRow label="Cities at Legacy City status" value={String(reports.legacyCities)} />
           </div>
         </div>
 

@@ -150,93 +150,73 @@ Deno.serve(async (req: Request) => {
       const subscriptionId = invoice.subscription as string;
       const customerId = invoice.customer as string;
 
-      // Skip the first invoice (handled by checkout.session.completed)
-      const billingReason = invoice.billing_reason as string;
-      if (billingReason === "subscription_create") {
-        // First invoice — still generate commission for the initial payment
-        // Look up member by subscription ID
-        const { data: member } = await adminClient
-          .from("members")
-          .select("id, membership_tier")
-          .eq("stripe_subscription_id", subscriptionId)
-          .maybeSingle();
+      const { data: member } = await adminClient
+        .from("members")
+        .select("id, membership_tier")
+        .eq("stripe_subscription_id", subscriptionId)
+        .maybeSingle();
 
-        if (member?.id && member.membership_tier !== "white") {
-          await adminClient.rpc("generate_partner_commission", {
-            p_referred_member_id: member.id,
-            p_stripe_event_id: event.id,
-            p_tier_id: member.membership_tier,
-          });
-        }
-
-        await adminClient.from("stripe_payment_events").insert({
-          member_id: member?.id ?? null,
-          stripe_event_id: event.id,
-          event_type: event.type,
-          subscription_id: subscriptionId,
-          customer_id: customerId,
-          amount_total: invoice.amount_paid ?? null,
-          currency: invoice.currency ?? null,
-          tier_id: member?.membership_tier ?? null,
-        });
-      } else {
-        // Renewal payment — generate commission
-        const { data: member } = await adminClient
-          .from("members")
-          .select("id, membership_tier")
-          .eq("stripe_subscription_id", subscriptionId)
-          .maybeSingle();
-
-        if (member?.id && member.membership_tier !== "white") {
-          await adminClient.rpc("generate_partner_commission", {
-            p_referred_member_id: member.id,
-            p_stripe_event_id: event.id,
-            p_tier_id: member.membership_tier,
-          });
-        }
-
-        await adminClient.from("stripe_payment_events").insert({
-          member_id: member?.id ?? null,
-          stripe_event_id: event.id,
-          event_type: event.type,
-          subscription_id: subscriptionId,
-          customer_id: customerId,
-          amount_total: invoice.amount_paid ?? null,
-          currency: invoice.currency ?? null,
-          tier_id: member?.membership_tier ?? null,
+      if (member?.id && member.membership_tier !== "white") {
+        await adminClient.rpc("generate_partner_commission", {
+          p_referred_member_id: member.id,
+          p_stripe_event_id: event.id,
+          p_tier_id: member.membership_tier,
         });
       }
-    } else if (event.type === "charge.refunded" || event.type === "charge.dispute.created") {
-      // Refund or chargeback — reverse commission
-      const charge = event.data.object as Record<string, unknown>;
-      const invoiceId = charge.invoice as string;
 
-      // Find the original invoice.paid event to get its stripe_event_id
-      if (invoiceId) {
-        const { data: originalEvents } = await adminClient
+      await adminClient.from("stripe_payment_events").insert({
+        member_id: member?.id ?? null,
+        stripe_event_id: event.id,
+        event_type: event.type,
+        subscription_id: subscriptionId,
+        customer_id: customerId,
+        invoice_id: (invoice.id as string) ?? null,
+        charge_id: (invoice.charge as string) ?? null,
+        amount_total: invoice.amount_paid ?? null,
+        currency: invoice.currency ?? null,
+        tier_id: member?.membership_tier ?? null,
+      });
+    } else if (event.type === "charge.refunded" || event.type === "charge.dispute.created") {
+      // Disputes carry the charge id in `charge`; refunds are the charge itself.
+      const obj = event.data.object as Record<string, unknown>;
+      const isDispute = event.type === "charge.dispute.created";
+      const chargeId = (isDispute ? obj.charge : obj.id) as string | undefined;
+      const invoiceId = isDispute ? undefined : (obj.invoice as string | undefined);
+      const customerId = (obj.customer as string | undefined) ?? null;
+
+      const findOriginal = async (column: "invoice_id" | "charge_id" | "customer_id", value: string) => {
+        const { data } = await adminClient
           .from("stripe_payment_events")
-          .select("stripe_event_id")
-          .eq("subscription_id", (charge as Record<string, unknown>).subscription as string ?? "")
+          .select("stripe_event_id, member_id, subscription_id")
+          .eq(column, value)
           .eq("event_type", "invoice.paid")
           .order("created_at", { ascending: false })
           .limit(1);
+        return data?.[0] ?? null;
+      };
 
-        if (originalEvents?.[0]?.stripe_event_id) {
-          await adminClient.rpc("reverse_partner_commission", {
-            p_stripe_event_id: originalEvents[0].stripe_event_id,
-          });
-        }
+      let original = invoiceId ? await findOriginal("invoice_id", invoiceId) : null;
+      if (!original && chargeId) original = await findOriginal("charge_id", chargeId);
+      if (!original && customerId) original = await findOriginal("customer_id", customerId);
+
+      if (original?.stripe_event_id) {
+        await adminClient.rpc("reverse_partner_commission", {
+          p_stripe_event_id: original.stripe_event_id,
+        });
+      } else {
+        console.error("No original payment found for reversal", event.id);
       }
 
-      const userId = extractUserId(charge);
       await adminClient.from("stripe_payment_events").insert({
-        member_id: userId,
+        member_id: original?.member_id ?? extractUserId(obj),
         stripe_event_id: event.id,
         event_type: event.type,
-        subscription_id: (charge as Record<string, unknown>).subscription as string ?? null,
-        customer_id: charge.customer as string ?? null,
-        amount_total: charge.amount_refunded ?? charge.amount ?? null,
-        currency: charge.currency ?? null,
+        subscription_id: original?.subscription_id ?? null,
+        customer_id: customerId,
+        invoice_id: invoiceId ?? null,
+        charge_id: chargeId ?? null,
+        amount_total: (isDispute ? obj.amount : obj.amount_refunded ?? obj.amount) ?? null,
+        currency: obj.currency ?? null,
       });
     } else if (event.type === "customer.subscription.deleted" || event.type === "customer.subscription.updated") {
       const subscription = event.data.object as Record<string, unknown>;

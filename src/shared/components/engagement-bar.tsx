@@ -4,6 +4,7 @@ import { cn } from '@/shared/cn';
 import { supabase } from '@/shared/supabase-client';
 import { NominateButton } from '@/shared/components/nominate-button';
 import { Avatar } from '@/shared/components/avatar';
+import { getInitials } from '@/shared/utils';
 import type { FeedPostType } from '@/domains/market/types';
 import {
   toggleListingLike,
@@ -276,11 +277,11 @@ export function EngagementBar({
             <div className="space-y-1.5 max-h-[200px] overflow-y-auto">
               {comments.map((c) => (
                 <div key={c.id} className="flex gap-2 items-start">
-                  <div className="shrink-0">
+                  <div className="shrink-0 w-6 h-6 rounded-full overflow-hidden bg-ink-100">
                     <Avatar
-                      name={c.author_name}
-                      url={c.author_avatar_url ?? undefined}
-                      size="sm"
+                      src={c.author_avatar_url ?? null}
+                      initials={getInitials(c.author_name)}
+                      initialsClassName="text-[10px] text-ink-700"
                     />
                   </div>
                   <div className="flex-1 min-w-0">

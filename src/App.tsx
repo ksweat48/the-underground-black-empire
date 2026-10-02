@@ -27,6 +27,7 @@ const CreateOrganizationPage = lazy(() => import('@/domains/market/pages/create-
 const OrganizationDetailPage = lazy(() => import('@/domains/market/pages/organization-detail-page'));
 const VotePage = lazy(() => import('@/domains/market/pages/vote-page'));
 const MembershipPage = lazy(() => import('@/domains/membership/pages/membership-page'));
+const MetroTreasuryPage = lazy(() => import('@/domains/treasury/pages/metro-treasury-page'));
 
 function PageLoader() {
   return (
@@ -144,6 +145,22 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <MembershipPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/treasury"
+                element={
+                  <ProtectedRoute>
+                    <MetroTreasuryPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/treasury/:metroId"
+                element={
+                  <ProtectedRoute>
+                    <MetroTreasuryPage />
                   </ProtectedRoute>
                 }
               />
