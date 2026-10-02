@@ -74,19 +74,63 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    if (!tier.stripe_price_id) {
-      return new Response(
-        JSON.stringify({ error: "This tier does not require payment" }),
-        { status: 400, headers: { ...cors, "Content-Type": "application/json" } },
-      );
-    }
-
     const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeSecretKey) {
       return new Response(
         JSON.stringify({ error: "Stripe is not configured" }),
         { status: 500, headers: { ...cors, "Content-Type": "application/json" } },
       );
+    }
+
+    let stripePriceId = stripePriceId;
+    if (!stripePriceId) {
+      const pricesUrl = new URL("https://api.stripe.com/v1/prices");
+      pricesUrl.searchParams.set("active", "true");
+      pricesUrl.searchParams.set("type", "recurring");
+      pricesUrl.searchParams.set("limit", "100");
+      pricesUrl.searchParams.append("expand[]", "data.product");
+
+      const pricesResponse = await fetch(pricesUrl, {
+        headers: { "Authorization": `Bearer ${stripeSecretKey}` },
+      });
+      if (!pricesResponse.ok) {
+        return new Response(
+          JSON.stringify({ error: "Unable to verify Stripe pricing" }),
+          { status: 502, headers: { ...cors, "Content-Type": "application/json" } },
+        );
+      }
+
+      const pricesPayload = await pricesResponse.json() as {
+        data?: Array<Record<string, unknown>>;
+      };
+      const expectedAmount = Math.round(Number(tier.price_monthly) * 100);
+      const normalizedTierName = tier.display_name.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+      const amountMatches = (pricesPayload.data ?? []).filter((price) => {
+        const recurring = price.recurring as Record<string, unknown> | undefined;
+        return price.unit_amount === expectedAmount && price.currency === "usd" && recurring?.interval === "month";
+      });
+      const namedMatches = amountMatches.filter((price) => {
+        const product = price.product as Record<string, unknown> | undefined;
+        const productName = typeof product?.name === "string"
+          ? product.name.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim()
+          : "";
+        const metadata = product?.metadata as Record<string, unknown> | undefined;
+        return metadata?.tier_id === tierId || productName.includes(normalizedTierName);
+      });
+      const matchingPrices = namedMatches.length > 0 ? namedMatches : amountMatches;
+
+      if (matchingPrices.length !== 1) {
+        return new Response(
+          JSON.stringify({ error: "Stripe price is not uniquely configured for this membership tier" }),
+          { status: 400, headers: { ...cors, "Content-Type": "application/json" } },
+        );
+      }
+
+      stripePriceId = matchingPrices[0].id as string;
+      await adminClient
+        .from("membership_tiers")
+        .update({ stripe_price_id: stripePriceId })
+        .eq("id", tierId);
     }
 
     // Get member's Stripe info and current tier
@@ -160,7 +204,7 @@ Deno.serve(async (req: Request) => {
       // next billing cycle — the member keeps their current tier until then.
       const updateParams = new URLSearchParams();
       updateParams.append("items[0][id]", itemId);
-      updateParams.append("items[0][price]", tier.stripe_price_id);
+      updateParams.append("items[0][price]", stripePriceId);
       updateParams.append("proration_behavior", "none");
       updateParams.append("metadata[supabase_user_id]", user.id);
       updateParams.append("metadata[tier_id]", tierId);
@@ -196,7 +240,7 @@ Deno.serve(async (req: Request) => {
     // No existing active subscription — create a new checkout session
     const checkoutParams = new URLSearchParams({
       customer: customerId,
-      "line_items[0][price]": tier.stripe_price_id,
+      "line_items[0][price]": stripePriceId,
       "line_items[0][quantity]": "1",
       mode: "subscription",
       success_url: `${SITE_URL}/membership?checkout=success&tier=${tierId}`,
