@@ -84,6 +84,7 @@ Deno.serve(async (req: Request) => {
 
     let stripePriceId = tier.stripe_price_id;
     if (!stripePriceId) {
+      // Search for an existing recurring price that matches this tier
       const pricesUrl = new URL("https://api.stripe.com/v1/prices");
       pricesUrl.searchParams.set("active", "true");
       pricesUrl.searchParams.set("type", "recurring");
@@ -119,14 +120,63 @@ Deno.serve(async (req: Request) => {
       });
       const matchingPrices = namedMatches.length > 0 ? namedMatches : amountMatches;
 
-      if (matchingPrices.length !== 1) {
-        return new Response(
-          JSON.stringify({ error: "Stripe price is not uniquely configured for this membership tier" }),
-          { status: 400, headers: { ...cors, "Content-Type": "application/json" } },
-        );
+      if (matchingPrices.length === 1) {
+        stripePriceId = matchingPrices[0].id as string;
+      } else {
+        // No existing price found — create a product and recurring price for this tier
+        const productParams = new URLSearchParams({
+          name: tier.display_name,
+          "metadata[tier_id]": tierId,
+        });
+
+        const productResponse = await fetch("https://api.stripe.com/v1/products", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${stripeSecretKey}`,
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: productParams,
+        });
+
+        if (!productResponse.ok) {
+          return new Response(
+            JSON.stringify({ error: "Failed to create Stripe product for this tier" }),
+            { status: 502, headers: { ...cors, "Content-Type": "application/json" } },
+          );
+        }
+
+        const product = await productResponse.json();
+        const productId = product.id as string;
+
+        const priceParams = new URLSearchParams({
+          product: productId,
+          currency: "usd",
+          "unit_amount": String(expectedAmount),
+          "recurring[interval]": "month",
+          "metadata[tier_id]": tierId,
+        });
+
+        const priceResponse = await fetch("https://api.stripe.com/v1/prices", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${stripeSecretKey}`,
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: priceParams,
+        });
+
+        if (!priceResponse.ok) {
+          return new Response(
+            JSON.stringify({ error: "Failed to create Stripe price for this tier" }),
+            { status: 502, headers: { ...cors, "Content-Type": "application/json" } },
+          );
+        }
+
+        const priceData = await priceResponse.json();
+        stripePriceId = priceData.id as string;
       }
 
-      stripePriceId = matchingPrices[0].id as string;
+      // Cache the resolved or created price ID back to the database
       await adminClient
         .from("membership_tiers")
         .update({ stripe_price_id: stripePriceId })
