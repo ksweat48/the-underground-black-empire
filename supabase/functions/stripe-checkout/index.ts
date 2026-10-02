@@ -82,7 +82,7 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    let stripePriceId = stripePriceId;
+    let stripePriceId = tier.stripe_price_id;
     if (!stripePriceId) {
       const pricesUrl = new URL("https://api.stripe.com/v1/prices");
       pricesUrl.searchParams.set("active", "true");
