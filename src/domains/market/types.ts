@@ -20,7 +20,6 @@ export interface MarketListing {
   like_count: number;
   save_count: number;
   comment_count: number;
-  check_in_count: number;
   created_at: string;
   updated_at: string;
   rank_score?: number;
@@ -80,11 +79,9 @@ export interface MarketEvent {
   external_url: string;
   image_url: string | null;
   status: ContentStatus;
-  check_in_count: number;
   created_at: string;
   updated_at: string;
   listing_name?: string;
-  has_checked_in?: boolean;
 }
 
 export interface ListingComment {

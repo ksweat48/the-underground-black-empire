@@ -9,17 +9,16 @@ explicit approved change.
 
 ## 1. Core Progression Principle
 
-The Empire advances through **two measurements only**:
+The Empire advances through **one measurement only**:
 
-1. **Total Population** — every member in the Empire.
-2. **Tribe City Count** — the number of cities that have reached Tribe status (100+ people).
+1. **Qualified Metro Count** — the number of Metros that have reached at least
+   100 active members.
 
-No other metric gates Empire advancement. Money, voting, initiatives, legacy
-enrollment, and governance are city-level features that unlock at certain
-civilization levels, but they do NOT determine when the Empire advances.
+No other metric gates Empire advancement. Money, voting, initiatives, and
+governance are feature systems that unlock at certain civilization levels, but
+they do NOT determine when the Empire advances.
 
-Each civilization level requires BOTH thresholds to be met simultaneously.
-Neither population alone nor Tribe Cities alone can advance the Empire.
+A Metro becomes **Qualified** when its active member population reaches 100.
 
 ---
 
@@ -35,35 +34,36 @@ Use this exact order:
 6. Dominion
 7. Empire
 
-These levels represent the advancement of the **entire Empire**.
+These levels represent the advancement of the **entire Empire** — not individual
+cities or Metros. Cities do not have named levels. Metros do not have named
+levels. The civilization ladder belongs to the Empire as a whole.
 
-They must never be mixed with local city progression:
+The following legacy terms are **removed** and must never be used as progression
+levels:
 
+- Tribe City
 - Group
-- Tribe
-- Organization
 - Congregation
 - Coalition
 - Powerhouse
 - Legacy City
 
-Use separate types, configuration, calculations, database fields, and UI labels for Empire civilization levels and city levels.
-
 ---
 
 ## 3. Official Progression Requirements
 
-| Level | Name | Population Required | Tribe Cities Required | Unlocks |
-|---|---|---|---|---|
-| LVL 1 | Outpost | 1,000 | 10 | Organizations, Marketplace |
-| LVL 2 | Settlement | 5,000 | 20 | City Treasuries, Local Voting |
-| LVL 3 | Village | 25,000 | 30 | Family, City Leadership and Elections |
-| LVL 4 | Province | 50,000 | 40 | Legacy Program, Expanded Treasury Capacity |
-| LVL 5 | Kingdom | 100,000 | 50 | Empire Council, Inter-City Initiatives |
-| LVL 6 | Dominion | 500,000 | 100 | Final Empire Status, All approved core systems fully active |
-| LVL 7 | Empire | 1,000,000 | 200 | — |
+| Level | Name | Qualified Metros Required | Unlocks |
+|---|---|---|---|
+| LVL 1 | Outpost | 0 (prelaunch) | Member registration, profiles, referrals, missions, rankings |
+| LVL 2 | Settlement | 1 | Organizations, Marketplace |
+| LVL 3 | Village | 3 | Metro Treasuries, Metro Initiative Voting |
+| LVL 4 | Province | 5 | Family, Metro Leadership Elections |
+| LVL 5 | Kingdom | 10 | Empire Advisory Council, Legacy Program, Expanded Treasury Capacity |
+| LVL 6 | Dominion | 25 | Empire-Wide Voting, Inter-Metro Initiatives |
+| LVL 7 | Empire | 50 | Final Empire Status — all approved core systems fully active |
 
-A city becomes a Tribe when its population reaches 100 people.
+A Metro qualifies at 100 active members. Empire stage is determined solely by
+how many Qualified Metros exist.
 
 ---
 
@@ -72,293 +72,174 @@ A city becomes a Tribe when its population reaches 100 people.
 ### LVL 1 — OUTPOST
 
 **Current Objective**
-Reach 1,000 members and form 10 Tribe Cities.
+Recruit founding members and help Metros reach 100 members.
 
 **To Reach LVL 2 — Settlement**
-We must gather our people and raise 10 Tribes.
+At least one Metro must reach 100 active members.
 
-**Unlocks**
-- Organizations
-- Marketplace
+**Available During Outpost**
+- Member registration
+- Member numbers
+- City and Metro assignment
+- Member profiles
+- Member missions
+- Referrals
+- Member rankings
+- City rankings (population and contributions)
+- Empire growth updates
+- Empire map and campaign statistics
 
 ---
 
 ### LVL 2 — SETTLEMENT
 
 **Current Objective**
-Reach 5,000 members and form 20 Tribe Cities.
+Grow the first Qualified Metro and begin building organizations.
 
 **To Reach LVL 3 — Village**
-We must grow our numbers and our geography.
+Three Metros must reach 100 active members.
 
 **Unlocks**
-- City Treasuries
-- Local Voting
+- Organizations
+- Marketplace
 
 ---
 
 ### LVL 3 — VILLAGE
 
 **Current Objective**
-Reach 25,000 members and form 30 Tribe Cities.
+Begin pooling community resources through Metro Treasuries.
 
 **To Reach LVL 4 — Province**
-We must keep growing — more people, more Tribes.
+Five Metros must reach 100 active members.
 
 **Unlocks**
-- Family
-- City Leadership and Elections
+- Metro Treasuries
+- Metro Initiative Voting
 
 ---
 
 ### LVL 4 — PROVINCE
 
 **Current Objective**
-Reach 50,000 members and form 40 Tribe Cities.
+Establish local governance through elected Metro Councils.
 
 **To Reach LVL 5 — Kingdom**
-We must keep growing our population and our geography.
+Ten Metros must reach 100 active members.
 
 **Unlocks**
-- Legacy Program
-- Expanded Treasury Capacity
+- Family
+- Metro Leadership Elections
 
 ---
 
 ### LVL 5 — KINGDOM
 
 **Current Objective**
-Reach 100,000 members and form 50 Tribe Cities.
+Introduce the Empire Advisory Council and the Legacy Program.
 
 **To Reach LVL 6 — Dominion**
-We must reach one hundred thousand members and fifty Tribes.
+Twenty-five Metros must reach 100 active members.
 
 **Unlocks**
-- Empire Council
-- Inter-City Initiatives
+- Empire Advisory Council
+- Legacy Program
+- Expanded Treasury Capacity
 
 ---
 
 ### LVL 6 — DOMINION
 
 **Current Objective**
-Reach 500,000 members and form 100 Tribe Cities.
+Enable Empire-wide decisions and cross-Metro collaboration.
 
 **To Reach LVL 7 — Empire**
-We must unite half a million members and one hundred Tribes.
+Fifty Metros must reach 100 active members.
 
 **Unlocks**
-- Final Empire Status
-- All approved core systems fully active
+- Empire-Wide Voting
+- Inter-Metro Initiatives
 
 ---
 
 ### LVL 7 — EMPIRE
 
 **Current Objective**
-Continue growing the population and expanding Tribe Cities across the land.
+Continue growing the population and expanding Qualified Metros across the land.
 
 **Civilization Achieved**
-One million members. Two hundred Tribe Cities. One Empire.
+Fifty Qualified Metros. One Empire.
 The Empire has risen. Now we build its legacy.
 
 ---
 
-## 5. Outpost
+## 5. City and Metro Structure
 
-### Purpose
+Cities do not have named levels. A city display shows:
 
-Outpost is the pre-launch Founder Campaign.
+- Member population
+- Amount raised/contributed
+- Businesses, professionals, organizations
+- Metro affiliation
 
-The Empire is gathering its first members and helping cities reach Tribe status.
+Example:
 
-### Available During Outpost
+> Kennesaw, GA
+> 842 Members
+> $6,420 Raised
+> Atlanta Metro
 
-- Member registration
-- Member numbers
-- City and metro assignment
-- Member profiles
-- Member missions
-- Referrals
-- Member rankings
-- City rankings
-- Empire growth updates
-- Empire map and campaign statistics
+Cities contribute financially, but the **Metro** is the primary local governance
+and Treasury unit. City contributions combine into the Metro Treasury.
 
-### Requirement to Reach Settlement
-
-**1,000 total members AND 10 Tribe Cities.**
-
-A Tribe City is any city with 100+ members.
-
-This transition is calculated from authoritative backend data.
-
-### Settlement Unlocks
-
-- Organizations
-- Marketplace
+**Principle:** Cities raise it. The Metro pools it. The Metro community decides
+how it is used.
 
 ---
 
-## 6. Settlement
+## 6. Metro Treasury Capacity
 
-### Purpose
+Treasury capacity belongs to the Metro, not individual cities.
 
-The Empire is now open.
+| Metro Population | Available Capacity |
+|---|---|
+| 0–99 | $0 |
+| 100–249 | $5,000 |
+| 250–499 | $10,000 |
+| 500–999 | $25,000 |
+| 1,000–2,499 | $50,000 |
+| 2,500–4,999 | $100,000 |
+| 5,000+ | No artificial cap |
 
-Members choose their primary role and immediately receive tools that allow them to contribute through that role.
+Treasury capacity is a maximum Available balance at one time, not a lifetime
+spending limit.
 
-### New Features Unlocked
-
-#### Organizations
-
-Members can create and join organizations within the Empire.
-
-#### Marketplace and Contribution Tools
-
-The Marketplace opens at the same time as Organizations so members can immediately contribute.
-
-### Village Unlocks
-
-- City Treasuries
-- Local Voting
-
-### Requirement to Reach Village
-
-**5,000 total members AND 20 Tribe Cities.**
+**Capacity is permanent.** Once a Metro reaches a threshold and unlocks a
+higher capacity, it never loses that capacity — even if population later
+decreases. The system stores the highest capacity ever unlocked and refills
+Available from Reserved up to that amount.
 
 ---
 
-## 7. Village
+## 7. Influence Growth Rewards
 
-### Purpose
+Influence is earned through **individual member actions only**, primarily:
 
-The Empire has grown enough to begin accumulating and allocating shared resources.
+- Voting (+25 per completed voting event)
+- Referrals (+25 per verified referral)
 
-### New Features Unlocked
+**Removed rewards (no longer awarded):**
+- ~~+50 Influence city-level-up reward~~
+- ~~+50 Metro qualification reward~~
+- ~~+100 Influence Empire-stage advancement reward~~
 
-#### City Treasury
-
-Eligible Empire revenue begins flowing into city treasury balances.
-
-#### Local Voting Booth
-
-Eligible members can participate in local voting sessions.
-
-### Province Unlocks
-
-- Family
-- City Leadership and Elections
-
-### Requirement to Reach Province
-
-**25,000 total members AND 30 Tribe Cities.**
+Metro qualification and Empire-stage advancement trigger milestone notifications,
+celebrations, historical records, and cosmetic recognition — but **no automatic
+Influence**.
 
 ---
 
-## 8. Province
-
-### Purpose
-
-Cities are now becoming organized communities with local programs, gatherings, leadership, and civic structure.
-
-### New Features Unlocked
-
-#### Family Section
-
-The Family section supports local events, mentorship, youth programs, community gatherings, and recurring programs.
-
-#### City Leadership and Elections
-
-Qualified members may participate in local governance.
-
-### Kingdom Unlocks
-
-- Legacy Program
-- Expanded Treasury Capacity
-
-### Requirement to Reach Kingdom
-
-**50,000 total members AND 40 Tribe Cities.**
-
----
-
-## 9. Kingdom
-
-### Purpose
-
-The Empire has grown large enough to support qualified members through major life milestones.
-
-### New Features Unlocked
-
-#### Legacy Program
-
-The Legacy Program supports qualified members through Death Support, Marriage Support, Child Welcome, and Education Recognition grants.
-
-#### Expanded Treasury Capacity
-
-Cities become eligible for higher treasury caps, larger awards, and expanded project categories.
-
-### Dominion Unlocks
-
-- Empire Council
-- Inter-City Initiatives
-
-### Requirement to Reach Dominion
-
-**100,000 total members AND 50 Tribe Cities.**
-
----
-
-## 10. Dominion
-
-### Purpose
-
-The Empire now contains mature cities capable of coordinating leadership, funding, and initiatives across regions.
-
-### New Features Unlocked
-
-#### Empire Council
-
-The Empire Council supports empire-wide coordination, national leadership, and regional representation.
-
-#### Inter-City Initiatives
-
-Multiple cities may collaborate through shared projects, cooperative campaigns, and coordinated funding.
-
-### Empire Unlocks
-
-- Final Empire Status
-- All approved core systems fully active
-
-### Requirement to Reach Empire
-
-**500,000 total members AND 100 Tribe Cities.**
-
----
-
-## 11. Empire
-
-### Purpose
-
-Empire is the seventh and highest civilization stage.
-
-There is no civilization level after Empire.
-
-### Completion State
-
-Show a celebration state:
-
-> EMPIRE ACHIEVED
-> One million members. Two hundred Tribe Cities. One Empire.
-
-Personal progression, city progression, projects, treasuries, Legacy support, leadership, and community growth continue after Empire status is reached.
-
-The application does not stop evolving. Only the civilization ladder is complete.
-
----
-
-## 12. Voting Systems Overview
+## 8. Voting Systems Overview
 
 ### Three Separate Voting Systems
 
@@ -423,22 +304,62 @@ retroactively affect past votes.
 The linear level rate (+0.05/level) keeps unlimited Level progression from
 creating unlimited voting weight. VP is driven by Level alone, and Level is
 driven by Influence alone — so voting weight reflects earned participation,
-not purchased power. A veteran member who has helped build the Empire carries
-real weight in decisions — strong enough to feel earned, without making a
-single person equivalent to twenty community members.
+not purchased power.
 
 ---
 
-## 13. Official Feature-Unlock Matrix
+## 9. News Publishing
+
+Only active elected Metro leadership may publish local/Metro News.
+
+Empire-wide News may only be published by:
+- Founder/Admin
+- authorized Media & Public Affairs EAC members
+
+Normal members do not publish News. The general correspondent/news publishing
+model is removed.
+
+---
+
+## 10. Event Check-ins
+
+Event Check-ins are removed from V1. They are not used for Influence,
+Marketplace ranking, initiative ranking, or any current progression system.
+The concept is retained only as a future feature.
+
+---
+
+## 11. Official Feature-Unlock Matrix
 
 | Civilization | Major Unlocks |
 |---|---|
-| Outpost | Founder Campaign |
+| Outpost | Founder Campaign — registration, profiles, referrals, missions, rankings |
 | Settlement | Organizations and Marketplace |
-| Village | City Treasury and Local Voting |
-| Province | Family and City Leadership/Elections |
-| Kingdom | Legacy Program and Expanded Treasury |
-| Dominion | Empire Council and Inter-City Initiatives |
+| Village | Metro Treasury and Metro Initiative Voting |
+| Province | Family and Metro Leadership Elections |
+| Kingdom | Empire Advisory Council, Legacy Program, Expanded Treasury |
+| Dominion | Empire-Wide Voting and Inter-Metro Initiatives |
 | Empire | Final Civilization Status and all approved core systems |
 
 Do not move features between levels without an explicit approved change.
+
+---
+
+## 12. Final Principles
+
+- Influence is earned through individual participation such as voting and referrals.
+- Paid membership does not directly purchase Influence.
+- Initiative Voting Credits determine how many initiatives a member may support,
+  not how much weight they can stack on one proposal.
+- Voting Power is earned through progression and applies once to each valid
+  selection.
+- Black Pro is the maximum functional Initiative Voting Credit tier.
+- Arch and Arch Pro add prestige, VIP identity, and recognition — not extra
+  governance power.
+- Cities raise funds. Metros pool funds. Metro communities vote on local
+  initiatives.
+- Treasury capacity permanently unlocks and never decreases.
+- Organizations build initiative support continuously rather than resubmitting
+  every cycle.
+- Metro Initiative Voting, Metro Leadership Elections, and Empire-Wide Votes
+  are three separate voting systems with different ballot mechanics.

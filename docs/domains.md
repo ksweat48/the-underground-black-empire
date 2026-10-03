@@ -24,24 +24,39 @@
 - Nomination submission and nomination counts
 - Nomination acceptance and decline
 - Election ballot eligibility after accepted nominations
+- Metro Council display
+
+### Initiatives (`src/domains/initiatives/`)
+- Initiative creation, ranking, and backing
+- Metro Initiative voting cycles and ballots
+- Results calculation and admin review
+- Organization initiative management
+
+### Treasury (`src/domains/treasury/`)
+- Metro Treasury balances (Available, Reserved, Total Raised)
+- Permanent Treasury capacity tracking
+- Treasury ledger entries
+- Funding release workflow
 
 ### Membership (`src/domains/membership/`)
 - Membership tiers, subscriptions, benefits, voting credits, and billing status
+- Partner program dashboard
 
 ### Notifications (`src/domains/notifications/`)
 - Member notifications and engagement-related alerts
 
 ### Admin (`src/domains/admin/`)
 - Administrative controls
-- Basic reporting (founder counts, city counts, Influence awarded)
+- Basic reporting (member counts, city counts, Influence awarded)
 - Feature flag visibility
 - Audit log (structure in place, populated by edge functions)
 
 ## Future Domains and Extensions
 
-- **Treasury Systems** — city treasuries and Empire reserve
+- **Moderation** — content and member moderation tools
+- **Empire Advisory Council** — appointed 11-seat council with EAC applications
+- **Empire-Wide Voting** — Yes/No ballots on Empire-level decisions
 - **Legacy Program** — legacy benefits (NEVER described as guaranteed insurance)
-- **Quests & Challenges** — expanded mission system
 - **Impact Tracking** — community impact metrics
 - **Verification & Trust** — expanded verified-member workflows
 - **Cities** (expanded) — full city management beyond the current metro and city flows

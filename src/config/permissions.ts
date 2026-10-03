@@ -9,8 +9,7 @@ export type RoleKey =
   | 'metro_leadership'
   | 'empire_admin'
   | 'moderator'
-  | 'financial_admin'
-  | 'local_correspondent';
+  | 'financial_admin';
 
 export interface RoleDefinition {
   key: RoleKey;
@@ -41,8 +40,7 @@ export type Permission =
   | 'cast_vote'
   | 'run_election'
   | 'verify_members'
-  | 'publish_news'
-  | 'admin_manage_correspondents';
+  | 'publish_news';
 
 export const ROLE_PERMISSIONS: Record<RoleKey, RoleDefinition> = {
   visitor: {
@@ -55,7 +53,7 @@ export const ROLE_PERMISSIONS: Record<RoleKey, RoleDefinition> = {
   founder: {
     key: 'founder',
     label: 'Pioneer',
-    description: 'A pioneer member of the Empire — one of the first 1,000 to join',
+    description: 'A pioneer member of the Empire — one of the first to join',
     permissions: [
       'view_landing',
       'view_cities',
@@ -108,8 +106,8 @@ export const ROLE_PERMISSIONS: Record<RoleKey, RoleDefinition> = {
   metro_leadership: {
     key: 'metro_leadership',
     label: 'Metro Leadership',
-    description: 'An elected leader of a metro region',
-    permissions: ['view_landing', 'view_cities', 'view_empire_progress'],
+    description: 'An elected leader of a metro region — may publish local/Metro News',
+    permissions: ['view_landing', 'view_cities', 'view_empire_progress', 'publish_news'],
     milestone: 'post_launch',
   },
   empire_admin: {
@@ -130,6 +128,7 @@ export const ROLE_PERMISSIONS: Record<RoleKey, RoleDefinition> = {
       'admin_manage_founders',
       'admin_view_audit_log',
       'admin_manage_feature_flags',
+      'publish_news',
     ],
     milestone: 'founder_campaign',
   },
@@ -145,13 +144,6 @@ export const ROLE_PERMISSIONS: Record<RoleKey, RoleDefinition> = {
     label: 'Financial Admin',
     description: 'An administrator over treasury and financial systems',
     permissions: ['view_landing', 'view_cities', 'view_empire_progress'],
-    milestone: 'post_launch',
-  },
-  local_correspondent: {
-    key: 'local_correspondent',
-    label: 'Local Correspondent',
-    description: 'An approved news correspondent for a specific city',
-    permissions: ['view_landing', 'view_cities', 'view_empire_progress', 'publish_news'],
     milestone: 'post_launch',
   },
 } as const;

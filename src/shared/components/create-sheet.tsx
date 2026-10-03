@@ -11,6 +11,7 @@ import {
 import { useAuth } from '@/domains/identity/auth-context';
 import { supabase } from '@/shared/supabase-client';
 
+
 type CreateAction = 'listing' | 'update' | 'news' | 'event' | 'organization';
 
 interface CreateSheetContextValue {
@@ -34,7 +35,7 @@ interface CreateOption {
   icon: typeof Building2;
   path: string;
   requiresApprovedListing?: boolean;
-  requiresCorrespondent?: boolean;
+  requiresLeadership?: boolean;
 }
 
 const CREATE_GROUPS: CreateOption[][] = [
@@ -66,7 +67,7 @@ const CREATE_GROUPS: CreateOption[][] = [
     {
       key: 'event',
       label: 'Create an Event',
-      description: 'Add a community event with date, time, location, and check-in support.',
+      description: 'Add a community event with date, time, and location.',
       icon: CalendarPlus,
       path: '/market/create/event',
     },
@@ -75,10 +76,10 @@ const CREATE_GROUPS: CreateOption[][] = [
     {
       key: 'news',
       label: 'Post Local News',
-      description: 'Report on something happening in your city. Only approved Correspondents can post news.',
+      description: 'Report on something happening in your Metro. Only elected Metro leadership and authorized admins can post news.',
       icon: Newspaper,
       path: '/market/create/news',
-      requiresCorrespondent: true,
+      requiresLeadership: true,
     },
   ],
 ];
@@ -87,8 +88,8 @@ export function CreateSheetProvider({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
   const [hasApprovedListing, setHasApprovedListing] = useState(false);
   const [checkedApproved, setCheckedApproved] = useState(false);
-  const [isCorrespondent, setIsCorrespondent] = useState(false);
-  const [checkedCorrespondent, setCheckedCorrespondent] = useState(false);
+  const [canPublishNews, setCanPublishNews] = useState(false);
+  const [checkedLeadership, setCheckedLeadership] = useState(false);
   const { session } = useAuth();
   const navigate = useNavigate();
 
@@ -115,27 +116,32 @@ export function CreateSheetProvider({ children }: { children: ReactNode }) {
     }
   }, [session?.user.id, checkedApproved]);
 
-  const checkCorrespondentStatus = useCallback(async () => {
-    if (!session?.user.id || checkedCorrespondent) return;
+  const checkLeadershipStatus = useCallback(async () => {
+    if (!session?.user.id || checkedLeadership) return;
     try {
-      const { data } = await supabase
-        .from('members')
-        .select('correspondent_status')
-        .eq('id', session.user.id)
-        .maybeSingle();
-      setIsCorrespondent(data?.correspondent_status === 'approved');
-      setCheckedCorrespondent(true);
+      const { data: adminCheck } = await supabase.rpc('is_current_user_admin');
+      if (adminCheck) {
+        setCanPublishNews(true);
+        setCheckedLeadership(true);
+        return;
+      }
+      const { count } = await supabase
+        .from('metro_council')
+        .select('id', { count: 'exact', head: true })
+        .eq('member_id', session.user.id);
+      setCanPublishNews((count ?? 0) > 0);
+      setCheckedLeadership(true);
     } catch {
-      setCheckedCorrespondent(true);
+      setCheckedLeadership(true);
     }
-  }, [session?.user.id, checkedCorrespondent]);
+  }, [session?.user.id, checkedLeadership]);
 
   useEffect(() => {
     if (isOpen) {
       checkApprovedListings();
-      checkCorrespondentStatus();
+      checkLeadershipStatus();
     }
-  }, [isOpen, checkApprovedListings, checkCorrespondentStatus]);
+  }, [isOpen, checkApprovedListings, checkLeadershipStatus]);
 
   const handleSelect = useCallback(
     (option: CreateOption) => {
@@ -147,7 +153,7 @@ export function CreateSheetProvider({ children }: { children: ReactNode }) {
 
   const isOptionVisible = (opt: CreateOption) => {
     if (opt.requiresApprovedListing) return hasApprovedListing;
-    if (opt.requiresCorrespondent) return isCorrespondent;
+    if (opt.requiresLeadership) return canPublishNews;
     return true;
   };
 
@@ -232,10 +238,10 @@ export function CreateSheetProvider({ children }: { children: ReactNode }) {
                     </p>
                   </div>
                 )}
-                {!isCorrespondent && checkedCorrespondent && (
+                {!canPublishNews && checkedLeadership && (
                   <div className="pt-1 pb-1">
                     <p className="text-xs text-empire-text-muted text-center">
-                      Post Local News is available to approved Correspondents only.
+                      Post Local News is available to elected Metro leadership and authorized admins only.
                     </p>
                   </div>
                 )}

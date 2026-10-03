@@ -98,9 +98,9 @@ export const whitePaperSections: WhitePaperSection[] = [
         ],
       },
       {
-        heading: 'Voting Credits',
+        heading: 'Initiative Voting Credits',
         paragraphs: [
-          'Members may purchase Voting Credits to participate in designated Treasury allocation votes. Voting Credits are a platform feature. They are not investments. They are not shares of stock. They do not create ownership of the Empire. They do not guarantee a financial return.',
+          'Paid membership tiers receive monthly Initiative Voting Credits, which allow members to support community initiatives during Metro Initiative Voting cycles. Voting Credits are a platform feature. They are not investments. They are not shares of stock. They do not create ownership of the Empire. They do not guarantee a financial return.',
         ],
       },
       {
@@ -172,7 +172,7 @@ export const whitePaperSections: WhitePaperSection[] = [
     number: '6',
     title: 'A Simple Example',
     paragraphs: [
-      'Imagine a member purchases $10 in eligible Voting Credits. After applicable refunds, chargebacks, taxes, or transaction expenses defined by Empire policy, the eligible amount is divided.',
+      'Imagine a member pays $10 in eligible membership fees. After applicable refunds, chargebacks, taxes, or transaction expenses defined by Empire policy, the eligible amount is divided.',
     ],
     blocks: [
       {
@@ -244,7 +244,7 @@ export const whitePaperSections: WhitePaperSection[] = [
           'Community news',
           'Local events',
           'Organizations and Influence',
-          'City quests and Empire initiatives',
+          'Metro and Empire initiatives',
           'Qualified voting opportunities',
           'Treasury information',
           'Leadership participation where eligible',
@@ -674,13 +674,13 @@ export const whitePaperSections: WhitePaperSection[] = [
     blocks: [
       {
         paragraphs: [
-          'If members are ever offered actual ownership or an expectation of financial return, that opportunity would require a separate legal structure and separate disclosures. It should not simply be mixed into normal membership or Voting Credits.',
+          'If members are ever offered actual ownership or an expectation of financial return, that opportunity would require a separate legal structure and separate disclosures. It should not simply be mixed into normal membership or Initiative Voting Credits.',
         ],
       },
       {
         highlight: true,
         paragraphs: [
-          'Until such a structure exists: Empire membership is not an investment. Voting Credits are not investments. Treasury participation is not personal ownership.',
+          'Until such a structure exists: Empire membership is not an investment. Initiative Voting Credits are not investments. Treasury participation is not personal ownership.',
         ],
       },
     ],

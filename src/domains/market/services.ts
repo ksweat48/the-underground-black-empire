@@ -87,7 +87,6 @@ function mapListingRow(row: ListingRow, opts?: { is_saved?: boolean; is_liked?: 
     like_count: row.like_count,
     save_count: row.save_count ?? 0,
     comment_count: row.comment_count,
-    check_in_count: row.check_in_count,
     created_at: row.created_at,
     updated_at: row.updated_at,
     rank_score: opts?.rank_score ?? rankingData?.score ?? 0,
@@ -484,7 +483,6 @@ export async function fetchEvents(params: {
       external_url: row.external_url,
       image_url: row.image_url,
       status: row.status,
-      check_in_count: row.check_in_count,
       created_at: row.created_at,
       updated_at: row.updated_at,
       listing_name: listingData?.name ?? undefined,
@@ -512,25 +510,6 @@ export async function createMarketEvent(input: CreateEventInput): Promise<Market
 
   if (error) throw error;
   return data as MarketEvent;
-}
-
-export async function checkInToEvent(eventId: string): Promise<void> {
-  const { error } = await supabase
-    .rpc('check_in_to_event', { p_event_id: eventId });
-
-  if (error) throw error;
-}
-
-export async function hasUserCheckedIn(eventId: string, userId: string): Promise<boolean> {
-  const { data, error } = await supabase
-    .from('event_check_ins')
-    .select('id')
-    .eq('event_id', eventId)
-    .eq('member_id', userId)
-    .maybeSingle();
-
-  if (error) throw error;
-  return !!data;
 }
 
 // ============================================================

@@ -17,14 +17,10 @@ export const INFLUENCE_REWARDS = {
   city_selected: 10,
   news_like: 1,
   marketplace_like: 1,
-  ballot_participation: 10,
-  empire_level_upgrade: 100,
-  event_checkin_verified: 25,
-  city_quest_completed: 50,
-  secret_quest_completed: 100,
+  ballot_participation: 25,
+  leadership_ballot: 25,
   official_news_contribution: 25,
   builder_listing_approved: 25,
-  verified_event_hosted: 75,
   verified_referral: 25,
 } as const;
 
@@ -43,7 +39,6 @@ export const LIKE_DAILY_INFLUENCE_CAP = 20;
 export const MARKETPLACE_ENGAGEMENT_WEIGHTS = {
   like: 1,
   comment: 3,
-  verified_checkin: 5,
 } as const;
 
 // ============================================================
@@ -57,10 +52,10 @@ export const VP_RULES = {
 } as const;
 
 // ============================================================
-// BALLOT CREDIT CAP
+// INITIATIVE VOTING — MAX SELECTIONS PER BALLOT
 // ============================================================
 
-export const BALLOT_CREDIT_CAP = 1;
+export const MAX_BALLOT_SELECTIONS = 5;
 
 // ============================================================
 // INITIATIVE VOTING CREDIT ROLLOVER CAP
