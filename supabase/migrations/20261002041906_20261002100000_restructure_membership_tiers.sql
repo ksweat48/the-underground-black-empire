@@ -48,8 +48,8 @@ VALUES
   ('black',     'Black Card',       'Black Card Member',       5,  10,  'black',   'Contribute',               2,  100),
   ('black_plus','Black Card+',      'Black Card+ Member',     10,  25,  'black',   'Serve',                    3,  200),
   ('black_pro', 'Black Card Pro',   'Black Card Pro Member',  20,  25,  'black',   'Protect Family & Legacy',  4,  400),
-  ('arch',      'Arch Member',      'Arch Member',            50,   0,  'emerald', 'VIP Prestige',             5, 1000),
-  ('arch_pro',  'Arch Pro Member',  'Arch Pro Member',       100,   0,  'plum',    'VIP Supreme',              6, 2000)
+  ('arch',      'Arch Member',      'Arch Member',            50,  25,  'emerald', 'VIP Prestige',             5, 1000),
+  ('arch_pro',  'Arch Pro Member',  'Arch Pro Member',       100,  25,  'plum',    'VIP Supreme',              6, 2000)
 ON CONFLICT (id) DO UPDATE SET
   display_name = EXCLUDED.display_name,
   public_label = EXCLUDED.public_label,
