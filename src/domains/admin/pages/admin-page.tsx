@@ -21,6 +21,9 @@ import {
   Send,
   Landmark,
   Receipt,
+  Flag,
+  UserCheck,
+  ShieldAlert,
 } from 'lucide-react';
 import { Layout } from '@/shared/components/layout';
 import { ErrorBanner } from '@/shared/components/error-banner';
@@ -29,6 +32,14 @@ import { supabase } from '@/shared/supabase-client';
 import { useAuth } from '@/domains/identity/auth-context';
 import { EMPIRE_STAGES, getNextEmpireStage, isEmpireStageName, type EmpireStageName } from '@/config/progression-rules';
 import { fetchListingsForReview, reviewListing, type ListingForReview, type ReviewAction } from '@/domains/market/services';
+import {
+  fetchModerationQueue,
+  takeModerationAction,
+  fetchPendingIdentityChecks,
+  reviewIdentityCheck,
+  type ModerationReport,
+  type IdentityCheck,
+} from '@/domains/admin/moderation-services';
 
 interface AdminStats {
   totalPopulation: number;
@@ -156,6 +167,11 @@ export function AdminPage() {
   const [broadcastLink, setBroadcastLink] = useState('');
   const [broadcastSending, setBroadcastSending] = useState(false);
   const [broadcastResult, setBroadcastResult] = useState<{ ok: boolean; count: number } | null>(null);
+  const [modQueue, setModQueue] = useState<ModerationReport[]>([]);
+  const [modLoading, setModLoading] = useState(true);
+  const [identityChecks, setIdentityChecks] = useState<IdentityCheck[]>([]);
+  const [identityLoading, setIdentityLoading] = useState(true);
+  const [modAction, setModAction] = useState<string | null>(null);
 
   const handleBroadcast = async () => {
     if (!broadcastTitle.trim()) return;
@@ -274,6 +290,29 @@ export function AdminPage() {
       setActionError('Unable to process review. Please try again.');
     } finally {
       setReviewAction(null);
+    }
+  };
+
+  const onModAction = async (report: ModerationReport, action: 'warn' | 'suspend' | 'remove' | 'dismiss') => {
+    setModAction(report.id);
+    try {
+      await takeModerationAction(report.target_type, report.target_id, action, report.reason, undefined, report.id);
+      setModQueue((prev) => prev.filter((r) => r.id !== report.id));
+    } catch (err) {
+      console.error('Moderation action failed:', err);
+      setActionError('Unable to process moderation action.');
+    } finally {
+      setModAction(null);
+    }
+  };
+
+  const onIdentityReview = async (checkId: string, status: 'verified' | 'rejected' | 'more_info_requested') => {
+    try {
+      await reviewIdentityCheck(checkId, status);
+      setIdentityChecks((prev) => prev.filter((c) => c.id !== checkId));
+    } catch (err) {
+      console.error('Identity review failed:', err);
+      setActionError('Unable to review identity check.');
     }
   };
 
@@ -475,6 +514,122 @@ export function AdminPage() {
         </div>
       </div>
 
+      {/* Moderation Queue */}
+      {modQueue.length > 0 && (
+        <div className="mb-8 space-y-4">
+          <div className="flex items-center gap-3 mb-2">
+            <Flag className="w-5 h-5 text-gold-400" />
+            <h2 className="font-display text-lg font-semibold text-ink-100">Moderation Queue</h2>
+            <span className="badge-gold text-xs">{modQueue.length} pending</span>
+          </div>
+          <div className="space-y-3">
+            {modQueue.map((report) => (
+              <div key={report.id} className="card p-4 space-y-2">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-ink-100">
+                      {report.target_type} report
+                    </p>
+                    <p className="text-xs text-ink-400 mt-0.5">{report.reason}</p>
+                    <p className="text-[10px] text-ink-500 mt-1">
+                      by {report.reporter_name ?? 'Unknown'} on {new Date(report.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => onModAction(report, 'remove')}
+                    disabled={modAction === report.id}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 transition-all disabled:opacity-50"
+                  >
+                    {modAction === report.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <XCircle className="w-3.5 h-3.5" />}
+                    Remove
+                  </button>
+                  <button
+                    onClick={() => onModAction(report, 'suspend')}
+                    disabled={modAction === report.id}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-500/10 border border-amber-500/20 text-amber-400 hover:bg-amber-500/20 transition-all disabled:opacity-50"
+                  >
+                    <ShieldAlert className="w-3.5 h-3.5" />
+                    Suspend
+                  </button>
+                  <button
+                    onClick={() => onModAction(report, 'warn')}
+                    disabled={modAction === report.id}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-500/10 border border-amber-500/20 text-amber-400 hover:bg-amber-500/20 transition-all disabled:opacity-50"
+                  >
+                    <AlertTriangle className="w-3.5 h-3.5" />
+                    Warn
+                  </button>
+                  <button
+                    onClick={() => onModAction(report, 'dismiss')}
+                    disabled={modAction === report.id}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20 transition-all disabled:opacity-50 ml-auto"
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    Dismiss
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Identity Check Queue */}
+      {identityChecks.length > 0 && (
+        <div className="mb-8 space-y-4">
+          <div className="flex items-center gap-3 mb-2">
+            <UserCheck className="w-5 h-5 text-gold-400" />
+            <h2 className="font-display text-lg font-semibold text-ink-100">Identity Verification Queue</h2>
+            <span className="badge-gold text-xs">{identityChecks.length} pending</span>
+          </div>
+          <div className="space-y-3">
+            {identityChecks.map((check) => (
+              <div key={check.id} className="card p-4 space-y-2">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-ink-100">
+                      {check.member_name ?? 'Unknown member'}
+                    </p>
+                    <p className="text-xs text-ink-400 mt-0.5">
+                      {check.check_type === 'eac' ? 'EAC seat' : 'Metro Council'} verification
+                    </p>
+                    <p className="text-[10px] text-ink-500 mt-1">
+                      Submitted {new Date(check.submitted_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => onIdentityReview(check.id, 'verified')}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20 transition-all"
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    Verify
+                  </button>
+                  <button
+                    onClick={() => onIdentityReview(check.id, 'rejected')}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 transition-all"
+                  >
+                    <XCircle className="w-3.5 h-3.5" />
+                    Reject
+                  </button>
+                  <button
+                    onClick={() => onIdentityReview(check.id, 'more_info_requested')}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-500/10 border border-amber-500/20 text-amber-400 hover:bg-amber-500/20 transition-all ml-auto"
+                  >
+                    <AlertTriangle className="w-3.5 h-3.5" />
+                    Request More Info
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Audit Log */}
       <div className="card p-6">
         <div className="flex items-center gap-3 mb-4">
           <Shield className="w-5 h-5 text-gold-400" />
