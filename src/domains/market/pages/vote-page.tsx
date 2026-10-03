@@ -7,7 +7,6 @@ import {
   Loader2,
   CheckCircle2,
   AlertCircle,
-  Coins,
   Zap,
   Info,
   Scale,
@@ -27,7 +26,6 @@ import { useAuth } from '@/domains/identity/auth-context';
 import {
   fetchVotes,
   castVote,
-  fetchVotingCredits,
   fetchVotingPower,
   fetchMemberCityInfo,
   fetchTopOrganizationsForVoting,
@@ -35,7 +33,6 @@ import {
   type OrganizationVoteCandidate,
 } from '@/domains/market/services';
 import { ORG_TYPE_LABELS } from '@/domains/market/types';
-import { BALLOT_CREDIT_CAP } from '@/config/progression-rules';
 import {
   fetchActiveCycle,
   fetchNominationCandidates,
@@ -150,9 +147,7 @@ function InitiativesTab({ userId, sessionVersion }: { userId: string; sessionVer
   const [submitting, setSubmitting] = useState(false);
   const [votedSuccess, setVotedSuccess] = useState(false);
   const [votedWeight, setVotedWeight] = useState(0);
-  const [votingCredits, setVotingCredits] = useState(0);
   const [votingPower, setVotingPower] = useState(1.0);
-  const [creditsToUse, setCreditsToUse] = useState(1);
   const [voteError, setVoteError] = useState<string | null>(null);
   const [loadError, setLoadError] = useState(false);
 
@@ -186,11 +181,7 @@ function InitiativesTab({ userId, sessionVersion }: { userId: string; sessionVer
   const loadVotingInfo = useCallback(async () => {
     if (!userId) return;
     try {
-      const [credits, power] = await Promise.all([
-        fetchVotingCredits(userId),
-        fetchVotingPower(userId),
-      ]);
-      setVotingCredits(credits);
+      const power = await fetchVotingPower(userId);
       setVotingPower(power);
     } catch {
       // ignore
@@ -207,18 +198,14 @@ function InitiativesTab({ userId, sessionVersion }: { userId: string; sessionVer
     setShowConfirm(true);
     setVotedSuccess(false);
     setVoteError(null);
-    setCreditsToUse(1);
   };
-
-  const effectiveWeight = creditsToUse * votingPower;
-  const maxCreditsForBallot = Math.min(BALLOT_CREDIT_CAP, votingCredits);
 
   const handleCastVote = async () => {
     if (!selectedVote || !selectedChoice) return;
     setSubmitting(true);
     setVoteError(null);
     try {
-      const weight = await castVote(selectedVote.id, selectedChoice, creditsToUse);
+      const weight = await castVote(selectedVote.id, selectedChoice, 1);
       setVotedWeight(weight);
       setVotedSuccess(true);
       loadVotingInfo();
@@ -254,7 +241,7 @@ function InitiativesTab({ userId, sessionVersion }: { userId: string; sessionVer
 
   return (
     <>
-      {/* VP & Credits Summary Bar */}
+      {/* VP Summary Bar */}
       <div className="frame-utility p-3 flex items-center justify-between gap-3 animate-fade-up" style={{ animationDelay: '25ms' }}>
         <div className="flex items-center gap-2">
           <Zap className="w-4 h-4 text-empire-gold" />
@@ -265,10 +252,10 @@ function InitiativesTab({ userId, sessionVersion }: { userId: string; sessionVer
         </div>
         <div className="w-px h-10 bg-ink-700/30" />
         <div className="flex items-center gap-2">
-          <Coins className="w-4 h-4 text-empire-text-secondary" />
+          <Info className="w-4 h-4 text-empire-text-secondary" />
           <div>
-            <p className="text-xs font-semibold text-empire-ivory">Voting Credits</p>
-            <p className="text-lg font-display font-bold text-empire-text-secondary tabular-nums">{votingCredits}</p>
+            <p className="text-xs font-semibold text-empire-ivory">Empire-Wide Vote</p>
+            <p className="text-[11px] text-empire-text-secondary">One ballot · No credits needed</p>
           </div>
         </div>
       </div>
@@ -448,7 +435,7 @@ function InitiativesTab({ userId, sessionVersion }: { userId: string; sessionVer
                 </div>
                 {selectedVote.user_effective_weight !== undefined && (
                   <p className="text-[10px] text-empire-text-muted mt-1 pl-6">
-                    Your vote weight: {selectedVote.user_effective_weight.toFixed(2)} ({selectedVote.user_credits_used} credits x {selectedVote.user_voting_power?.toFixed(2)} VP)
+                    Your vote weight: {selectedVote.user_effective_weight.toFixed(2)} ({selectedVote.user_voting_power?.toFixed(2)} VP)
                   </p>
                 )}
               </div>
@@ -477,61 +464,17 @@ function InitiativesTab({ userId, sessionVersion }: { userId: string; sessionVer
             </div>
             {!selectedVote.user_choice && (
               <>
-                <div className="frame-utility p-3 space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Coins className="w-4 h-4 text-empire-gold" />
-                    <p className="text-xs font-semibold text-empire-ivory">Voting Credits</p>
-                  </div>
-                  <p className="text-[11px] text-empire-text-muted">
-                    You have <span className="font-bold text-empire-text-secondary">{votingCredits}</span> credits.
-                    Use up to <span className="font-bold text-empire-text-secondary">{maxCreditsForBallot}</span> on this ballot.
-                  </p>
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => setCreditsToUse(Math.max(1, creditsToUse - 1))}
-                      disabled={creditsToUse <= 1}
-                      className="w-8 h-8 rounded-lg frame-utility flex items-center justify-center text-empire-text-secondary disabled:opacity-30"
-                    >
-                      -
-                    </button>
-                    <input
-                      type="range"
-                      min={1}
-                      max={maxCreditsForBallot}
-                      value={Math.min(creditsToUse, maxCreditsForBallot)}
-                      onChange={(e) => setCreditsToUse(Number(e.target.value))}
-                      disabled={maxCreditsForBallot < 1}
-                      className="flex-1 accent-empire-gold"
-                    />
-                    <button
-                      onClick={() => setCreditsToUse(Math.min(maxCreditsForBallot, creditsToUse + 1))}
-                      disabled={creditsToUse >= maxCreditsForBallot}
-                      className="w-8 h-8 rounded-lg frame-utility flex items-center justify-center text-empire-text-secondary disabled:opacity-30"
-                    >
-                      +
-                    </button>
-                    <span className="font-display font-bold text-lg text-empire-gold tabular-nums w-10 text-center">
-                      {creditsToUse}
-                    </span>
-                  </div>
-                  {votingCredits < 1 && (
-                    <p className="text-[11px] text-crimson-300 flex items-center gap-1">
-                      <AlertCircle className="w-3 h-3" />
-                      You need at least 1 voting credit to cast a vote.
-                    </p>
-                  )}
-                </div>
                 <div className="flex items-center justify-between p-3 rounded-xl bg-empire-gold/5 border border-empire-gold/15">
                   <div className="flex items-center gap-2">
                     <Info className="w-3.5 h-3.5 text-empire-gold" />
-                    <span className="text-xs text-empire-text-secondary">Effective Voting Weight</span>
+                    <span className="text-xs text-empire-text-secondary">Your Voting Weight</span>
                   </div>
                   <span className="font-display font-bold text-lg text-empire-gold tabular-nums">
-                    {effectiveWeight.toFixed(2)}
+                    {votingPower.toFixed(2)}
                   </span>
                 </div>
                 <p className="text-[10px] text-empire-text-muted text-center">
-                  {creditsToUse} credits x {votingPower.toFixed(2)} VP = {effectiveWeight.toFixed(2)} weighted votes
+                  Your Voting Power applies once to this ballot. No credits are consumed.
                 </p>
                 {voteError && (
                   <p className="text-sm text-crimson-300 flex items-center gap-1.5">
@@ -541,7 +484,7 @@ function InitiativesTab({ userId, sessionVersion }: { userId: string; sessionVer
                 )}
                 <button
                   onClick={handleCastVote}
-                  disabled={!selectedChoice || submitting || votingCredits < 1}
+                  disabled={!selectedChoice || submitting}
                   className="btn-primary w-full text-sm py-2.5 disabled:opacity-50"
                 >
                   {submitting ? (
@@ -554,7 +497,7 @@ function InitiativesTab({ userId, sessionVersion }: { userId: string; sessionVer
                   )}
                 </button>
                 <p className="text-[10px] text-empire-text-muted text-center">
-                  Your vote is final and cannot be changed. Credits are consumed on submission.
+                  Your vote is final and cannot be changed.
                 </p>
               </>
             )}
@@ -790,7 +733,7 @@ function LeadershipTab({ userId, sessionVersion }: { userId: string; sessionVers
           </div>
           <p className="text-xs text-empire-text-muted">
             These {finalists.length} members received the strongest community support and have advanced to the election.
-            Select up to {cycle.seats} candidates. No credits are used -- one member, one ballot.
+            Select up to {cycle.seats} candidates. No credits are used -- one member, one ballot. Earn +25 Influence for participating.
           </p>
 
           {ballotSubmitted && !ballotSuccess && (
@@ -1172,7 +1115,7 @@ function VoteCard({ vote, onOpen }: { vote: Vote; onOpen: () => void }) {
           <Zap className="w-3 h-3 text-empire-gold" />
           Your vote weight: <span className="font-bold text-empire-gold tabular-nums">{vote.user_effective_weight.toFixed(2)}</span>
           <span className="text-ink-600">-</span>
-          {vote.user_credits_used} credits x {vote.user_voting_power?.toFixed(2)} VP
+          {vote.user_voting_power?.toFixed(2)} VP
         </div>
       )}
 

@@ -503,7 +503,8 @@ function TierDetailsPanel({
 const LEDGER_SOURCE_LABELS: Record<string, string> = {
   monthly_grant: 'Monthly grant',
   initial_grant: 'Initial grant',
-  vote_spend: 'Vote cast',
+  initiative_vote_spend: 'Initiative vote',
+  initiative_vote_refund: 'Initiative refund',
 };
 
 function formatLedgerDate(dateStr: string): string {
@@ -554,8 +555,8 @@ function CreditBalancePanel({
           )}
         </div>
         <p className="mt-3 text-xs text-stone-500 leading-relaxed">
-          Credits are granted on your monthly anniversary date and carry forward if unused.
-          Spend them on treasury votes and ballots.
+          Initiative Voting Credits are granted on your monthly anniversary date and carry forward up to 30.
+          Spend them on Metro Initiative voting — each initiative you support costs 1 credit.
         </p>
         {ledger.length > 0 && (
           <div className="mt-4 border-t border-stone-200 pt-3">

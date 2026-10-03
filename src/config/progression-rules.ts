@@ -60,19 +60,25 @@ export const VP_RULES = {
 // BALLOT CREDIT CAP
 // ============================================================
 
-export const BALLOT_CREDIT_CAP = 100;
+export const BALLOT_CREDIT_CAP = 1;
 
 // ============================================================
-// MEMBERSHIP MONTHLY VOTING CREDITS
+// INITIATIVE VOTING CREDIT ROLLOVER CAP
+// ============================================================
+
+export const VOTING_CREDIT_ROLLOVER_CAP = 30;
+
+// ============================================================
+// MEMBERSHIP MONTHLY INITIATIVE VOTING CREDITS
 // ============================================================
 
 export const MEMBERSHIP_MONTHLY_CREDITS = {
   white: 0,
-  black: 10,
-  black_plus: 25,
-  black_pro: 25,
-  arch: 0,
-  arch_pro: 0,
+  black: 4,
+  black_plus: 7,
+  black_pro: 10,
+  arch: 10,
+  arch_pro: 10,
 } as const;
 
 export type MembershipTierId = 'white' | 'black' | 'black_plus' | 'black_pro' | 'arch' | 'arch_pro';

@@ -23,7 +23,7 @@ export interface VotingCredits {
 export interface CreditLedgerEntry {
   id: string;
   amount: number;
-  source: 'monthly_grant' | 'initial_grant' | 'vote_spend';
+  source: 'monthly_grant' | 'initial_grant' | 'initiative_vote_spend' | 'initiative_vote_refund';
   reference_id: string | null;
   created_at: string;
 }

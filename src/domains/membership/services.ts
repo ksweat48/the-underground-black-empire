@@ -220,15 +220,15 @@ export const TIER_DETAILS: Record<MembershipTierId, TierDetails> = {
     benefits: [
       { text: 'Everything in Free, plus:' },
       { text: 'Treasury unlocked' },
-      { text: 'Treasury voting participation' },
-      { text: '10 Voting Credits every month' },
+      { text: 'Metro Initiative voting' },
+      { text: '4 Initiative Voting Credits every month' },
     ],
     ctaLabel: 'Become a Black Member',
   },
   black_plus: {
     benefits: [
       { text: 'Everything in Black, plus:' },
-      { text: '25 Voting Credits every month' },
+      { text: '7 Initiative Voting Credits every month' },
       { text: 'Can qualify for leadership' },
       { text: 'Can qualify for committees' },
     ],
@@ -239,7 +239,8 @@ export const TIER_DETAILS: Record<MembershipTierId, TierDetails> = {
   black_pro: {
     benefits: [
       { text: 'Everything in Black+, plus:' },
-      { text: '25 Voting Credits every month' },
+      { text: '10 Initiative Voting Credits every month' },
+      { text: 'Support all 5 initiatives in both monthly cycles' },
       { text: 'Family & Legacy Fund eligibility' },
       { text: 'Priority leadership consideration' },
     ],
@@ -250,32 +251,32 @@ export const TIER_DETAILS: Record<MembershipTierId, TierDetails> = {
   arch: {
     benefits: [
       { text: 'All Black Pro benefits included' },
-      { text: 'Zero additional voting credits' },
+      { text: '10 Initiative Voting Credits (same as Black Pro)' },
       { text: 'Arch Member recognition badge & frame' },
       { text: 'VIP prestige status' },
     ],
     ctaLabel: 'Become an Arch Member',
     learnMoreTitle: 'Arch Member Recognition',
-    learnMoreBody: 'Arch Member is a VIP prestige tier. It carries all the functional benefits of Black Pro (including Family & Legacy eligibility) plus exclusive recognition. Arch Members receive zero additional voting credits beyond what Black Pro provides — this tier is about distinguished status, not voting power.',
+    learnMoreBody: 'Arch Member is a VIP prestige tier. It carries all the functional benefits of Black Pro (including 10 Initiative Voting Credits and Family & Legacy eligibility) plus exclusive recognition. Arch Members do not receive more credits than Black Pro — this tier is about distinguished status, not additional voting power.',
   },
   arch_pro: {
     benefits: [
       { text: 'All Arch Member benefits included' },
-      { text: 'Zero additional voting credits' },
+      { text: '10 Initiative Voting Credits (same as Black Pro)' },
       { text: 'Arch Pro recognition badge & frame' },
       { text: 'Highest prestige designation' },
     ],
     ctaLabel: 'Become an Arch Pro',
     learnMoreTitle: 'Arch Pro Recognition',
-    learnMoreBody: 'Arch Pro is the highest prestige designation in the Empire. It carries all Black Pro functional benefits plus the most exclusive recognition. Like Arch Member, there are zero additional voting credits — this tier represents the pinnacle of distinguished status and commitment.',
+    learnMoreBody: 'Arch Pro is the highest prestige designation in the Empire. It carries all Black Pro functional benefits plus the most exclusive recognition. Arch Pro does not receive more voting credits than Black Pro — this tier represents the pinnacle of distinguished status and commitment.',
   },
 };
 
 export const VOTING_CREDIT_AMOUNTS: Record<MembershipTierId, number> = {
   white: 0,
-  black: 10,
-  black_plus: 25,
-  black_pro: 25,
-  arch: 0,
-  arch_pro: 0,
+  black: 4,
+  black_plus: 7,
+  black_pro: 10,
+  arch: 10,
+  arch_pro: 10,
 };
