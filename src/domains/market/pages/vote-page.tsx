@@ -12,11 +12,7 @@ import {
   Scale,
   Landmark,
   Crown,
-  HeartHandshake,
-  TrendingUp,
-  ChevronRight,
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
 import { Layout } from '@/shared/components/layout';
 import { GlassModal } from '@/shared/components/glass-modal';
 import { ErrorBanner } from '@/shared/components/error-banner';
@@ -28,11 +24,10 @@ import {
   castVote,
   fetchVotingPower,
   fetchMemberCityInfo,
-  fetchTopOrganizationsForVoting,
   type Vote,
-  type OrganizationVoteCandidate,
 } from '@/domains/market/services';
-import { ORG_TYPE_LABELS } from '@/domains/market/types';
+import { fetchInitiativeHub, type InitiativeHub } from '@/domains/initiatives/services';
+import { VoteTab } from '@/domains/initiatives/components/vote-tab';
 import {
   fetchActiveCycle,
   fetchNominationCandidates,
@@ -61,19 +56,6 @@ export function VotePage() {
     <Layout fullWidth>
       <div className="max-w-[960px] lg:max-w-[1100px] mx-auto px-2 sm:px-3 pt-3 pb-24 lg:pb-10 space-y-4">
         <VoteHeader tab={tab} onTabChange={setTab} />
-        <Link
-          to="/initiatives?tab=vote"
-          className="frame-command px-4 py-3 flex items-center gap-3 group transition-all hover:-translate-y-0.5 animate-fade-up"
-        >
-          <div className="w-9 h-9 rounded-xl bg-plum-50 border border-plum-200 flex items-center justify-center shrink-0">
-            <Landmark className="w-4 h-4 text-plum-700" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-stone-900">Metro Initiative Ballot</p>
-            <p className="text-[11px] text-stone-500 truncate">Vote on the Top 5 funding requests in your Metro on the 1st and 15th</p>
-          </div>
-          <ChevronRight className="w-4 h-4 text-stone-400 group-hover:text-plum-600 transition-colors" />
-        </Link>
         {tab === 'initiatives' ? (
           <InitiativesTab userId={userId} sessionVersion={sessionVersion} />
         ) : (
@@ -138,8 +120,9 @@ function TabButton({
 
 function InitiativesTab({ userId, sessionVersion }: { userId: string; sessionVersion: number }) {
   const [votes, setVotes] = useState<Vote[]>([]);
-  const [orgCandidates, setOrgCandidates] = useState<OrganizationVoteCandidate[]>([]);
-  const [orgsLoading, setOrgsLoading] = useState(true);
+  const [initiativeHub, setInitiativeHub] = useState<InitiativeHub | null>(null);
+  const [initiativeLoading, setInitiativeLoading] = useState(true);
+  const [initiativeError, setInitiativeError] = useState(false);
   const [loading, setLoading] = useState(true);
   const [selectedVote, setSelectedVote] = useState<Vote | null>(null);
   const [selectedChoice, setSelectedChoice] = useState<string>('');
@@ -166,15 +149,16 @@ function InitiativesTab({ userId, sessionVersion }: { userId: string; sessionVer
     }
   }, [userId]);
 
-  const loadOrgCandidates = useCallback(async () => {
-    setOrgsLoading(true);
+  const loadInitiatives = useCallback(async () => {
+    setInitiativeLoading(true);
+    setInitiativeError(false);
     try {
-      const data = await fetchTopOrganizationsForVoting(6);
-      setOrgCandidates(data);
+      setInitiativeHub(await fetchInitiativeHub());
     } catch {
-      setOrgCandidates([]);
+      setInitiativeHub(null);
+      setInitiativeError(true);
     } finally {
-      setOrgsLoading(false);
+      setInitiativeLoading(false);
     }
   }, []);
 
@@ -190,7 +174,7 @@ function InitiativesTab({ userId, sessionVersion }: { userId: string; sessionVer
 
   useEffect(() => { loadVotes(); }, [loadVotes, sessionVersion]);
   useEffect(() => { loadVotingInfo(); }, [loadVotingInfo, sessionVersion]);
-  useEffect(() => { loadOrgCandidates(); }, [loadOrgCandidates, sessionVersion]);
+  useEffect(() => { loadInitiatives(); }, [loadInitiatives, sessionVersion]);
 
   const handleOpenVote = (vote: Vote) => {
     setSelectedVote(vote);
@@ -260,84 +244,25 @@ function InitiativesTab({ userId, sessionVersion }: { userId: string; sessionVer
         </div>
       </div>
 
-      {/* Organization candidates for voting */}
       <section className="animate-fade-up" style={{ animationDelay: '50ms' }}>
         <div className="flex items-center gap-2 mb-3">
-          <HeartHandshake className="w-4 h-4 text-plum-400" />
+          <Landmark className="w-4 h-4 text-plum-500" />
           <h2 className="font-display text-sm font-semibold text-empire-ivory uppercase tracking-wider">
-            Top Organizations
+            Metro Initiative Ballot
           </h2>
         </div>
-        {orgsLoading ? (
-          <div className="flex justify-center py-6">
-            <Loader2 className="w-5 h-5 text-empire-text-muted animate-spin" />
+        {initiativeLoading ? (
+          <div className="flex items-center justify-center py-16">
+            <Loader2 className="w-6 h-6 text-empire-text-muted animate-spin" />
           </div>
-        ) : orgCandidates.length === 0 ? (
-          <div className="frame-utility p-4 text-center">
-            <p className="text-xs text-empire-text-muted">
-              No organizations have been listed yet. Organizations with the most engagement will appear here as vote candidates.
-            </p>
-          </div>
+        ) : initiativeError ? (
+          <ErrorBanner message="Unable to load Metro initiatives. Please try again." onRetry={loadInitiatives} />
+        ) : initiativeHub ? (
+          <VoteTab hub={initiativeHub} onSubmitted={loadInitiatives} />
         ) : (
-          <div className="space-y-2">
-            {orgCandidates.map((org) => {
-              const goalNum = org.funding_goal || 0;
-              const raisedNum = org.total_raised || 0;
-              const progressPct = goalNum > 0 ? Math.min(100, (raisedNum / goalNum) * 100) : 0;
-              return (
-                <div
-                  key={org.id}
-                  className="frame-utility p-3"
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="shrink-0 w-10 h-10 rounded-lg overflow-hidden bg-ink-800/10">
-                      {org.image_url ? (
-                        <img src={org.image_url} alt={org.name} className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="flex items-center justify-center w-full h-full">
-                          <HeartHandshake className="w-5 h-5 text-empire-text-muted/30" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0 space-y-1.5">
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <h3 className="font-display text-sm font-semibold text-empire-ivory line-clamp-1">{org.name}</h3>
-                          <div className="flex items-center gap-1.5 mt-0.5">
-                            <span className="badge-gold text-[8px] py-0.5 px-1.5">{ORG_TYPE_LABELS[org.org_type]}</span>
-                            {org.city_name && (
-                              <span className="text-[10px] text-empire-text-muted">{org.city_state ? `${org.city_name}, ${org.city_state}` : org.city_name}</span>
-                            )}
-                          </div>
-                        </div>
-                        <span className="flex items-center gap-1 text-[10px] text-empire-text-muted shrink-0">
-                          <TrendingUp className="w-3 h-3" />
-                          {org.engagement_score.toFixed(0)}
-                        </span>
-                      </div>
-                      {/* Fundraising progress */}
-                      <div className="space-y-0.5">
-                        <div className="flex items-center justify-between text-[10px]">
-                          <span className="font-semibold text-emerald-400">${raisedNum.toLocaleString()}</span>
-                          <span className="text-empire-text-muted">of ${goalNum.toLocaleString()}</span>
-                        </div>
-                        <div className="h-1.5 rounded-full bg-ink-700/30 overflow-hidden">
-                          <div
-                            className="h-full rounded-full bg-gradient-to-r from-emerald-600 to-emerald-400"
-                            style={{ width: `${progressPct}%` }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-            {activeVotes.length === 0 && (
-              <p className="text-[10px] text-empire-text-muted text-center pt-1">
-                These organizations will be available for voting when a voting round opens. The most engaged organizations rise to the top.
-              </p>
-            )}
+          <div className="frame-utility p-6 text-center">
+            <p className="text-sm font-medium text-empire-text-secondary mb-1">No Metro initiative ballot available</p>
+            <p className="text-xs text-empire-text-muted">Your city is not currently connected to a Metro with initiative voting.</p>
           </div>
         )}
       </section>
@@ -347,7 +272,7 @@ function InitiativesTab({ userId, sessionVersion }: { userId: string; sessionVer
         <div className="flex items-center gap-2 mb-3">
           <div className="w-2 h-2 rounded-full bg-empire-success animate-pulse" />
           <h2 className="font-display text-sm font-semibold text-empire-ivory uppercase tracking-wider">
-            Active Votes
+            Empire-Wide Decisions
           </h2>
         </div>
         {activeVotes.length === 0 ? (

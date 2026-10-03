@@ -20,7 +20,6 @@ import type {
   Organization,
   OrganizationComment,
   CreateOrganizationInput,
-  OrganizationVoteCandidate,
   OrgType,
   FeedPostType,
 } from './types';
@@ -46,7 +45,6 @@ export type {
   Organization,
   OrganizationComment,
   CreateOrganizationInput,
-  OrganizationVoteCandidate,
   OrgType,
   FeedPostType,
 };
@@ -1119,75 +1117,6 @@ export async function createOrganizationComment(orgId: string, body: string): Pr
     .from('organization_comments')
     .insert({ organization_id: orgId, body });
   if (error) throw error;
-}
-
-export async function fetchTopOrganizationsForVoting(limit: number = 10): Promise<OrganizationVoteCandidate[]> {
-  const { data, error } = await supabase
-    .from('organization_ranking')
-    .select(`
-      id, name, org_type, funding_goal, total_raised, city_id, engagement_score
-    `)
-    .limit(limit);
-
-  if (error) throw error;
-
-  const rows = data ?? [];
-  if (rows.length === 0) return [];
-
-  const cityIds = [...new Set(rows.map((r) => r.city_id).filter(Boolean))] as string[];
-  const { data: cities } = await supabase
-    .from('cities')
-    .select('id, name, state')
-    .in('id', cityIds);
-
-  const cityMap = new Map<string, { name: string; state: string }>();
-  if (cities) {
-    for (const c of cities) {
-      cityMap.set(c.id as string, { name: c.name as string, state: c.state as string });
-    }
-  }
-
-  const orgIds = rows.map((r) => r.id as string);
-  const { data: orgImages } = await supabase
-    .from('organizations')
-    .select('id, image_url')
-    .in('id', orgIds);
-  const imageMap = new Map<string, string | null>();
-  if (orgImages) {
-    for (const o of orgImages) {
-      imageMap.set(o.id as string, (o.image_url as string | null) ?? null);
-    }
-  }
-
-  return rows.map((row) => {
-    const city = cityMap.get(row.city_id as string);
-    return {
-      id: row.id as string,
-      name: row.name as string,
-      org_type: row.org_type as OrgType,
-      funding_goal: Number(row.funding_goal) ?? 0,
-      total_raised: Number(row.total_raised) ?? 0,
-      city_name: city?.name,
-      city_state: city?.state,
-      engagement_score: Number(row.engagement_score) ?? 0,
-      image_url: imageMap.get(row.id as string) ?? null,
-    } as OrganizationVoteCandidate;
-  });
-}
-
-export async function recordOrgVoteSupport(
-  organizationId: string,
-  voteId: string,
-  effectiveWeight: number
-): Promise<number> {
-  const { data, error } = await supabase.rpc('record_organization_vote_support', {
-    p_organization_id: organizationId,
-    p_vote_id: voteId,
-    p_effective_weight: effectiveWeight,
-  });
-
-  if (error) throw error;
-  return Number(data) ?? 0;
 }
 
 // ============================================================

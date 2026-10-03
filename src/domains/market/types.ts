@@ -302,14 +302,3 @@ export interface CreateOrganizationInput {
   image_url: string | null;
 }
 
-export interface OrganizationVoteCandidate {
-  id: string;
-  name: string;
-  org_type: OrgType;
-  funding_goal: number;
-  total_raised: number;
-  city_name?: string;
-  city_state?: string;
-  engagement_score: number;
-  image_url: string | null;
-}

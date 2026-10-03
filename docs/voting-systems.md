@@ -27,9 +27,10 @@ the member makes within that event.
 ## 1. Metro Initiative Voting
 
 ### Purpose
-Members vote on which community funding requests (initiatives) their Metro Treasury
-should fund. Organizations submit initiatives, the Top 5 by community backing are
-frozen into a 48-hour ballot, and members vote on which ones to support.
+Members vote on which organization-created initiatives their Metro Treasury
+should fund. Organizations submit initiatives attached to their organization, the
+Top 5 initiatives by community backing are frozen into a 48-hour ballot, and
+members vote on the initiatives themselves.
 
 ### Eligibility
 - Black Card or higher membership
@@ -60,8 +61,9 @@ Each membership tier receives a monthly allowance of Initiative Voting Credits:
 
 - Voting cycles open on the **1st and 15th** of each month (Metro local time)
   and last **48 hours**.
-- The Top 5 eligible initiatives (one per organization, each fully fundable from
-  the Available Treasury) are frozen into the ballot.
+- The Top 5 eligible initiatives (each fully fundable from the Available Treasury)
+  are frozen into the ballot. The organization name identifies who submitted each
+  initiative; organizations are not voting choices.
 - A member may support **any or all** of the 5 initiatives on the ballot.
 - **Each selected initiative costs 1 Initiative Voting Credit.**
 - A member may spend **maximum 1 credit per initiative per cycle** — no stacking

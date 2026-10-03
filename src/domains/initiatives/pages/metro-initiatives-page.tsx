@@ -115,7 +115,7 @@ function HubHeader({ hub, onCycleChange }: { hub: InitiativeHub; onCycleChange: 
           {hub.metro.state && <span className="text-stone-400 font-semibold"> · {hub.metro.state}</span>}
         </h1>
         <p className="text-sm text-stone-500 mt-1 leading-relaxed max-w-xl">
-          Local organizations ask for Treasury funding. Members back the ones they believe in, then vote on the Top 5 twice a month.
+          Organizations submit initiatives for Metro Treasury funding. Members back the initiatives they believe in, then vote on the Top 5 twice a month.
         </p>
       </div>
       <div className="grid grid-cols-2 gap-3 lg:w-[380px]">
