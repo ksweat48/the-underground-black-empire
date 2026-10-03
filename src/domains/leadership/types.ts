@@ -1,4 +1,4 @@
-export type ElectionPhase = 'nomination' | 'election' | 'closed';
+export type ElectionPhase = 'nomination' | 'election' | 'runoff' | 'closed';
 
 export type NomineeAcceptanceStatus = 'pending' | 'accepted' | 'declined';
 
@@ -13,6 +13,10 @@ export interface LeadershipCycle {
   election_closes_at: string;
   seats: number;
   finalist_count: number;
+  runoff_phase?: boolean;
+  runoff_opens_at?: string | null;
+  runoff_closes_at?: string | null;
+  is_recurring?: boolean;
 }
 
 export interface NominationCandidate {
@@ -47,6 +51,9 @@ export interface MetroCouncilMember {
   influence: number;
   level: number;
   seated_at: string;
+  term_starts_at?: string | null;
+  term_ends_at?: string | null;
+  council_member_status?: string;
 }
 
 export interface LeadershipEligibility {

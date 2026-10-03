@@ -5,6 +5,7 @@ import {
   Store,
   Vote,
   CreditCard,
+  Scale,
 } from 'lucide-react';
 import { EmpireEmblemIcon } from '@/shared/components/empire-emblem-icon';
 
@@ -46,6 +47,13 @@ export const NAV_SECTIONS: NavSection[] = [
         path: '/vote',
         icon: Vote,
         description: 'Community decisions and local priorities',
+        requiresAuth: true,
+      },
+      {
+        label: 'Governance',
+        path: '/governance',
+        icon: Scale,
+        description: 'Advisory Council, Metro Council, and Empire-wide initiatives',
         requiresAuth: true,
       },
       {

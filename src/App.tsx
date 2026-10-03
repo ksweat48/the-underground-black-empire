@@ -17,6 +17,7 @@ const ProfilePage = lazy(() => import('@/domains/founder-campaign/pages/profile-
 const AdminPage = lazy(() => import('@/domains/admin/pages/admin-page'));
 const EmailPreviewPage = lazy(() => import('@/domains/admin/pages/email-preview-page'));
 const FinancialAdminPage = lazy(() => import('@/domains/admin/pages/financial-admin-page'));
+const GovernancePage = lazy(() => import('@/domains/governance/pages/governance-page'));
 const MarketPage = lazy(() => import('@/domains/market/pages/market-page'));
 const ListingDetailPage = lazy(() => import('@/domains/market/pages/listing-detail-page'));
 const CreateListingPage = lazy(() => import('@/domains/market/pages/create-listing-page'));
@@ -221,6 +222,14 @@ function App() {
                 element={
                   <ProtectedRoute requireAdmin>
                     <FinancialAdminPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/governance"
+                element={
+                  <ProtectedRoute>
+                    <GovernancePage />
                   </ProtectedRoute>
                 }
               />
