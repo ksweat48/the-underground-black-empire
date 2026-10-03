@@ -157,10 +157,14 @@ Deno.serve(async (req: Request) => {
         .maybeSingle();
 
       if (member?.id && member.membership_tier !== "white") {
+        const collectedAmount = (invoice.amount_paid as number) ?? null;
+        const feeAmount = (invoice.total_tax_amounts as unknown) ? 0 : 0;
         await adminClient.rpc("generate_partner_commission", {
           p_referred_member_id: member.id,
           p_stripe_event_id: event.id,
           p_tier_id: member.membership_tier,
+          p_net_collected_cents: collectedAmount,
+          p_stripe_fee_cents: feeAmount,
         });
       }
 
@@ -202,6 +206,7 @@ Deno.serve(async (req: Request) => {
       if (original?.stripe_event_id) {
         await adminClient.rpc("reverse_partner_commission", {
           p_stripe_event_id: original.stripe_event_id,
+          p_reversal_event_id: event.id,
         });
       } else {
         console.error("No original payment found for reversal", event.id);

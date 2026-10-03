@@ -115,6 +115,37 @@ export async function fetchEmpireGrowth(): Promise<EmpireGrowth> {
   };
 }
 
+export interface TreasuryReleaseRecord {
+  id: string;
+  metro_id: string;
+  initiative_id: string | null;
+  amount_cents: number;
+  status: 'submitted' | 'under_review' | 'approved' | 'funded' | 'completed' | 'rejected';
+  submitted_by: string;
+  submitted_at: string;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  review_notes: string | null;
+  approved_by: string | null;
+  approved_at: string | null;
+  payment_reference: string | null;
+  funded_by: string | null;
+  funded_at: string | null;
+  completed_by: string | null;
+  completed_at: string | null;
+  rejection_reason: string | null;
+  created_at: string;
+}
+
+export async function fetchTreasuryReleases(metroId: string, limit = 25): Promise<TreasuryReleaseRecord[]> {
+  const { data, error } = await supabase.rpc('get_treasury_releases', {
+    p_metro_id: metroId,
+    p_limit: limit,
+  });
+  if (error) throw error;
+  return (data ?? []) as TreasuryReleaseRecord[];
+}
+
 export function formatCents(cents: number): string {
   return (cents / 100).toLocaleString('en-US', {
     style: 'currency',

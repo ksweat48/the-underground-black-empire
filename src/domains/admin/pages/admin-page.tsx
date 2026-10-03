@@ -20,6 +20,7 @@ import {
   Megaphone,
   Send,
   Landmark,
+  Receipt,
 } from 'lucide-react';
 import { Layout } from '@/shared/components/layout';
 import { ErrorBanner } from '@/shared/components/error-banner';
@@ -324,6 +325,13 @@ export function AdminPage() {
             >
               <Landmark className="w-4 h-4" />
               Metro Initiatives
+            </a>
+            <a
+              href="/admin/financial"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-gold-500/15 border border-gold-500/30 text-gold-200 hover:bg-gold-500/25 transition-colors"
+            >
+              <Receipt className="w-4 h-4" />
+              Financial Admin
             </a>
             <a
               href="/admin/emails"
