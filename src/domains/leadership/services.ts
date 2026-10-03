@@ -314,6 +314,7 @@ export async function fetchMetroCouncil(metroId: string | null): Promise<MetroCo
       member:member_id ( display_name, avatar_url )
     `)
     .eq('metro_id', metroId)
+    .in('council_member_status', ['active', 'grace_period'])
     .order('seat_number', { ascending: true });
 
   if (error) throw error;
