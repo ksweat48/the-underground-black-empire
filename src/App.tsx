@@ -28,6 +28,9 @@ const OrganizationDetailPage = lazy(() => import('@/domains/market/pages/organiz
 const VotePage = lazy(() => import('@/domains/market/pages/vote-page'));
 const MembershipPage = lazy(() => import('@/domains/membership/pages/membership-page'));
 const MetroTreasuryPage = lazy(() => import('@/domains/treasury/pages/metro-treasury-page'));
+const MetroInitiativesPage = lazy(() => import('@/domains/initiatives/pages/metro-initiatives-page'));
+const InitiativeDetailPage = lazy(() => import('@/domains/initiatives/pages/initiative-detail-page'));
+const AdminInitiativesPage = lazy(() => import('@/domains/initiatives/pages/admin-initiatives-page'));
 
 function PageLoader() {
   return (
@@ -161,6 +164,30 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <MetroTreasuryPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/initiatives"
+                element={
+                  <ProtectedRoute>
+                    <MetroInitiativesPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/initiatives/:id"
+                element={
+                  <ProtectedRoute>
+                    <InitiativeDetailPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/initiatives"
+                element={
+                  <ProtectedRoute requireAdmin>
+                    <AdminInitiativesPage />
                   </ProtectedRoute>
                 }
               />

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, Landmark, Lock, Unlock, Building2, Users, PartyPopper, X, ShieldCheck, Infinity as InfinityIcon } from 'lucide-react';
+import { ArrowLeft, Landmark, Lock, Unlock, Building2, Users, PartyPopper, X, ShieldCheck, Infinity as InfinityIcon, Vote, ChevronRight } from 'lucide-react';
 import { Layout } from '@/shared/components/layout';
 import { ErrorBanner } from '@/shared/components/error-banner';
 import { useAuth } from '@/domains/identity/auth-context';
@@ -89,6 +89,21 @@ export default function MetroTreasuryPage() {
             <TreasuryHeader treasury={treasury} />
             <BalanceTiles treasury={treasury} />
             <CapacityCard treasury={treasury} />
+            <Link
+              to="/initiatives"
+              className="frame-command p-4 lg:p-5 flex items-center gap-4 group transition-all hover:-translate-y-0.5"
+            >
+              <div className="w-11 h-11 rounded-xl bg-plum-50 border border-plum-200 flex items-center justify-center shrink-0">
+                <Vote className="w-5 h-5 text-plum-700" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-stone-900">Metro Initiatives</p>
+                <p className="text-xs text-stone-500 mt-0.5">
+                  Members decide how Available funds are released. Vote on the 1st and 15th; results post on the 3rd and 17th.
+                </p>
+              </div>
+              <ChevronRight className="w-4 h-4 text-stone-400 group-hover:text-plum-600 transition-colors shrink-0" />
+            </Link>
             <TreasuryCityList cities={treasury.cities} totalRaisedCents={treasury.total_raised_cents} />
             <div className="grid gap-4 lg:grid-cols-2 lg:gap-6">
               <TreasuryReleases releases={treasury.releases} />

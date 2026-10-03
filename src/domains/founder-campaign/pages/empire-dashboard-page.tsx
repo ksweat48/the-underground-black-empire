@@ -13,6 +13,7 @@ import {
   Lock,
   Map as MapIcon,
   Landmark,
+  Vote,
 } from 'lucide-react';
 import { Layout } from '@/shared/components/layout';
 import { GlassModal } from '@/shared/components/glass-modal';
@@ -510,6 +511,20 @@ export function EmpireDashboardPage() {
                         onClick={metroData?.metroId ? () => navigate('/treasury') : undefined}
                       />
                     </div>
+
+                    {metroData?.metroId && (
+                      <button
+                        onClick={() => navigate('/initiatives')}
+                        className="mt-2 sm:mt-3 w-full frame-utility px-4 py-3 flex items-center gap-3 text-left group transition-all hover:-translate-y-0.5"
+                      >
+                        <Vote className="w-4 h-4 text-plum-600 shrink-0" />
+                        <span className="flex-1 min-w-0">
+                          <span className="block text-sm font-semibold text-stone-900">Metro Initiatives</span>
+                          <span className="block text-[11px] text-stone-500 truncate">Back local projects and vote on Treasury funding</span>
+                        </span>
+                        <ChevronRight className="w-4 h-4 text-stone-400 group-hover:text-plum-600 transition-colors" />
+                      </button>
+                    )}
                   </div>
 
                   {/* Right column: Location Intelligence */}

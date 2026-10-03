@@ -22,6 +22,7 @@ import {
   type Organization,
 } from '@/domains/market/services';
 import { ORG_TYPE_LABELS } from '@/domains/market/types';
+import { OrganizationInitiativesCard } from '@/domains/initiatives/components/organization-initiatives-card';
 
 export function OrganizationDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -236,6 +237,8 @@ export function OrganizationDetailPage() {
             </div>
           </div>
         </div>
+
+        {org.owner_id === userId && <OrganizationInitiativesCard organizationId={org.id} />}
 
       </div>
     </Layout>

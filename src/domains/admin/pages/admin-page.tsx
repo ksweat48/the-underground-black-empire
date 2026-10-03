@@ -19,6 +19,7 @@ import {
   Mail,
   Megaphone,
   Send,
+  Landmark,
 } from 'lucide-react';
 import { Layout } from '@/shared/components/layout';
 import { ErrorBanner } from '@/shared/components/error-banner';
@@ -316,13 +317,22 @@ export function AdminPage() {
         </div>
         <div className="flex items-center justify-between flex-wrap gap-4">
           <p className="text-ink-400">Administrative controls and reporting for the Pioneer Campaign.</p>
-          <a
-            href="/admin/emails"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-gold-500/15 border border-gold-500/30 text-gold-200 hover:bg-gold-500/25 transition-colors"
-          >
-            <Mail className="w-4 h-4" />
-            Email Preview
-          </a>
+          <div className="flex flex-wrap gap-2">
+            <a
+              href="/admin/initiatives"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-gold-500/15 border border-gold-500/30 text-gold-200 hover:bg-gold-500/25 transition-colors"
+            >
+              <Landmark className="w-4 h-4" />
+              Metro Initiatives
+            </a>
+            <a
+              href="/admin/emails"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-gold-500/15 border border-gold-500/30 text-gold-200 hover:bg-gold-500/25 transition-colors"
+            >
+              <Mail className="w-4 h-4" />
+              Email Preview
+            </a>
+          </div>
         </div>
       </div>
 

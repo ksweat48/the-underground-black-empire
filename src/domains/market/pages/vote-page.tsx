@@ -15,7 +15,9 @@ import {
   Crown,
   HeartHandshake,
   TrendingUp,
+  ChevronRight,
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { Layout } from '@/shared/components/layout';
 import { GlassModal } from '@/shared/components/glass-modal';
 import { ErrorBanner } from '@/shared/components/error-banner';
@@ -62,6 +64,19 @@ export function VotePage() {
     <Layout fullWidth>
       <div className="max-w-[960px] lg:max-w-[1100px] mx-auto px-2 sm:px-3 pt-3 pb-24 lg:pb-10 space-y-4">
         <VoteHeader tab={tab} onTabChange={setTab} />
+        <Link
+          to="/initiatives?tab=vote"
+          className="frame-command px-4 py-3 flex items-center gap-3 group transition-all hover:-translate-y-0.5 animate-fade-up"
+        >
+          <div className="w-9 h-9 rounded-xl bg-plum-50 border border-plum-200 flex items-center justify-center shrink-0">
+            <Landmark className="w-4 h-4 text-plum-700" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-stone-900">Metro Initiative Ballot</p>
+            <p className="text-[11px] text-stone-500 truncate">Vote on the Top 5 funding requests in your Metro on the 1st and 15th</p>
+          </div>
+          <ChevronRight className="w-4 h-4 text-stone-400 group-hover:text-plum-600 transition-colors" />
+        </Link>
         {tab === 'initiatives' ? (
           <InitiativesTab userId={userId} sessionVersion={sessionVersion} />
         ) : (
