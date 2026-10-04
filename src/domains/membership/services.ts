@@ -4,7 +4,10 @@ import type {
   MembershipTierId,
   VotingCredits,
   CreditLedgerEntry,
-  LegacyFund,
+  FamilyLegacyFund,
+  FamilyLegacyEligibility,
+  AssistanceCategory,
+  AssistanceRequest,
   MemberMembership,
   BenefitItem,
   TierDetails,
@@ -17,7 +20,10 @@ export type {
   MembershipTierId,
   VotingCredits,
   CreditLedgerEntry,
-  LegacyFund,
+  FamilyLegacyFund,
+  FamilyLegacyEligibility,
+  AssistanceCategory,
+  AssistanceRequest,
   MemberMembership,
   BenefitItem,
   TierDetails,
@@ -155,14 +161,48 @@ export async function ensureVotingCreditsRow(userId: string): Promise<void> {
   }
 }
 
-export async function fetchLegacyFund(): Promise<LegacyFund> {
-  const { data, error } = await supabase
-    .from('legacy_fund')
-    .select('total_reserve')
-    .eq('id', 1)
-    .maybeSingle();
-  if (error) throw error;
-  return { total_reserve: Number(data?.total_reserve ?? 0) };
+function friendlyError(error: { message?: string } | null, fallback: string): string {
+  const msg = error?.message ?? '';
+  return msg && !msg.includes('function') && !msg.includes('permission') ? msg : fallback;
+}
+
+export async function fetchFamilyLegacyOverview(): Promise<{
+  fund: FamilyLegacyFund;
+  eligibility: FamilyLegacyEligibility;
+  requests: AssistanceRequest[];
+}> {
+  const [fundRes, eligRes, reqRes] = await Promise.all([
+    supabase.rpc('get_family_legacy_fund'),
+    supabase.rpc('get_family_legacy_eligibility'),
+    supabase
+      .from('family_assistance_requests')
+      .select('id, category, amount_requested_cents, approved_amount_cents, description, status, decision_notes, created_at')
+      .order('created_at', { ascending: false })
+      .limit(20),
+  ]);
+  if (fundRes.error || eligRes.error || reqRes.error || !fundRes.data || !eligRes.data) {
+    throw new Error('Could not load the Family & Legacy fund.');
+  }
+  const elig = eligRes.data as FamilyLegacyEligibility;
+  return {
+    fund: fundRes.data as FamilyLegacyFund,
+    eligibility: { ...elig, reasons: Array.isArray(elig.reasons) ? elig.reasons : [] },
+    requests: (reqRes.data ?? []) as AssistanceRequest[],
+  };
+}
+
+export async function submitAssistanceRequest(category: AssistanceCategory, amountCents: number, description: string): Promise<void> {
+  const { error } = await supabase.rpc('submit_family_assistance_request', {
+    p_category: category,
+    p_amount_cents: amountCents,
+    p_description: description,
+  });
+  if (error) throw new Error(friendlyError(error, 'Could not submit your request.'));
+}
+
+export async function withdrawAssistanceRequest(requestId: string): Promise<void> {
+  const { error } = await supabase.rpc('withdraw_family_assistance_request', { p_request_id: requestId });
+  if (error) throw new Error(friendlyError(error, 'Could not withdraw this request.'));
 }
 
 // ============================================================

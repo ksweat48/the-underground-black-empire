@@ -28,8 +28,30 @@ export interface CreditLedgerEntry {
   created_at: string;
 }
 
-export interface LegacyFund {
-  total_reserve: number;
+export interface FamilyLegacyFund {
+  raised_cents: number;
+  paid_cents: number;
+  available_cents: number;
+  families_helped: number;
+}
+
+export interface FamilyLegacyEligibility {
+  eligible: boolean;
+  reasons: string[];
+  good_standing_days: number;
+}
+
+export type AssistanceCategory = 'bereavement' | 'medical' | 'housing' | 'education' | 'emergency' | 'other';
+
+export interface AssistanceRequest {
+  id: string;
+  category: AssistanceCategory;
+  amount_requested_cents: number;
+  approved_amount_cents: number | null;
+  description: string;
+  status: 'submitted' | 'approved' | 'denied' | 'paid' | 'withdrawn';
+  decision_notes: string | null;
+  created_at: string;
 }
 
 export interface MemberMembership {

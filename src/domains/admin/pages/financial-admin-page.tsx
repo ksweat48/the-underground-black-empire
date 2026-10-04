@@ -6,26 +6,22 @@ import {
   Loader2,
   CheckCircle2,
   AlertTriangle,
-  XCircle,
-  FileText,
-  Receipt,
   Scale,
   TrendingUp,
-  Users,
-  DollarSign,
 } from 'lucide-react';
 import { Layout } from '@/shared/components/layout';
 import { ErrorBanner } from '@/shared/components/error-banner';
 import { cn } from '@/shared/cn';
 import { formatCents } from '@/domains/treasury/services';
 import { PartnerPayoutQueue } from '@/domains/admin/components/partner-payout-queue';
+import { FundReleaseQueue } from '@/domains/admin/components/fund-release-queue';
+import { FamilyAssistanceReview } from '@/domains/admin/components/family-assistance-review';
 import {
   fetchSplitPolicies,
   fetchReconciliationRuns,
   resolveReconciliationRun,
   type SplitPolicy,
   type ReconciliationRun,
-  type TreasuryReleaseRecord,
 } from '@/domains/admin/financial-services';
 
 export function FinancialAdminPage() {
@@ -33,6 +29,7 @@ export function FinancialAdminPage() {
   const [reconciliationRuns, setReconciliationRuns] = useState<ReconciliationRun[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [releaseRefresh, setReleaseRefresh] = useState(0);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -112,7 +109,9 @@ export function FinancialAdminPage() {
 
         <PartnerPayoutQueue />
 
-        <ReleaseWorkflowSection />
+        <FundReleaseQueue refreshKey={releaseRefresh} />
+
+        <FamilyAssistanceReview onDecided={() => setReleaseRefresh((n) => n + 1)} />
       </div>
     </Layout>
   );
@@ -282,41 +281,6 @@ function ReconciliationSection({ runs, onResolved }: { runs: ReconciliationRun[]
           })}
         </ul>
       )}
-    </div>
-  );
-}
-
-function ReleaseWorkflowSection() {
-  return (
-    <div className="frame-command p-4 lg:p-6">
-      <div className="flex items-center gap-2 mb-1">
-        <Receipt className="w-4 h-4 text-stone-500" />
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-stone-500">Treasury Release Workflow</p>
-      </div>
-      <h2 className="text-lg font-display font-bold text-stone-900 mb-4">Approval Process</h2>
-      <div className="grid gap-3 sm:grid-cols-4">
-        {[
-          { step: 1, label: 'Submit', icon: FileText, desc: 'Admin submits release for a winning initiative' },
-          { step: 2, label: 'Review', icon: Users, desc: 'Admin reviews the initiative and records notes' },
-          { step: 3, label: 'Approve', icon: CheckCircle2, desc: 'Admin approves the release amount' },
-          { step: 4, label: 'Fund', icon: DollarSign, desc: 'Payment reference recorded, ledger entry written' },
-        ].map(({ step, label, icon: Icon, desc }) => (
-          <div key={step} className="frame-intel p-3">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="w-5 h-5 rounded-full bg-plum-100 text-plum-700 text-[10px] font-bold flex items-center justify-center shrink-0">
-                {step}
-              </span>
-              <Icon className="w-3.5 h-3.5 text-stone-500" />
-              <p className="text-xs font-semibold text-stone-900">{label}</p>
-            </div>
-            <p className="text-[10px] text-stone-500 leading-relaxed">{desc}</p>
-          </div>
-        ))}
-      </div>
-      <p className="text-xs text-stone-500 mt-4 leading-relaxed">
-        Each step is permanently recorded with who did it and when. After funding, the system
-        automatically refills Available funds from Reserved up to the permanent capacity cap.
-      </p>
     </div>
   );
 }

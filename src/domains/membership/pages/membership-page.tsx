@@ -27,6 +27,7 @@ import {
   TIER_DETAILS,
 } from '@/domains/membership/services';
 import { BillingStatusPanel } from '@/domains/membership/components/billing-status-panel';
+import { FamilyLegacyPanel } from '@/domains/membership/components/family-legacy-panel';
 import type { MembershipTier, MembershipTierId, MemberMembership, VotingCredits, CreditLedgerEntry, TierDetails as TierDetailsType } from '@/domains/membership/types';
 
 type TierSurfaceKey = MembershipTierId;
@@ -289,6 +290,7 @@ export function MembershipPage() {
           membershipStartedAt={myMembership?.membership_started_at ?? null}
         />
       )}
+      {currentTierId !== 'white' && <FamilyLegacyPanel />}
       <div className="membership-page w-full overflow-hidden pb-24">
         {tiers.length > 0 ? (
           <section

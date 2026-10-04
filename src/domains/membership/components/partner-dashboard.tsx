@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
   DollarSign,
-  ExternalLink,
   Handshake,
   Loader2,
   Users,
