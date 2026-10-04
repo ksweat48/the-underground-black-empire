@@ -11,18 +11,6 @@ export interface ModerationReport {
   reporter_name: string | null;
 }
 
-export interface IdentityCheck {
-  id: string;
-  member_id: string;
-  check_type: 'metro_council' | 'eac';
-  metro_id: string | null;
-  status: 'pending' | 'verified' | 'rejected' | 'more_info_requested';
-  submitted_at: string;
-  notes: string | null;
-  member_name: string | null;
-  member_avatar_url: string | null;
-}
-
 export interface AdminSubRole {
   id: string;
   member_id: string;
@@ -66,25 +54,6 @@ export async function takeModerationAction(
     p_reason: reason,
     p_notes: notes ?? null,
     p_report_id: reportId ?? null,
-  });
-  if (error) throw error;
-}
-
-export async function fetchPendingIdentityChecks(): Promise<IdentityCheck[]> {
-  const { data, error } = await supabase.rpc('get_pending_identity_checks');
-  if (error) throw error;
-  return (data ?? []) as IdentityCheck[];
-}
-
-export async function reviewIdentityCheck(
-  checkId: string,
-  status: 'verified' | 'rejected' | 'more_info_requested',
-  notes?: string,
-): Promise<void> {
-  const { error } = await supabase.rpc('review_identity_check', {
-    p_check_id: checkId,
-    p_status: status,
-    p_notes: notes ?? null,
   });
   if (error) throw error;
 }
@@ -146,18 +115,33 @@ export async function correctMilestone(
   if (error) throw error;
 }
 
-export async function freezePartnerAccount(memberId: string, reason: string): Promise<void> {
-  const { error } = await supabase
-    .from('empire_partners')
-    .update({ is_active: false, updated_at: new Date().toISOString() })
-    .eq('member_id', memberId);
-  if (error) throw error;
+export interface AdminPartner {
+  member_id: string;
+  display_name: string | null;
+  member_number: number | null;
+  avatar_url: string | null;
+  stripe_connect_status: string | null;
+  is_active: boolean;
+  joined_at: string | null;
+  suspended_at: string | null;
+  suspended_reason: string | null;
+  referral_count: number;
+  pending_cents: number;
+  available_cents: number;
+  paid_cents: number;
 }
 
-export async function unfreezePartnerAccount(memberId: string): Promise<void> {
-  const { error } = await supabase
-    .from('empire_partners')
-    .update({ is_active: true, updated_at: new Date().toISOString() })
-    .eq('member_id', memberId);
+export async function fetchPartnersAdmin(): Promise<AdminPartner[]> {
+  const { data, error } = await supabase.rpc('get_partners_admin');
+  if (error) throw error;
+  return Array.isArray(data) ? (data as AdminPartner[]) : [];
+}
+
+export async function setPartnerStatus(memberId: string, active: boolean, reason: string | null): Promise<void> {
+  const { error } = await supabase.rpc('admin_set_partner_status', {
+    p_partner_id: memberId,
+    p_active: active,
+    p_reason: reason,
+  });
   if (error) throw error;
 }

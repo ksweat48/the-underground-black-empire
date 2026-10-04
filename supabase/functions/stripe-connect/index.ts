@@ -130,7 +130,7 @@ Deno.serve(async (req: Request) => {
           .from("empire_partners")
           .update({
             stripe_connect_account_id: connectAccountId,
-            stripe_connect_status: "pending",
+            stripe_connect_status: "onboarding",
           })
           .eq("member_id", user.id);
       }
@@ -200,14 +200,9 @@ Deno.serve(async (req: Request) => {
       const payoutsEnabled = account.payouts_enabled === true;
       const detailsSubmitted = account.details_submitted === true;
 
-      let connectStatus = "pending";
-      if (chargesEnabled && payoutsEnabled) {
-        connectStatus = "active";
-      } else if (detailsSubmitted) {
-        connectStatus = "pending";
-      } else {
-        connectStatus = "pending";
-      }
+      const connectStatus = payoutsEnabled && detailsSubmitted
+        ? "verified"
+        : detailsSubmitted ? "restricted" : "onboarding";
 
       await adminClient
         .from("empire_partners")

@@ -56,96 +56,71 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Verify the user is an active partner with an active Connect account
-    const { data: partner } = await adminClient
-      .from("empire_partners")
-      .select("member_id, stripe_connect_account_id, stripe_connect_status, is_active")
-      .eq("member_id", user.id)
-      .maybeSingle();
+    const json = (body: unknown, status = 200) =>
+      new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
-    if (!partner || !partner.is_active) {
-      return new Response(
-        JSON.stringify({ error: "You are not an active partner" }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
+    // Monthly payout run: Financial Admin only. Partners request payouts in-app; this sends them.
+    const { data: allowed, error: roleError } = await userClient.rpc("has_sub_role", { p_sub_role: "financial_admin" });
+    if (roleError || allowed !== true) return json({ error: "Not authorized" }, 403);
+
+    const { data: queue, error: queueError } = await adminClient
+      .from("partner_payouts")
+      .select("id")
+      .eq("status", "requested")
+      .order("requested_at", { ascending: true })
+      .limit(100);
+    if (queueError) return json({ error: "Could not load payout requests" }, 500);
+
+    let paid = 0;
+    let failed = 0;
+    for (const row of queue ?? []) {
+      const { data: started, error: startError } = await adminClient.rpc("start_partner_payout", {
+        p_payout_id: row.id,
+        p_admin_id: user.id,
+      });
+      if (startError || !started) continue;
+
+      if (!started.partner_active || !started.account_id) {
+        await adminClient.rpc("fail_partner_payout", { p_payout_id: row.id, p_reason: "Partner account inactive or payout account missing" });
+        failed++;
+        continue;
+      }
+
+      const transferResponse = await fetch("https://api.stripe.com/v1/transfers", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${stripeSecretKey}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+          "Idempotency-Key": `partner-payout-${row.id}`,
+        },
+        body: new URLSearchParams({
+          amount: String(started.net_cents),
+          currency: "usd",
+          destination: started.account_id,
+          "metadata[partner_id]": started.partner_id,
+          "metadata[payout_id]": row.id,
+          "metadata[gross_cents]": String(started.gross_cents),
+          "metadata[fee_cents]": String(started.fee_cents),
+        }),
+      });
+
+      if (!transferResponse.ok) {
+        console.error("Stripe transfer failed", row.id, await transferResponse.text());
+        await adminClient.rpc("fail_partner_payout", { p_payout_id: row.id, p_reason: "Transfer was declined by the payment processor" });
+        failed++;
+        continue;
+      }
+
+      const transfer = await transferResponse.json();
+      const { error: completeError } = await adminClient.rpc("complete_partner_payout", {
+        p_payout_id: row.id,
+        p_transfer_id: transfer.id,
+      });
+      if (completeError) console.error("Payout recorded late", row.id, completeError.message);
+      paid++;
     }
 
-    if (partner.stripe_connect_status !== "active" || !partner.stripe_connect_account_id) {
-      return new Response(
-        JSON.stringify({ error: "Your Stripe Connect account must be fully set up before requesting payouts" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
-
-    // Check available balance
-    const { data: dashboard } = await userClient.rpc("get_partner_dashboard");
-    const availableCents = dashboard?.available_cents ?? 0;
-
-    if (availableCents < 10000) {
-      return new Response(
-        JSON.stringify({ error: `Minimum payout is $100. Your available balance is $${(availableCents / 100).toFixed(2)}.` }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
-
-    // Calculate net after 3% processing fee
-    const feeCents = Math.round(availableCents * 0.03);
-    const netCents = availableCents - feeCents;
-
-    // Create a Stripe Transfer to the Connected account
-    const transferParams = new URLSearchParams({
-      amount: String(netCents),
-      currency: "usd",
-      destination: partner.stripe_connect_account_id,
-      "metadata[partner_id]": user.id,
-      "metadata[gross_cents]": String(availableCents),
-      "metadata[fee_cents]": String(feeCents),
-    });
-
-    const transferResponse = await fetch("https://api.stripe.com/v1/transfers", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${stripeSecretKey}`,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: transferParams,
-    });
-
-    if (!transferResponse.ok) {
-      const errBody = await transferResponse.text();
-      console.error("Stripe transfer failed:", errBody);
-      return new Response(
-        JSON.stringify({ error: "Failed to process payout. Please try again later." }),
-        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
-
-    const transfer = await transferResponse.json();
-
-    // Record the payout and mark commissions as paid
-    const { data: payoutResult, error: payoutError } = await adminClient.rpc("request_partner_payout", {
-      p_partner_id: user.id,
-      p_stripe_transfer_id: transfer.id,
-    });
-
-    if (payoutError) {
-      console.error("Payout recording failed:", payoutError.message);
-      return new Response(
-        JSON.stringify({ error: "Payout was sent but recording failed. Contact support." }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
-
-    return new Response(
-      JSON.stringify({
-        success: true,
-        payout_id: payoutResult?.payout_id,
-        gross_cents: availableCents,
-        fee_cents: feeCents,
-        net_cents: netCents,
-      }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-    );
+    return json({ success: true, processed: (queue ?? []).length, paid, failed });
   } catch (err) {
     return new Response(
       JSON.stringify({ error: "Internal server error" }),

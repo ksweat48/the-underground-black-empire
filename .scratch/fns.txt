@@ -1,0 +1,426 @@
+===== generate_partner_commission ( p_referred_member_id uuid, p_stripe_event_id text, p_tier_id text, p_period_start date DEFAULT CURRENT_DATE )
+
+DECLARE
+v_partner_id uuid;
+v_commission_cents integer;
+v_gross_cents integer;
+v_has_referral boolean := false;
+v_city_pct numeric;
+v_empire_pct numeric;
+v_family_pct numeric;
+v_ops_pct numeric;
+v_city_id uuid;
+v_metro_id uuid;
+v_allocation_id uuid;
+v_city_cents int;
+BEGIN
+SELECT commission_amount_cents, price_monthly * 100
+INTO v_commission_cents, v_gross_cents
+FROM membership_tiers WHERE id = p_tier_id;
+
+v_commission_cents := COALESCE(v_commission_cents, 0);
+
+IF v_gross_cents IS NULL OR v_gross_cents = 0 THEN
+RETURN jsonb_build_object('commission_generated', false, 'reason', 'free_tier');
+END IF;
+
+SELECT pr.partner_id INTO v_partner_id
+FROM partner_referrals pr
+JOIN empire_partners ep ON ep.member_id = pr.partner_id AND ep.is_active = true
+WHERE pr.referred_member_id = p_referred_member_id;
+
+SELECT m.city_id, c.metro_id INTO v_city_id, v_metro_id
+FROM members m LEFT JOIN cities c ON c.id = m.city_id
+WHERE m.id = p_referred_member_id;
+
+IF v_partner_id IS NOT NULL AND v_commission_cents > 0 THEN
+v_has_referral := true;
+v_city_pct := 0.35; v_empire_pct := 0.15; v_family_pct := 0.10; v_ops_pct := 0.20;
+ELSE
+v_city_pct := 0.40; v_empire_pct := 0.20; v_family_pct := 0.10; v_ops_pct := 0.30;
+END IF;
+
+v_city_cents := ROUND(v_gross_cents * v_city_pct)::int;
+
+INSERT INTO treasury_allocations (
+stripe_event_id, member_id, membership_tier, gross_amount_cents,
+city_treasury_cents, empire_treasury_cents, family_legacy_cents,
+operations_cents, referral_commission_cents, has_active_referral, city_id, metro_id
+) VALUES (
+p_stripe_event_id, p_referred_member_id, p_tier_id, v_gross_cents,
+v_city_cents,
+ROUND(v_gross_cents * v_empire_pct)::int,
+ROUND(v_gross_cents * v_family_pct)::int,
+ROUND(v_gross_cents * v_ops_pct)::int,
+CASE WHEN v_has_referral THEN v_commission_cents ELSE 0 END,
+v_has_referral, v_city_id, v_metro_id
+) ON CONFLICT (stripe_event_id) DO NOTHING
+RETURNING id INTO v_allocation_id;
+
+IF v_allocation_id IS NOT NULL AND v_metro_id IS NOT NULL AND v_city_cents > 0 THEN
+INSERT INTO metro_treasury_ledger (metro_id, city_id, member_id, entry_type, amount_cents, source_event_id, allocation_id, notes)
+VALUES (v_metro_id, v_city_id, p_referred_member_id, 'contribution', v_city_cents, p_stripe_event_id, v_allocation_id, 'Membership payment')
+ON CONFLICT DO NOTHING;
+END IF;
+
+IF v_has_referral THEN
+INSERT INTO partner_commission_ledger (
+partner_id, referred_member_id, stripe_event_id,
+membership_tier, amount_cents, status, payment_period_start
+) VALUES (
+v_partner_id, p_referred_member_id, p_stripe_event_id,
+p_tier_id, v_commission_cents, 'pending', p_period_start
+) ON CONFLICT (stripe_event_id) DO NOTHING;
+END IF;
+
+RETURN jsonb_build_object(
+'commission_generated', v_has_referral,
+'partner_id', v_partner_id,
+'commission_cents', CASE WHEN v_has_referral THEN v_commission_cents ELSE 0 END
+);
+END;
+
+===== generate_partner_commission ( p_referred_member_id uuid, p_stripe_event_id text, p_tier_id text, p_net_collected_cents bigint DEFAULT NULL::bigint, p_stripe_fee_cents bigint DEFAULT 0, p_period_start date DEFAULT CURRENT_DATE )
+
+DECLARE
+v_partner_id uuid;
+v_commission_cents integer;
+v_tier_price_cents integer;
+v_gross_cents bigint;
+v_net_cents bigint;
+v_has_referral boolean := false;
+v_policy record;
+v_city_pct numeric;
+v_empire_pct numeric;
+v_family_pct numeric;
+v_ops_pct numeric;
+v_ref_pct numeric;
+v_city_id uuid;
+v_metro_id uuid;
+v_allocation_id uuid;
+v_city_cents int;
+v_empire_cents int;
+v_family_cents int;
+v_ops_cents int;
+v_ref_cents int;
+BEGIN
+-- Get tier info
+SELECT commission_amount_cents, price_monthly * 100
+INTO v_commission_cents, v_tier_price_cents
+FROM membership_tiers WHERE id = p_tier_id;
+
+v_commission_cents := COALESCE(v_commission_cents, 0);
+
+-- Use the actual collected amount if provided, otherwise fall back to tier price
+v_gross_cents := COALESCE(p_net_collected_cents, v_tier_price_cents, 0);
+v_net_cents := v_gross_cents;
+
+IF v_net_cents IS NULL OR v_net_cents = 0 THEN
+RETURN jsonb_build_object('commission_generated', false, 'reason', 'zero_payment');
+END IF;
+
+-- Look up the permanent referrer
+SELECT pr.partner_id INTO v_partner_id
+FROM partner_referrals pr
+JOIN empire_partners ep ON ep.member_id = pr.partner_id AND ep.is_active = true
+WHERE pr.referred_member_id = p_referred_member_id;
+
+-- Get the active split policy
+SELECT * INTO v_policy
+FROM treasury_split_policies WHERE is_active = true
+ORDER BY id DESC LIMIT 1;
+
+IF NOT FOUND THEN
+-- Fallback to hardcoded values if no policy exists
+IF v_partner_id IS NOT NULL AND v_commission_cents > 0 THEN
+v_has_referral := true;
+v_city_pct := 0.35; v_empire_pct := 0.15; v_family_pct := 0.10; v_ops_pct := 0.20; v_ref_pct := 0.20;
+ELSE
+v_city_pct := 0.40; v_empire_pct := 0.20; v_family_pct := 0.10; v_ops_pct := 0.30; v_ref_pct := 0.00;
+END IF;
+ELSE
+IF v_partner_id IS NOT NULL AND v_commission_cents > 0 THEN
+v_has_referral := true;
+v_city_pct := v_policy.city_treasury_pct_with_referral;
+v_empire_pct := v_policy.empire_treasury_pct_with_referral;
+v_family_pct := v_policy.family_legacy_pct_with_referral;
+v_ops_pct := v_policy.operations_pct_with_referral;
+v_ref_pct := v_policy.partner_commission_pct_with_referral;
+ELSE
+v_city_pct := v_policy.city_treasury_pct;
+v_empire_pct := v_policy.empire_treasury_pct;
+v_family_pct := v_policy.family_legacy_pct;
+v_ops_pct := v_policy.operations_pct;
+v_ref_pct := v_policy.partner_commission_pct;
+END IF;
+END IF;
+
+-- Calculate share amounts from the net collected amount
+v_city_cents := ROUND(v_net_cents * v_city_pct)::int;
+v_empire_cents := ROUND(v_net_cents * v_empire_pct)::int;
+v_family_cents := ROUND(v_net_cents * v_family_pct)::int;
+v_ops_cents := ROUND(v_net_cents * v_ops_pct)::int;
+
+-- Commission is the tier-defined amount, capped to the referral share percentage
+IF v_has_referral THEN
+v_ref_cents := LEAST(v_commission_cents, ROUND(v_net_cents * v_ref_pct)::int);
+ELSE
+v_ref_cents := 0;
+END IF;
+
+-- Get member's city and metro
+SELECT m.city_id, c.metro_id INTO v_city_id, v_metro_id
+FROM members m LEFT JOIN cities c ON c.id = m.city_id
+WHERE m.id = p_referred_member_id;
+
+-- Record treasury allocation with policy version and actual amounts
+INSERT INTO treasury_allocations (
+stripe_event_id, member_id, membership_tier, gross_amount_cents,
+city_treasury_cents, empire_treasury_cents, family_legacy_cents,
+operations_cents, referral_commission_cents, has_active_referral,
+city_id, metro_id, policy_version_id, net_collected_cents, stripe_fee_cents
+) VALUES (
+p_stripe_event_id, p_referred_member_id, p_tier_id, v_net_cents,
+v_city_cents, v_empire_cents, v_family_cents, v_ops_cents,
+v_ref_cents, v_has_referral,
+v_city_id, v_metro_id, COALESCE(v_policy.id, 1), v_net_cents, p_stripe_fee_cents
+) ON CONFLICT (stripe_event_id) DO NOTHING
+RETURNING id INTO v_allocation_id;
+
+-- Add Metro Treasury ledger entry
+IF v_allocation_id IS NOT NULL AND v_metro_id IS NOT NULL AND v_city_cents > 0 THEN
+INSERT INTO metro_treasury_ledger (metro_id, city_id, member_id, entry_type, amount_cents, source_event_id, allocation_id, notes, policy_version_id)
+VALUES (v_metro_id, v_city_id, p_referred_member_id, 'contribution', v_city_cents, p_stripe_event_id, v_allocation_id, 'Membership payment', COALESCE(v_policy.id, 1))
+ON CONFLICT DO NOTHING;
+END IF;
+
+-- Generate partner commission
+IF v_has_referral THEN
+INSERT INTO partner_commission_ledger (
+partner_id, referred_member_id, stripe_event_id,
+membership_tier, amount_cents, status, payment_period_start
+) VALUES (
+v_partner_id, p_referred_member_id, p_stripe_event_id,
+p_tier_id, v_ref_cents, 'pending', p_period_start
+) ON CONFLICT (stripe_event_id) DO NOTHING;
+END IF;
+
+RETURN jsonb_build_object(
+'commission_generated', v_has_referral,
+'partner_id', v_partner_id,
+'commission_cents', CASE WHEN v_has_referral THEN v_ref_cents ELSE 0 END,
+'policy_version_id', COALESCE(v_policy.id, 1),
+'city_cents', v_city_cents,
+'empire_cents', v_empire_cents,
+'family_cents', v_family_cents,
+'ops_cents', v_ops_cents
+);
+END;
+
+===== process_grace_period_checks (  )
+
+DECLARE
+v_member record;
+v_results jsonb[];
+v_influence integer;
+v_tier text;
+v_city_id uuid;
+BEGIN
+FOR v_member IN
+SELECT mc.id, mc.member_id, mc.metro_id, mc.council_member_status, mc.grace_period_started_at
+FROM metro_council mc
+WHERE mc.council_member_status IN ('active', 'grace_period')
+LOOP
+v_influence := 0;
+v_tier := NULL;
+v_city_id := NULL;
+
+SELECT membership_tier, city_id INTO v_tier, v_city_id
+FROM members WHERE id = v_member.member_id;
+
+v_influence := public.get_member_influence(v_member.member_id);
+
+IF v_influence < 250 OR v_tier IS NULL OR v_tier = 'white' OR v_city_id IS NULL THEN
+IF v_member.council_member_status = 'active' THEN
+UPDATE metro_council
+SET council_member_status = 'grace_period', grace_period_started_at = now()
+WHERE id = v_member.id;
+
+INSERT INTO council_action_history (metro_id, member_id, action, reason)
+VALUES (v_member.metro_id, v_member.member_id, 'grace_started',
+'Dropped below eligibility requirements');
+
+v_results := array_append(v_results, jsonb_build_object(
+'member_id', v_member.member_id, 'action', 'grace_started'
+));
+ELSIF v_member.council_member_status = 'grace_period' AND v_member.grace_period_started_at IS NOT NULL THEN
+IF now() - v_member.grace_period_started_at > interval '30 days' THEN
+UPDATE metro_council
+SET council_member_status = 'removed'
+WHERE id = v_member.id;
+
+INSERT INTO council_action_history (metro_id, member_id, action, reason)
+VALUES (v_member.metro_id, v_member.member_id, 'removed',
+'Grace period expired without regaining eligibility');
+
+v_results := array_append(v_results, jsonb_build_object(
+'member_id', v_member.member_id, 'action', 'grace_expired_removed'
+));
+END IF;
+END IF;
+ELSIF v_member.council_member_status = 'grace_period' THEN
+UPDATE metro_council
+SET council_member_status = 'active', grace_period_started_at = NULL
+WHERE id = v_member.id;
+
+INSERT INTO council_action_history (metro_id, member_id, action, reason)
+VALUES (v_member.metro_id, v_member.member_id, 'grace_ended',
+'Regained eligibility requirements');
+
+v_results := array_append(v_results, jsonb_build_object(
+'member_id', v_member.member_id, 'action', 'grace_ended'
+));
+END IF;
+END LOOP;
+
+RETURN jsonb_build_object('processed', array_length(v_results, 1) > 0, 'results', to_jsonb(v_results));
+END;
+
+===== request_partner_payout ( p_partner_id uuid, p_stripe_transfer_id text )
+
+DECLARE
+v_available_cents bigint;
+v_fee_cents integer;
+v_net_cents integer;
+v_payout_id uuid;
+BEGIN
+-- Calculate available balance
+SELECT COALESCE(SUM(amount_cents), 0)
+INTO v_available_cents
+FROM partner_commission_ledger
+WHERE partner_id = p_partner_id AND status = 'available';
+
+IF v_available_cents < 10000 THEN
+RAISE EXCEPTION 'Minimum payout balance is $100. Current available: $%', (v_available_cents / 100.0)::numeric(10,2);
+END IF;
+
+-- Calculate fee (3%)
+v_fee_cents := ROUND(v_available_cents * 0.03)::int;
+v_net_cents := v_available_cents::int - v_fee_cents;
+
+-- Create payout record
+INSERT INTO partner_payouts (partner_id, gross_amount_cents, fee_cents, net_amount_cents, status, stripe_transfer_id)
+VALUES (p_partner_id, v_available_cents::int, v_fee_cents, v_net_cents, 'processing', p_stripe_transfer_id)
+RETURNING id INTO v_payout_id;
+
+-- Mark all available commissions as paid
+UPDATE partner_commission_ledger
+SET status = 'paid', paid_at = now(), payout_id = v_payout_id
+WHERE partner_id = p_partner_id AND status = 'available';
+
+RETURN jsonb_build_object(
+'payout_id', v_payout_id,
+'gross_cents', v_available_cents,
+'fee_cents', v_fee_cents,
+'net_cents', v_net_cents
+);
+END;
+
+===== reverse_partner_commission ( p_stripe_event_id text )
+
+DECLARE
+v_updated integer;
+v_contribution record;
+BEGIN
+UPDATE partner_commission_ledger
+SET status = 'reversed', reversed_at = now()
+WHERE stripe_event_id = p_stripe_event_id
+AND status IN ('pending', 'available');
+GET DIAGNOSTICS v_updated = ROW_COUNT;
+
+SELECT * INTO v_contribution
+FROM metro_treasury_ledger
+WHERE source_event_id = p_stripe_event_id AND entry_type = 'contribution';
+
+IF FOUND THEN
+INSERT INTO metro_treasury_ledger (metro_id, city_id, member_id, entry_type, amount_cents, source_event_id, allocation_id, notes)
+VALUES (v_contribution.metro_id, v_contribution.city_id, v_contribution.member_id, 'reversal',
+-v_contribution.amount_cents, p_stripe_event_id, v_contribution.allocation_id, 'Refund or chargeback')
+ON CONFLICT DO NOTHING;
+END IF;
+
+RETURN v_updated > 0;
+END;
+
+===== reverse_partner_commission ( p_stripe_event_id text, p_reversal_event_id text DEFAULT NULL::text )
+
+DECLARE
+v_updated integer;
+v_allocation record;
+v_contribution record;
+v_reversal_id text;
+v_partner_reversed boolean := false;
+v_metro_reversed boolean := false;
+BEGIN
+v_reversal_id := COALESCE(p_reversal_event_id, p_stripe_event_id || '_reversal');
+
+-- Reverse partner commission
+UPDATE partner_commission_ledger
+SET status = 'reversed', reversed_at = now()
+WHERE stripe_event_id = p_stripe_event_id
+AND status IN ('pending', 'available');
+GET DIAGNOSTICS v_updated = ROW_COUNT;
+v_partner_reversed := v_updated > 0;
+
+-- Get the original allocation to reverse all shares
+SELECT * INTO v_allocation
+FROM treasury_allocations
+WHERE stripe_event_id = p_stripe_event_id;
+
+IF FOUND THEN
+-- Reverse Metro Treasury contribution
+SELECT * INTO v_contribution
+FROM metro_treasury_ledger
+WHERE source_event_id = p_stripe_event_id AND entry_type = 'contribution';
+
+IF FOUND THEN
+INSERT INTO metro_treasury_ledger (metro_id, city_id, member_id, entry_type, amount_cents, source_event_id, allocation_id, notes, policy_version_id)
+VALUES (v_contribution.metro_id, v_contribution.city_id, v_contribution.member_id, 'reversal',
+-v_contribution.amount_cents, v_reversal_id, v_contribution.allocation_id, 'Refund or chargeback reversal', v_contribution.policy_version_id)
+ON CONFLICT DO NOTHING;
+v_metro_reversed := true;
+END IF;
+
+-- Record a reversal allocation entry for audit (negative amounts)
+-- This creates a permanent record that all five shares were reversed
+INSERT INTO treasury_allocations (
+stripe_event_id, member_id, membership_tier, gross_amount_cents,
+city_treasury_cents, empire_treasury_cents, family_legacy_cents,
+operations_cents, referral_commission_cents, has_active_referral,
+city_id, metro_id, policy_version_id, net_collected_cents, stripe_fee_cents
+) VALUES (
+v_reversal_id, v_allocation.member_id, v_allocation.membership_tier,
+-v_allocation.gross_amount_cents,
+-v_allocation.city_treasury_cents,
+-v_allocation.empire_treasury_cents,
+-v_allocation.family_legacy_cents,
+-v_allocation.operations_cents,
+-v_allocation.referral_commission_cents,
+v_allocation.has_active_referral,
+v_allocation.city_id, v_allocation.metro_id,
+v_allocation.policy_version_id,
+-COALESCE(v_allocation.net_collected_cents, v_allocation.gross_amount_cents),
+-COALESCE(v_allocation.stripe_fee_cents, 0)
+) ON CONFLICT (stripe_event_id) DO NOTHING;
+END IF;
+
+RETURN jsonb_build_object(
+'partner_reversed', v_partner_reversed,
+'metro_reversed', v_metro_reversed,
+'all_shares_reversed', FOUND,
+'reversal_id', v_reversal_id
+);
+END;
+
+
+(exit 0, 63ms)

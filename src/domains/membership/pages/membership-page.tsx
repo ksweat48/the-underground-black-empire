@@ -22,10 +22,11 @@ import {
   fetchMyMembership,
   fetchVotingCredits,
   fetchCreditLedger,
-  downgradeToWhite,
+  cancelMembershipAtPeriodEnd,
   startStripeCheckout,
   TIER_DETAILS,
 } from '@/domains/membership/services';
+import { BillingStatusPanel } from '@/domains/membership/components/billing-status-panel';
 import type { MembershipTier, MembershipTierId, MemberMembership, VotingCredits, CreditLedgerEntry, TierDetails as TierDetailsType } from '@/domains/membership/types';
 
 type TierSurfaceKey = MembershipTierId;
@@ -169,8 +170,11 @@ export function MembershipPage() {
     if (checkoutStatus === 'success' && tierParam) {
       setSelectSuccess(`Your ${CARD_COLOR_LABEL[tierParam as MembershipTierId] ?? tierParam} membership is now active.`);
       window.history.replaceState({}, '', '/membership');
+    } else if (checkoutStatus === 'upgraded' && tierParam) {
+      setSelectSuccess(`You are now ${CARD_COLOR_LABEL[tierParam as MembershipTierId] ?? tierParam}. Your card was charged only the prorated difference, and any extra voting credits were added. It can take a moment to show.`);
+      window.history.replaceState({}, '', '/membership');
     } else if (checkoutStatus === 'scheduled' && tierParam) {
-      setSelectSuccess(`Your switch to ${CARD_COLOR_LABEL[tierParam as MembershipTierId] ?? tierParam} will take effect at your next billing cycle.`);
+      setSelectSuccess(`Your switch to ${CARD_COLOR_LABEL[tierParam as MembershipTierId] ?? tierParam} will take effect at your next billing date. You can undo it any time before then.`);
       window.history.replaceState({}, '', '/membership');
     } else if (checkoutStatus === 'cancelled') {
       setSelectError('Checkout was cancelled. Your membership was not changed.');
@@ -211,11 +215,11 @@ export function MembershipPage() {
     setSelectSuccess(null);
     setConfirmDowngrade(null);
     try {
-      await downgradeToWhite();
+      await cancelMembershipAtPeriodEnd();
       await loadData();
-      setSelectSuccess('You have been downgraded to the Free White membership.');
-    } catch {
-      setSelectError('Unable to downgrade your membership. Please try again.');
+      setSelectSuccess('Your paid membership will end at the close of your billing period. You keep every benefit until then.');
+    } catch (error) {
+      setSelectError(error instanceof Error ? error.message : 'Unable to cancel your membership. Please try again.');
     } finally {
       setSelecting(null);
     }
@@ -270,6 +274,13 @@ export function MembershipPage() {
           <Check className="h-4 w-4 text-emerald-700 shrink-0" />
           <p className="text-xs text-emerald-700 flex-1">{selectSuccess}</p>
         </div>
+      )}
+      {myMembership && (
+        <BillingStatusPanel
+          membership={myMembership}
+          tierLabels={CARD_COLOR_LABEL}
+          onChanged={(message) => { setSelectError(null); setSelectSuccess(message); loadData(); }}
+        />
       )}
       {currentTierId !== 'white' && votingCredits && (
         <CreditBalancePanel
@@ -355,17 +366,17 @@ export function MembershipPage() {
             <div className="flex items-start gap-3 rounded-xl bg-red-50 border border-red-200 p-3">
               <AlertTriangle className="h-5 w-5 text-red-600 shrink-0 mt-0.5" />
               <div className="space-y-1">
-                <p className="text-sm font-semibold text-red-900">This takes effect immediately.</p>
+                <p className="text-sm font-semibold text-red-900">This takes effect at the end of your billing period.</p>
                 <p className="text-xs text-red-700 leading-5">
-                  You will lose access to your paid tier benefits right away, including
-                  remaining monthly voting credits, treasury participation, and any tier-specific
-                  features. Your Empire Level and Influence are not affected.
+                  You keep your paid benefits until {myMembership?.current_period_end
+                    ? new Date(myMembership.current_period_end).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
+                    : 'your next billing date'}. After that you move to White and lose voting credits,
+                  treasury participation, and tier features. Your Empire Level and Influence are not affected.
                 </p>
               </div>
             </div>
             <p className="text-sm text-stone-600">
-              Your Stripe subscription will be canceled immediately. You can rejoin a paid
-              membership at any time.
+              You will not be charged again. You can undo this any time before your billing date.
             </p>
             <div className="flex gap-2">
               <button
@@ -379,7 +390,7 @@ export function MembershipPage() {
                 disabled={selecting === 'white'}
                 className="flex-1 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
               >
-                {selecting === 'white' ? <Loader2 className="mx-auto h-4 w-4 animate-spin" /> : 'Downgrade Now'}
+                {selecting === 'white' ? <Loader2 className="mx-auto h-4 w-4 animate-spin" /> : 'Cancel at Period End'}
               </button>
             </div>
           </div>
@@ -488,7 +499,7 @@ function TierDetailsPanel({
               </button>
               {isSwitch && (
                 <p className="text-[10px] text-stone-400 leading-tight">
-                  Takes effect at your next billing cycle
+                  Takes effect at your next billing date
                 </p>
               )}
             </div>
@@ -503,6 +514,7 @@ function TierDetailsPanel({
 const LEDGER_SOURCE_LABELS: Record<string, string> = {
   monthly_grant: 'Monthly grant',
   initial_grant: 'Initial grant',
+  upgrade_grant: 'Upgrade bonus',
   initiative_vote_spend: 'Initiative vote',
   initiative_vote_refund: 'Initiative refund',
 };

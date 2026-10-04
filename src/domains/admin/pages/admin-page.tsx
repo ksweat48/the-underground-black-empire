@@ -22,8 +22,8 @@ import {
   Landmark,
   Receipt,
   Flag,
-  UserCheck,
   ShieldAlert,
+  Handshake,
 } from 'lucide-react';
 import { Layout } from '@/shared/components/layout';
 import { ErrorBanner } from '@/shared/components/error-banner';
@@ -35,10 +35,7 @@ import { fetchListingsForReview, reviewListing, type ListingForReview, type Revi
 import {
   fetchModerationQueue,
   takeModerationAction,
-  fetchPendingIdentityChecks,
-  reviewIdentityCheck,
   type ModerationReport,
-  type IdentityCheck,
 } from '@/domains/admin/moderation-services';
 
 interface AdminStats {
@@ -169,8 +166,6 @@ export function AdminPage() {
   const [broadcastResult, setBroadcastResult] = useState<{ ok: boolean; count: number } | null>(null);
   const [modQueue, setModQueue] = useState<ModerationReport[]>([]);
   const [modLoading, setModLoading] = useState(true);
-  const [identityChecks, setIdentityChecks] = useState<IdentityCheck[]>([]);
-  const [identityLoading, setIdentityLoading] = useState(true);
   const [modAction, setModAction] = useState<string | null>(null);
 
   const handleBroadcast = async () => {
@@ -306,16 +301,6 @@ export function AdminPage() {
     }
   };
 
-  const onIdentityReview = async (checkId: string, status: 'verified' | 'rejected' | 'more_info_requested') => {
-    try {
-      await reviewIdentityCheck(checkId, status);
-      setIdentityChecks((prev) => prev.filter((c) => c.id !== checkId));
-    } catch (err) {
-      console.error('Identity review failed:', err);
-      setActionError('Unable to review identity check.');
-    }
-  };
-
   if (loading) {
     return (
       <Layout>
@@ -371,6 +356,13 @@ export function AdminPage() {
             >
               <Receipt className="w-4 h-4" />
               Financial Admin
+            </a>
+            <a
+              href="/admin/partners"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-gold-500/15 border border-gold-500/30 text-gold-200 hover:bg-gold-500/25 transition-colors"
+            >
+              <Handshake className="w-4 h-4" />
+              Partners
             </a>
             <a
               href="/admin/emails"
@@ -568,59 +560,6 @@ export function AdminPage() {
                   >
                     <CheckCircle2 className="w-3.5 h-3.5" />
                     Dismiss
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Identity Check Queue */}
-      {identityChecks.length > 0 && (
-        <div className="mb-8 space-y-4">
-          <div className="flex items-center gap-3 mb-2">
-            <UserCheck className="w-5 h-5 text-gold-400" />
-            <h2 className="font-display text-lg font-semibold text-ink-100">Identity Verification Queue</h2>
-            <span className="badge-gold text-xs">{identityChecks.length} pending</span>
-          </div>
-          <div className="space-y-3">
-            {identityChecks.map((check) => (
-              <div key={check.id} className="card p-4 space-y-2">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-ink-100">
-                      {check.member_name ?? 'Unknown member'}
-                    </p>
-                    <p className="text-xs text-ink-400 mt-0.5">
-                      {check.check_type === 'eac' ? 'EAC seat' : 'Metro Council'} verification
-                    </p>
-                    <p className="text-[10px] text-ink-500 mt-1">
-                      Submitted {new Date(check.submitted_at).toLocaleDateString()}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => onIdentityReview(check.id, 'verified')}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20 transition-all"
-                  >
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    Verify
-                  </button>
-                  <button
-                    onClick={() => onIdentityReview(check.id, 'rejected')}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 transition-all"
-                  >
-                    <XCircle className="w-3.5 h-3.5" />
-                    Reject
-                  </button>
-                  <button
-                    onClick={() => onIdentityReview(check.id, 'more_info_requested')}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-500/10 border border-amber-500/20 text-amber-400 hover:bg-amber-500/20 transition-all ml-auto"
-                  >
-                    <AlertTriangle className="w-3.5 h-3.5" />
-                    Request More Info
                   </button>
                 </div>
               </div>

@@ -14,9 +14,10 @@ function getResumePath(memberState: { cityId: string | null; founderNumber: numb
 interface ProtectedRouteProps {
   children: ReactNode;
   requireAdmin?: boolean;
+  subRole?: 'financial_admin' | 'moderation_admin' | 'elections_admin' | 'partner_admin' | 'correction_admin';
 }
 
-export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRouteProps) {
+export function ProtectedRoute({ children, requireAdmin = false, subRole }: ProtectedRouteProps) {
   const { session, loading, onboardingComplete, memberState } = useAuth();
   const location = useLocation();
   const userId = session?.user?.id ?? null;
@@ -48,12 +49,16 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
         setAdminLoading(false);
       }
     }, 10000);
-    Promise.resolve(supabase.rpc('is_current_user_admin'))
+    const check = subRole
+      ? supabase.rpc('has_sub_role', { p_sub_role: subRole })
+      : supabase.rpc('is_current_user_admin');
+    Promise.resolve(check)
       .then(({ data, error }) => {
         if (!cancelled) {
           clearTimeout(timeout);
           if (error) {
-            setAdminError(error.message);
+            console.error('admin check failed', error);
+            setAdminError('We could not confirm your admin access.');
             setIsAdmin(false);
           } else {
             setIsAdmin(Boolean(data));
@@ -64,7 +69,8 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
       .catch((err: unknown) => {
         if (!cancelled) {
           clearTimeout(timeout);
-          setAdminError(err instanceof Error ? err.message : 'Unknown error');
+          console.error('admin check failed', err);
+          setAdminError('We could not confirm your admin access.');
           setAdminLoading(false);
         }
       });
@@ -73,7 +79,7 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
       cancelled = true;
       clearTimeout(timeout);
     };
-  }, [requireAdmin, loading, userId]);
+  }, [requireAdmin, subRole, loading, userId]);
 
   if (loading || adminLoading || (session && onboardingComplete === null)) {
     return (
@@ -104,7 +110,7 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
         <div className="max-w-md text-center space-y-4">
           <Shield className="w-10 h-10 text-red-400 mx-auto" />
           <h1 className="text-xl font-display font-bold text-ink-100">Admin check failed</h1>
-          <p className="text-sm text-red-300 font-mono break-words">{adminError}</p>
+          <p className="text-sm text-red-300 break-words">{adminError}</p>
           <button
             onClick={() => window.location.reload()}
             className="px-4 py-2 rounded-lg bg-gold-500/20 border border-gold-500/40 text-gold-200 text-sm hover:bg-gold-500/30 transition-colors"

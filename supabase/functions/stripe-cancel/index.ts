@@ -68,71 +68,106 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Get the member's Stripe subscription ID
+    const json = (body: unknown, status = 200) =>
+      new Response(JSON.stringify(body), { status, headers: { ...cors, "Content-Type": "application/json" } });
+
+    let action = "cancel";
+    try {
+      const body = await req.json();
+      if (typeof body?.action === "string") action = body.action;
+    } catch {
+      // empty body means cancel
+    }
+    if (!["cancel", "undo_cancel", "undo_downgrade", "update_card"].includes(action)) {
+      return json({ error: "Invalid action" }, 400);
+    }
+
     const { data: member, error: memberError } = await adminClient
       .from("members")
-      .select("stripe_subscription_id, stripe_subscription_status, membership_tier")
+      .select("stripe_customer_id, stripe_subscription_id, stripe_subscription_status, membership_tier, scheduled_tier, scheduled_previous_price_id")
       .eq("id", user.id)
       .maybeSingle();
 
-    if (memberError || !member) {
-      return new Response(
-        JSON.stringify({ error: "Member not found" }),
-        { status: 404, headers: { ...cors, "Content-Type": "application/json" } },
-      );
-    }
+    if (memberError || !member) return json({ error: "Member not found" }, 404);
 
-    // If they already have no active subscription, just set tier to white
-    if (!member.stripe_subscription_id || member.stripe_subscription_status !== "active") {
-      const { error: rpcError } = await userClient.rpc("change_membership_tier", {
-        target_tier: "white",
-      });
-      if (rpcError) {
-        return new Response(
-          JSON.stringify({ error: "Failed to downgrade membership" }),
-          { status: 500, headers: { ...cors, "Content-Type": "application/json" } },
-        );
-      }
-      return new Response(
-        JSON.stringify({ success: true, tier: "white" }),
-        { status: 200, headers: { ...cors, "Content-Type": "application/json" } },
-      );
-    }
-
-    // Cancel the Stripe subscription immediately
-    const cancelResponse = await fetch(
-      `https://api.stripe.com/v1/subscriptions/${member.stripe_subscription_id}`,
-      {
-        method: "DELETE",
+    const stripePost = (path: string, params: URLSearchParams) =>
+      fetch(`https://api.stripe.com/v1/${path}`, {
+        method: "POST",
         headers: {
           "Authorization": `Bearer ${stripeSecretKey}`,
           "Content-Type": "application/x-www-form-urlencoded",
         },
-      },
-    );
+        body: params,
+      });
 
-    if (!cancelResponse.ok) {
-      const errBody = await cancelResponse.text();
-      return new Response(
-        JSON.stringify({ error: "Failed to cancel subscription" }),
-        { status: 502, headers: { ...cors, "Content-Type": "application/json" } },
-      );
+    if (action === "update_card") {
+      if (!member.stripe_customer_id) return json({ error: "No billing account found" }, 400);
+      const origin = req.headers.get("Origin");
+      const returnUrl = `${ALLOWED_ORIGINS.includes(origin ?? "") ? origin : ALLOWED_ORIGINS[0]}/membership`;
+      const portal = await stripePost("billing_portal/sessions", new URLSearchParams({
+        customer: member.stripe_customer_id,
+        return_url: returnUrl,
+      }));
+      if (!portal.ok) return json({ error: "Could not open billing settings" }, 502);
+      const session = await portal.json();
+      return json({ url: session.url });
     }
 
-    // The Stripe webhook will fire subscription.deleted and set the tier
-    // to white. But we also set it immediately for instant feedback.
-    const { error: rpcError } = await userClient.rpc("change_membership_tier", {
-      target_tier: "white",
-    });
-    if (rpcError) {
-      // The webhook will handle it, so don't fail the request
-      console.error("RPC change_membership_tier failed:", rpcError.message);
+    // Members without a live subscription are simply moved to White.
+    if (!member.stripe_subscription_id || !["active", "past_due"].includes(member.stripe_subscription_status ?? "")) {
+      if (action !== "cancel") return json({ error: "No active subscription" }, 400);
+      const { error: updateError } = await adminClient.from("members").update({
+        membership_tier: "white",
+        membership_started_at: null,
+        good_standing_since: null,
+        past_due_since: null,
+        scheduled_tier: null,
+        scheduled_previous_price_id: null,
+        cancel_at_period_end: false,
+      }).eq("id", user.id);
+      if (updateError) return json({ error: "Failed to update membership" }, 500);
+      return json({ success: true, tier: "white" });
     }
 
-    return new Response(
-      JSON.stringify({ success: true, tier: "white" }),
-      { status: 200, headers: { ...cors, "Content-Type": "application/json" } },
-    );
+    const subPath = `subscriptions/${member.stripe_subscription_id}`;
+
+    if (action === "undo_downgrade") {
+      if (!member.scheduled_tier || !member.scheduled_previous_price_id) {
+        return json({ error: "No scheduled change to undo" }, 400);
+      }
+      const subRes = await fetch(`https://api.stripe.com/v1/${subPath}`, {
+        headers: { "Authorization": `Bearer ${stripeSecretKey}` },
+      });
+      const sub = await subRes.json();
+      const itemId = sub?.items?.data?.[0]?.id;
+      if (!subRes.ok || !itemId) return json({ error: "Could not load subscription" }, 502);
+      const params = new URLSearchParams();
+      params.append("items[0][id]", itemId);
+      params.append("items[0][price]", member.scheduled_previous_price_id);
+      params.append("proration_behavior", "none");
+      params.append("metadata[tier_id]", member.membership_tier);
+      const res = await stripePost(subPath, params);
+      if (!res.ok) return json({ error: "Could not undo the scheduled change" }, 502);
+      await adminClient.from("members")
+        .update({ scheduled_tier: null, scheduled_previous_price_id: null })
+        .eq("id", user.id);
+      return json({ success: true });
+    }
+
+    const cancelling = action === "cancel";
+    const res = await stripePost(subPath, new URLSearchParams({ cancel_at_period_end: String(cancelling) }));
+    if (!res.ok) return json({ error: cancelling ? "Failed to cancel subscription" : "Could not undo cancellation" }, 502);
+    const sub = await res.json();
+
+    const periodEndSec = sub?.current_period_end ?? sub?.items?.data?.[0]?.current_period_end;
+    const periodEnd = periodEndSec ? new Date(periodEndSec * 1000).toISOString() : null;
+
+    await adminClient.from("members").update({
+      cancel_at_period_end: cancelling,
+      current_period_end: periodEnd,
+    }).eq("id", user.id);
+
+    return json({ success: true, cancel_at_period_end: cancelling, period_end: periodEnd });
   } catch (err) {
     return new Response(
       JSON.stringify({ error: "Internal server error" }),

@@ -1,0 +1,283 @@
+===== check_rate_limit
+
+DECLARE
+v_caller uuid := auth.uid();
+v_count int;
+BEGIN
+IF v_caller IS NULL THEN
+RETURN false;
+END IF;
+
+SELECT COUNT(*) INTO v_count
+FROM rate_limit_log
+WHERE member_id = v_caller
+AND action_type = p_action_type
+AND acted_at > now() - interval '1 hour';
+
+IF v_count >= p_max_per_hour THEN
+RAISE EXCEPTION 'Rate limit exceeded for action %. Max % per hour.', p_action_type, p_max_per_hour;
+END IF;
+
+INSERT INTO rate_limit_log (member_id, action_type) VALUES (v_caller, p_action_type);
+
+RETURN true;
+END;
+
+===== get_partner_dashboard
+
+DECLARE
+v_caller uuid := auth.uid();
+v_pending_cents bigint;
+v_available_cents bigint;
+v_paid_cents bigint;
+v_lifetime_cents bigint;
+v_active_referrals integer;
+v_partner_exists boolean;
+BEGIN
+IF v_caller IS NULL THEN
+RAISE EXCEPTION 'Not authenticated';
+END IF;
+
+SELECT EXISTS(SELECT 1 FROM empire_partners WHERE member_id = v_caller)
+INTO v_partner_exists;
+
+IF NOT v_partner_exists THEN
+RETURN jsonb_build_object('is_partner', false);
+END IF;
+
+SELECT
+COALESCE(SUM(CASE WHEN status = 'pending' THEN amount_cents ELSE 0 END), 0),
+COALESCE(SUM(CASE WHEN status = 'available' THEN amount_cents ELSE 0 END), 0),
+COALESCE(SUM(CASE WHEN status = 'paid' THEN amount_cents ELSE 0 END), 0),
+COALESCE(SUM(CASE WHEN status IN ('available', 'paid', 'pending') THEN amount_cents ELSE 0 END), 0)
+INTO v_pending_cents, v_available_cents, v_paid_cents, v_lifetime_cents
+FROM partner_commission_ledger
+WHERE partner_id = v_caller;
+
+SELECT COUNT(DISTINCT pr.referred_member_id)
+INTO v_active_referrals
+FROM partner_referrals pr
+JOIN members m ON m.id = pr.referred_member_id
+WHERE pr.partner_id = v_caller
+AND m.membership_tier <> 'white';
+
+RETURN jsonb_build_object(
+'is_partner', true,
+'active_referrals', v_active_referrals,
+'pending_cents', v_pending_cents,
+'available_cents', v_available_cents,
+'paid_cents', v_paid_cents,
+'lifetime_cents', v_lifetime_cents
+);
+END;
+
+===== get_reconciliation_runs
+
+BEGIN
+PERFORM public.require_sub_role('financial_admin');
+RETURN (
+SELECT COALESCE(jsonb_agg(jsonb_build_object(
+'id', r.id, 'run_date', r.run_date, 'stripe_total_cents', r.stripe_total_cents,
+'ledger_total_cents', r.ledger_total_cents, 'difference_cents', r.difference_cents, 'status', r.status,
+'resolved_by', r.resolved_by, 'resolved_at', r.resolved_at, 'resolution_notes', r.resolution_notes,
+'created_at', r.created_at,
+'discrepancies', COALESCE((SELECT jsonb_agg(jsonb_build_object(
+'id', d.id, 'stripe_event_id', d.stripe_event_id, 'stripe_amount_cents', d.stripe_amount_cents,
+'ledger_amount_cents', d.ledger_amount_cents, 'difference_cents', d.difference_cents, 'notes', d.notes))
+FROM stripe_reconciliation_discrepancies d WHERE d.run_id = r.id), '[]'::jsonb)
+) ORDER BY r.run_date DESC), '[]'::jsonb)
+FROM (SELECT * FROM stripe_reconciliation_runs ORDER BY run_date DESC LIMIT least(greatest(p_limit, 1), 200)) r
+);
+END 
+===== grant_initial_voting_credits
+
+DECLARE
+v_tier text;
+v_credits int;
+v_current_balance int;
+v_last_reset date;
+v_new_balance int;
+BEGIN
+SELECT membership_tier INTO v_tier FROM members WHERE id = p_member_id;
+IF v_tier IS NULL OR v_tier = 'white' THEN
+RETURN;
+END IF;
+
+SELECT voting_credits INTO v_credits
+FROM membership_tiers WHERE id = v_tier;
+IF v_credits IS NULL OR v_credits <= 0 THEN
+RETURN;
+END IF;
+
+SELECT COALESCE(balance, 0), last_reset_date
+INTO v_current_balance, v_last_reset
+FROM voting_credits WHERE member_id = p_member_id;
+
+IF v_last_reset IS NOT NULL THEN
+RETURN;
+END IF;
+
+v_new_balance := LEAST(COALESCE(v_current_balance, 0) + v_credits, 30);
+
+IF v_current_balance IS NULL THEN
+INSERT INTO voting_credits (member_id, balance, last_reset_date, updated_at)
+VALUES (p_member_id, v_new_balance, CURRENT_DATE, now())
+ON CONFLICT (member_id) DO UPDATE
+SET balance = v_new_balance,
+last_reset_date = CURRENT_DATE,
+updated_at = now();
+ELSE
+UPDATE voting_credits
+SET balance = v_new_balance,
+last_reset_date = CURRENT_DATE,
+updated_at = now()
+WHERE member_id = p_member_id;
+END IF;
+
+INSERT INTO voting_credit_ledger (member_id, amount, source, reference_id)
+VALUES (p_member_id, v_credits, 'initial_grant', NULL);
+END;
+
+===== notify_metro_capacity_unlocked
+
+DECLARE
+v_metro_name text;
+v_capacity bigint;
+v_label text;
+BEGIN
+IF NEW.event_type <> 'capacity_unlocked' THEN
+RETURN NEW;
+END IF;
+
+SELECT name INTO v_metro_name FROM metros WHERE id = NEW.metro_id;
+v_capacity := public.treasury_capacity_cents(NEW.capacity_band);
+v_label := CASE
+WHEN v_capacity IS NULL THEN 'full Treasury capacity'
+ELSE '$' || to_char(v_capacity / 100, 'FM999,999,999') || ' in Treasury capacity'
+END;
+
+INSERT INTO notifications (member_id, type, title, body, link_url)
+SELECT m.id,
+'metro_capacity_unlocked',
+COALESCE(v_metro_name, 'Your Metro') || ' unlocked ' || v_label,
+'This milestone is permanent. Reserved funds now move into Available up to the new limit.',
+'/treasury'
+FROM members m
+JOIN cities c ON c.id = m.city_id
+WHERE c.metro_id = NEW.metro_id
+AND m.onboarding_complete = true
+AND m.account_status = 'active';
+
+RETURN NEW;
+END;
+
+===== refill_treasury_capacity
+
+DECLARE
+v_ms record;
+v_population int;
+v_contributed bigint;
+v_reversed bigint;
+v_released bigint;
+v_unspent bigint;
+v_capacity bigint;
+v_available bigint;
+v_reserved bigint;
+BEGIN
+SELECT * INTO v_ms FROM metro_milestones WHERE metro_id = p_metro_id;
+SELECT COALESCE(population_count, 0) INTO v_population FROM metro_progress WHERE metro_id = p_metro_id;
+
+SELECT
+COALESCE(sum(amount_cents) FILTER (WHERE entry_type = 'contribution'), 0),
+COALESCE(-sum(amount_cents) FILTER (WHERE entry_type = 'reversal'), 0),
+COALESCE(-sum(amount_cents) FILTER (WHERE entry_type = 'release'), 0)
+INTO v_contributed, v_reversed, v_released
+FROM metro_treasury_ledger WHERE metro_id = p_metro_id;
+
+v_unspent := GREATEST(0, v_contributed - v_reversed - v_released);
+v_capacity := public.treasury_capacity_cents(COALESCE(v_ms.capacity_band, 0));
+v_available := CASE WHEN v_capacity IS NULL THEN v_unspent ELSE LEAST(v_unspent, v_capacity) END;
+v_reserved := v_unspent - v_available;
+
+RETURN jsonb_build_object(
+'metro_id', p_metro_id,
+'available_cents', v_available,
+'reserved_cents', v_reserved,
+'capacity_cents', v_capacity,
+'capacity_unlimited', v_capacity IS NULL,
+'refilled', v_reserved > 0 AND v_available < v_capacity
+);
+END;
+
+===== run_daily_reconciliation
+
+DECLARE
+v_stripe_total bigint;
+v_ledger_total bigint;
+v_diff bigint;
+v_run_id uuid;
+v_event record;
+BEGIN
+-- Sum Stripe payment events for the date (invoice.paid only = actual money collected)
+SELECT COALESCE(SUM(amount_total), 0) INTO v_stripe_total
+FROM stripe_payment_events
+WHERE event_type = 'invoice.paid'
+AND created_at::date = p_run_date;
+
+-- Sum treasury allocations for the date
+SELECT COALESCE(SUM(net_collected_cents), 0) INTO v_ledger_total
+FROM treasury_allocations
+WHERE created_at::date = p_run_date
+AND gross_amount_cents > 0;
+
+v_diff := v_stripe_total - v_ledger_total;
+
+-- Create the run record
+INSERT INTO stripe_reconciliation_runs (run_date, stripe_total_cents, ledger_total_cents, difference_cents, status)
+VALUES (p_run_date, v_stripe_total, v_ledger_total, v_diff,
+CASE WHEN v_diff = 0 THEN 'balanced' ELSE 'discrepancy' END)
+ON CONFLICT (run_date) DO UPDATE
+SET stripe_total_cents = EXCLUDED.stripe_total_cents,
+ledger_total_cents = EXCLUDED.ledger_total_cents,
+difference_cents = EXCLUDED.difference_cents,
+status = CASE WHEN EXCLUDED.difference_cents = 0 THEN 'balanced' ELSE 'discrepancy' END
+RETURNING id INTO v_run_id;
+
+-- If discrepancy, record individual mismatches
+IF v_diff <> 0 THEN
+FOR v_event IN
+SELECT stripe_event_id, amount_total
+FROM stripe_payment_events
+WHERE event_type = 'invoice.paid'
+AND created_at::date = p_run_date
+AND stripe_event_id NOT IN (
+SELECT stripe_event_id FROM treasury_allocations WHERE stripe_event_id IS NOT NULL
+)
+LOOP
+INSERT INTO stripe_reconciliation_discrepancies (run_id, stripe_event_id, stripe_amount_cents, ledger_amount_cents, difference_cents, notes)
+VALUES (v_run_id, v_event.stripe_event_id, v_event.amount_total, 0, v_event.amount_total, 'Payment event with no matching allocation')
+ON CONFLICT DO NOTHING;
+END LOOP;
+END IF;
+
+RETURN jsonb_build_object(
+'run_id', v_run_id,
+'run_date', p_run_date,
+'stripe_total_cents', v_stripe_total,
+'ledger_total_cents', v_ledger_total,
+'difference_cents', v_diff,
+'status', CASE WHEN v_diff = 0 THEN 'balanced' ELSE 'discrepancy' END
+);
+END;
+
+===== treasury_capacity_band
+
+SELECT CASE
+WHEN p_population >= 5000 THEN 6
+WHEN p_population >= 2500 THEN 5
+WHEN p_population >= 1000 THEN 4
+WHEN p_population >= 500 THEN 3
+WHEN p_population >= 250 THEN 2
+WHEN p_population >= 100 THEN 1
+ELSE 0 END;
+

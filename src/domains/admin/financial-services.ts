@@ -78,6 +78,36 @@ export async function fetchReconciliationRuns(limit = 30): Promise<Reconciliatio
   return (data ?? []) as ReconciliationRun[];
 }
 
+export async function resolveReconciliationRun(runId: string, notes: string): Promise<void> {
+  const { error } = await supabase.rpc('resolve_reconciliation_run', { p_run_id: runId, p_notes: notes });
+  if (error) throw new Error(error.message?.includes('resolution note') ? 'Add a short note explaining the resolution.' : 'Could not mark this run resolved.');
+}
+
+export interface PayoutQueueItem {
+  id: string;
+  partner_id: string;
+  display_name: string | null;
+  status: 'requested' | 'processing' | 'completed' | 'failed';
+  gross_cents: number;
+  fee_cents: number;
+  net_cents: number;
+  requested_at: string;
+  completed_at: string | null;
+  failure_reason: string | null;
+}
+
+export async function fetchPayoutQueue(): Promise<PayoutQueueItem[]> {
+  const { data, error } = await supabase.rpc('get_payouts_for_processing');
+  if (error) throw error;
+  return (Array.isArray(data) ? data : []) as PayoutQueueItem[];
+}
+
+export async function runMonthlyPayouts(): Promise<{ processed: number; paid: number; failed: number }> {
+  const { data, error } = await supabase.functions.invoke('partner-payout', { body: { action: 'process' } });
+  if (error || data?.error) throw new Error('The payout run could not be completed.');
+  return { processed: data?.processed ?? 0, paid: data?.paid ?? 0, failed: data?.failed ?? 0 };
+}
+
 export async function fetchTreasuryReleases(metroId: string, limit = 25): Promise<TreasuryReleaseRecord[]> {
   const { data, error } = await supabase.rpc('get_treasury_releases', {
     p_metro_id: metroId,

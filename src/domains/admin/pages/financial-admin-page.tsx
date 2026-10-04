@@ -18,9 +18,11 @@ import { Layout } from '@/shared/components/layout';
 import { ErrorBanner } from '@/shared/components/error-banner';
 import { cn } from '@/shared/cn';
 import { formatCents } from '@/domains/treasury/services';
+import { PartnerPayoutQueue } from '@/domains/admin/components/partner-payout-queue';
 import {
   fetchSplitPolicies,
   fetchReconciliationRuns,
+  resolveReconciliationRun,
   type SplitPolicy,
   type ReconciliationRun,
   type TreasuryReleaseRecord,
@@ -106,7 +108,9 @@ export function FinancialAdminPage() {
 
         <SplitPolicyCard policy={activePolicy} />
 
-        <ReconciliationSection runs={reconciliationRuns} />
+        <ReconciliationSection runs={reconciliationRuns} onResolved={load} />
+
+        <PartnerPayoutQueue />
 
         <ReleaseWorkflowSection />
       </div>
@@ -164,7 +168,28 @@ function SplitPolicyCard({ policy }: { policy: SplitPolicy }) {
   );
 }
 
-function ReconciliationSection({ runs }: { runs: ReconciliationRun[] }) {
+function ReconciliationSection({ runs, onResolved }: { runs: ReconciliationRun[]; onResolved: () => void }) {
+  const [resolvingId, setResolvingId] = useState<string | null>(null);
+  const [notes, setNotes] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [resolveError, setResolveError] = useState<string | null>(null);
+
+  const submitResolve = async () => {
+    if (!resolvingId) return;
+    setSaving(true);
+    setResolveError(null);
+    try {
+      await resolveReconciliationRun(resolvingId, notes.trim());
+      setResolvingId(null);
+      setNotes('');
+      onResolved();
+    } catch (e) {
+      setResolveError(e instanceof Error ? e.message : 'Could not mark this run resolved.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div className="frame-command p-4 lg:p-6">
       <div className="flex items-center gap-2 mb-1">
@@ -177,7 +202,7 @@ function ReconciliationSection({ runs }: { runs: ReconciliationRun[] }) {
       ) : (
         <ul className="divide-y divide-stone-100">
           {runs.map((run) => {
-            const balanced = run.status === 'balanced';
+            const balanced = run.status !== 'discrepancy';
             return (
               <li key={run.id} className="py-3">
                 <div className="flex items-center justify-between gap-3">
@@ -211,6 +236,37 @@ function ReconciliationSection({ runs }: { runs: ReconciliationRun[] }) {
                     </span>
                   </div>
                 </div>
+                {run.status === 'resolved' && run.resolution_notes && (
+                  <p className="mt-2 pl-6 text-[10px] text-stone-500">Resolved: {run.resolution_notes}</p>
+                )}
+                {run.status === 'discrepancy' && resolvingId !== run.id && (
+                  <button
+                    type="button"
+                    onClick={() => { setResolvingId(run.id); setNotes(''); setResolveError(null); }}
+                    className="mt-2 ml-6 text-xs font-semibold text-stone-700 underline-offset-2 hover:underline"
+                  >
+                    Mark Resolved
+                  </button>
+                )}
+                {resolvingId === run.id && (
+                  <div className="mt-2 ml-6 space-y-2">
+                    <textarea
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      rows={2}
+                      maxLength={1000}
+                      placeholder="What caused the difference and how it was handled"
+                      className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-xs text-stone-900 focus:border-stone-500 focus:outline-none"
+                    />
+                    {resolveError && <p className="text-[10px] text-red-700">{resolveError}</p>}
+                    <div className="flex gap-2">
+                      <button type="button" onClick={submitResolve} disabled={saving || notes.trim().length < 5} className="rounded-lg bg-stone-900 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50">
+                        {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Save Resolution'}
+                      </button>
+                      <button type="button" onClick={() => setResolvingId(null)} className="rounded-lg px-3 py-1.5 text-xs font-semibold text-stone-500 hover:text-stone-900">Cancel</button>
+                    </div>
+                  </div>
+                )}
                 {run.discrepancies.length > 0 && (
                   <div className="mt-2 pl-6 space-y-1">
                     {run.discrepancies.map((d) => (
@@ -264,3 +320,5 @@ function ReleaseWorkflowSection() {
     </div>
   );
 }
+
+export default FinancialAdminPage;

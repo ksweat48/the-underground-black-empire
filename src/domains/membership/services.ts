@@ -37,23 +37,49 @@ export async function fetchMembershipTiers(): Promise<MembershipTier[]> {
 export async function fetchMyMembership(userId: string): Promise<MemberMembership | null> {
   const { data, error } = await supabase
     .from('members')
-    .select('membership_tier, membership_started_at, display_name, created_at')
+    .select('membership_tier, membership_started_at, display_name, created_at, stripe_subscription_status, past_due_since, current_period_end, cancel_at_period_end, scheduled_tier')
     .eq('id', userId)
     .maybeSingle();
   if (error) throw error;
   return data as MemberMembership | null;
 }
 
-export async function downgradeToWhite(): Promise<void> {
-  const { error } = await supabase.functions.invoke('stripe-cancel', {
-    headers: {
-      Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token ?? ''}`,
-    },
-  });
+type BillingAction = 'cancel' | 'undo_cancel' | 'undo_downgrade' | 'update_card';
 
+async function billingAction(action: BillingAction): Promise<{ url?: string; period_end?: string | null }> {
+  const { data, error } = await supabase.functions.invoke('stripe-cancel', { body: { action } });
   if (error) {
-    throw new Error(error.message || 'Failed to downgrade membership');
+    let message = 'Something went wrong. Please try again.';
+    const context = 'context' in error ? error.context : null;
+    if (context instanceof Response) {
+      try {
+        const payload = await context.clone().json() as { error?: string };
+        if (payload.error) message = payload.error;
+      } catch {
+        // keep the generic message
+      }
+    }
+    throw new Error(message);
   }
+  if (data?.error) throw new Error(data.error);
+  return data ?? {};
+}
+
+export async function cancelMembershipAtPeriodEnd() {
+  return billingAction('cancel');
+}
+
+export async function undoMembershipCancel() {
+  await billingAction('undo_cancel');
+}
+
+export async function undoScheduledDowngrade() {
+  await billingAction('undo_downgrade');
+}
+
+export async function openCardUpdate(): Promise<string | null> {
+  const data = await billingAction('update_card');
+  return data.url ?? null;
 }
 
 export async function startStripeCheckout(tierId: MembershipTierId): Promise<string | null> {
@@ -190,16 +216,20 @@ export async function checkConnectStatus(): Promise<string> {
 }
 
 export async function requestPartnerPayout(): Promise<{ success: boolean; net_cents?: number; error?: string }> {
-  const accessToken = await getAccessToken();
-  if (!accessToken) return { success: false, error: 'Not signed in' };
-
-  const { data, error } = await supabase.functions.invoke('partner-payout', {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
-
-  if (error) return { success: false, error: error.message };
-  if (data?.error) return { success: false, error: data.error };
-  return { success: true, net_cents: data?.net_cents };
+  const { data, error } = await supabase.rpc('request_my_partner_payout');
+  if (error) {
+    const known = [
+      'Minimum payout is $100',
+      'You already have a payout in progress',
+      'Finish payout setup before requesting a payout',
+      'Your Partner account is not active',
+      'Verify your identity before requesting a payout',
+      'You can request one payout per month',
+    ];
+    const match = known.find((k) => error.message?.includes(k));
+    return { success: false, error: match ?? (error.message?.includes('Rate limit') ? 'Too many requests. Try again later.' : 'Could not request a payout. Please try again.') };
+  }
+  return { success: true, net_cents: (data as { net_cents?: number } | null)?.net_cents };
 }
 
 // ============================================================

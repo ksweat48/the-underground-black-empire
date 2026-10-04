@@ -94,7 +94,7 @@ export function PartnerDashboardSection({ referralCode }: { referralCode: string
     try {
       const result = await requestPartnerPayout();
       if (result.success) {
-        setPayoutMessage(`Payout of ${centsToUsd(result.net_cents ?? 0)} has been sent to your account.`);
+        setPayoutMessage(`Payout of ${centsToUsd(result.net_cents ?? 0)} requested. Payouts are sent in the monthly payout run.`);
         await loadDashboard();
       } else {
         setError(result.error ?? 'Payout failed. Please try again.');
@@ -157,8 +157,12 @@ export function PartnerDashboardSection({ referralCode }: { referralCode: string
   const pendingCents = dashboard.pending_cents ?? 0;
   const paidCents = dashboard.paid_cents ?? 0;
   const lifetimeCents = dashboard.lifetime_cents ?? 0;
+  const inPayoutCents = dashboard.in_payout_cents ?? 0;
+  const reversedCents = dashboard.reversed_cents ?? 0;
   const activeReferrals = dashboard.active_referrals ?? 0;
-  const canRequestPayout = connectStatus === 'active' && availableCents >= 10000;
+  const openPayout = dashboard.open_payout ?? null;
+  const lastFailed = dashboard.recent_payouts?.[0]?.status === 'failed';
+  const canRequestPayout = connectStatus === 'verified' && availableCents >= 10000 && !openPayout;
 
   return (
     <section className="glass-card p-4 animate-fade-up" style={{ animationDelay: '200ms' }}>
@@ -195,22 +199,44 @@ export function PartnerDashboardSection({ referralCode }: { referralCode: string
         <p className="text-[10px] font-bold uppercase tracking-wider text-ink-500 mb-2">Balance</p>
         <div className="space-y-1.5 text-xs">
           <div className="flex items-center justify-between">
-            <span className="text-ink-400">Pending</span>
+            <span className="text-ink-400">Pending <span className="text-ink-500">(7-day hold)</span></span>
             <span className="font-semibold text-amber-400 tabular-nums">{centsToUsd(pendingCents)}</span>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-ink-400">Available</span>
             <span className="font-semibold text-emerald-400 tabular-nums">{centsToUsd(availableCents)}</span>
           </div>
+          {inPayoutCents > 0 && (
+            <div className="flex items-center justify-between">
+              <span className="text-ink-400">{openPayout?.status === 'processing' ? 'Processing' : 'Requested'}</span>
+              <span className="font-semibold text-sky-400 tabular-nums">{centsToUsd(inPayoutCents)}</span>
+            </div>
+          )}
           <div className="flex items-center justify-between">
             <span className="text-ink-400">Paid Out</span>
             <span className="font-semibold text-ink-300 tabular-nums">{centsToUsd(paidCents)}</span>
           </div>
+          {reversedCents > 0 && (
+            <div className="flex items-center justify-between">
+              <span className="text-ink-400">Reversed (refunds)</span>
+              <span className="font-semibold text-red-400 tabular-nums">-{centsToUsd(reversedCents)}</span>
+            </div>
+          )}
         </div>
+        {dashboard.next_available_at && pendingCents > 0 && (
+          <p className="mt-2 text-[10px] text-ink-500">
+            Next earnings become available on {new Date(dashboard.next_available_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}.
+          </p>
+        )}
+        {availableCents < 0 && (
+          <p className="mt-2 text-[10px] text-red-400">
+            A refund was taken from your balance. New earnings will cover it first.
+          </p>
+        )}
       </div>
 
       {/* Connect / Payout Section */}
-      {connectStatus !== 'active' ? (
+      {connectStatus !== 'verified' ? (
         <div className="space-y-2">
           <p className="text-xs text-ink-400 leading-relaxed">
             Set up your payout account to receive commissions. You will verify your identity and tax information through Stripe.
@@ -225,13 +251,25 @@ export function PartnerDashboardSection({ referralCode }: { referralCode: string
             ) : (
               <>
                 <Wallet className="h-4 w-4" />
-                {connectStatus === 'pending' ? 'Continue Payout Setup' : 'Set Up Payouts'}
+                {connectStatus === 'onboarding' || connectStatus === 'restricted' ? 'Continue Payout Setup' : 'Set Up Payouts'}
               </>
             )}
           </button>
         </div>
       ) : (
         <div className="space-y-2">
+          {openPayout && !payoutMessage && (
+            <div className="rounded-lg bg-sky-950/40 border border-sky-800/40 p-2.5">
+              <p className="text-xs text-sky-300">
+                Payout of {centsToUsd(openPayout.net_cents)} is {openPayout.status === 'processing' ? 'being processed' : 'requested and will be sent in the monthly payout run'}.
+              </p>
+            </div>
+          )}
+          {lastFailed && !openPayout && (
+            <div className="rounded-lg bg-red-950/40 border border-red-800/40 p-2.5">
+              <p className="text-xs text-red-300">Your last payout did not go through. The money is back in Available. Check your payout account and try again.</p>
+            </div>
+          )}
           {payoutMessage && (
             <div className="rounded-lg bg-emerald-950/40 border border-emerald-800/40 p-2.5">
               <p className="text-xs text-emerald-400">{payoutMessage}</p>
@@ -256,9 +294,9 @@ export function PartnerDashboardSection({ referralCode }: { referralCode: string
               </>
             )}
           </button>
-          {!canRequestPayout && availableCents < 10000 && (
+          {!openPayout && availableCents < 10000 && (
             <p className="text-[10px] text-ink-500 text-center">
-              Minimum payout is $100. You need {centsToUsd(10000 - availableCents)} more.
+              Minimum payout is $100. You need {centsToUsd(10000 - availableCents)} more. A 3% processing fee applies.
             </p>
           )}
         </div>

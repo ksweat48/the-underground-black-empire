@@ -51,6 +51,7 @@ import { cn } from '@/shared/cn';
 import { fetchMyListings, fetchSavedListings, type MarketListing } from '@/domains/market/services';
 import { fetchMyMembership, type MemberMembership } from '@/domains/membership/services';
 import { PartnerDashboardSection } from '@/domains/membership/components/partner-dashboard';
+import { VerifyIdentityCard } from '@/domains/identity/components/verify-identity-card';
 import type { MembershipTierId } from '@/domains/membership/types';
 import {
   EthnicIdentitySelector,
@@ -601,6 +602,8 @@ export function ProfilePage() {
             <span><strong className="tabular-nums text-white">{referralStats.pending}</strong> Pending</span>
           </div>
         </section>
+
+        {memberId && <VerifyIdentityCard memberId={memberId} />}
 
         {/* Empire Partner Dashboard */}
         <PartnerDashboardSection referralCode={referralCode} />

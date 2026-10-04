@@ -23,7 +23,7 @@ export interface VotingCredits {
 export interface CreditLedgerEntry {
   id: string;
   amount: number;
-  source: 'monthly_grant' | 'initial_grant' | 'initiative_vote_spend' | 'initiative_vote_refund';
+  source: 'monthly_grant' | 'initial_grant' | 'upgrade_grant' | 'initiative_vote_spend' | 'initiative_vote_refund';
   reference_id: string | null;
   created_at: string;
 }
@@ -37,6 +37,11 @@ export interface MemberMembership {
   membership_started_at: string | null;
   display_name: string | null;
   created_at: string;
+  stripe_subscription_status: string | null;
+  past_due_since: string | null;
+  current_period_end: string | null;
+  cancel_at_period_end: boolean;
+  scheduled_tier: MembershipTierId | null;
 }
 
 export interface BenefitItem {
@@ -56,8 +61,26 @@ export interface PartnerDashboard {
   active_referrals?: number;
   pending_cents?: number;
   available_cents?: number;
+  adjustments_cents?: number;
+  in_payout_cents?: number;
   paid_cents?: number;
+  reversed_cents?: number;
   lifetime_cents?: number;
+  next_available_at?: string | null;
+  open_payout?: {
+    id: string;
+    status: 'requested' | 'processing';
+    gross_cents: number;
+    net_cents: number;
+    requested_at: string;
+  } | null;
+  recent_payouts?: Array<{
+    id: string;
+    status: 'requested' | 'processing' | 'completed' | 'failed';
+    net_cents: number;
+    requested_at: string;
+    completed_at: string | null;
+  }>;
 }
 
 export interface PartnerInfo {

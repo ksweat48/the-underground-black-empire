@@ -25,19 +25,14 @@ export function CreateNewsPage() {
 
   useEffect(() => {
     if (!userId) { setAuthChecking(false); return; }
-    Promise.all([
-      fetchMemberCityInfo(userId),
-      supabase
-        .from('metro_council')
-        .select('id')
-        .eq('member_id', userId)
-        .limit(1)
-        .maybeSingle(),
-    ])
-      .then(([info, memberRes]) => {
+    fetchMemberCityInfo(userId)
+      .then(async (info) => {
         setCityId(info.cityId);
         setCityName(info.cityName);
-        setIsCouncilLeader(!!memberRes.data);
+        if (!info.cityId) return;
+        const { data, error } = await supabase.rpc('can_publish_news_for_city', { p_city_id: info.cityId });
+        if (error) throw error;
+        setIsCouncilLeader(data === true);
       })
       .catch(() => {})
       .finally(() => setAuthChecking(false));
@@ -61,7 +56,8 @@ export function CreateNewsPage() {
       });
       navigate('/empire');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to submit news.');
+      console.error('news submit failed', err);
+      setError('Could not publish this story. Only active Metro leaders can post news for their Metro.');
     } finally {
       setSubmitting(false);
     }

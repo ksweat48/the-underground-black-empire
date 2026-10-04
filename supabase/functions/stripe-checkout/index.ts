@@ -223,8 +223,19 @@ Deno.serve(async (req: Request) => {
         .eq("id", user.id);
     }
 
-    // If member already has an active subscription, switch the price
-    // at the next billing cycle instead of creating a new checkout.
+    if (
+      member?.stripe_subscription_id &&
+      member?.stripe_subscription_status === "active" &&
+      member?.membership_tier === tierId
+    ) {
+      return new Response(
+        JSON.stringify({ error: "You are already on this membership" }),
+        { status: 400, headers: { ...cors, "Content-Type": "application/json" } },
+      );
+    }
+
+    // Existing paid members switching tiers: upgrades apply now (prorated),
+    // downgrades are scheduled for the end of the current billing period.
     if (
       member?.stripe_subscription_id &&
       member?.stripe_subscription_status === "active" &&
@@ -233,31 +244,38 @@ Deno.serve(async (req: Request) => {
     ) {
       const subResponse = await fetch(
         `https://api.stripe.com/v1/subscriptions/${member.stripe_subscription_id}`,
-        {
-          headers: { "Authorization": `Bearer ${stripeSecretKey}` },
-        },
+        { headers: { "Authorization": `Bearer ${stripeSecretKey}` } },
       );
       const subscription = await subResponse.json();
+      const currentPriceId = subscription?.items?.data?.[0]?.price?.id as string | undefined;
+      const itemId = subscription?.items?.data?.[0]?.id as string | undefined;
 
-      const currentPriceId = subscription?.items?.data?.[0]?.price?.id;
-      const itemId = subscription?.items?.data?.[0]?.id;
-
-      if (!itemId) {
+      if (!subResponse.ok || !itemId) {
         return new Response(
           JSON.stringify({ error: "Could not retrieve subscription details" }),
           { status: 502, headers: { ...cors, "Content-Type": "application/json" } },
         );
       }
 
-      // Update the subscription item with the new price.
-      // proration_behavior=none means the change takes effect at the
-      // next billing cycle — the member keeps their current tier until then.
+      const { data: tierOrder } = await adminClient
+        .from("membership_tiers")
+        .select("id, sort_order")
+        .in("id", [member.membership_tier, tierId]);
+      const rank = (id: string) => tierOrder?.find((t) => t.id === id)?.sort_order ?? 0;
+      const isUpgrade = rank(tierId) > rank(member.membership_tier);
+
       const updateParams = new URLSearchParams();
       updateParams.append("items[0][id]", itemId);
       updateParams.append("items[0][price]", stripePriceId);
-      updateParams.append("proration_behavior", "none");
+      updateParams.append("cancel_at_period_end", "false");
       updateParams.append("metadata[supabase_user_id]", user.id);
       updateParams.append("metadata[tier_id]", tierId);
+      if (isUpgrade) {
+        updateParams.append("proration_behavior", "always_invoice");
+        updateParams.append("payment_behavior", "pending_if_incomplete");
+      } else {
+        updateParams.append("proration_behavior", "none");
+      }
 
       const updateResponse = await fetch(
         `https://api.stripe.com/v1/subscriptions/${member.stripe_subscription_id}`,
@@ -273,16 +291,19 @@ Deno.serve(async (req: Request) => {
 
       if (!updateResponse.ok) {
         return new Response(
-          JSON.stringify({ error: "Failed to update subscription" }),
+          JSON.stringify({ error: isUpgrade ? "Your card could not be charged for the upgrade" : "Failed to update subscription" }),
           { status: 502, headers: { ...cors, "Content-Type": "application/json" } },
         );
       }
 
-      // The webhook will fire subscription.updated at the billing cycle
-      // boundary and update the membership_tier in the database then.
-      // Return a redirect to the membership page with a "scheduled" message.
+      await adminClient.from("members").update(
+        isUpgrade
+          ? { scheduled_tier: null, scheduled_previous_price_id: null, cancel_at_period_end: false }
+          : { scheduled_tier: tierId, scheduled_previous_price_id: currentPriceId ?? null, cancel_at_period_end: false },
+      ).eq("id", user.id);
+
       return new Response(
-        JSON.stringify({ url: `${SITE_URL}/membership?checkout=scheduled&tier=${tierId}` }),
+        JSON.stringify({ url: `${SITE_URL}/membership?checkout=${isUpgrade ? "upgraded" : "scheduled"}&tier=${tierId}` }),
         { status: 200, headers: { ...cors, "Content-Type": "application/json" } },
       );
     }
